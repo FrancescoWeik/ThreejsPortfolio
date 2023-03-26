@@ -31,7 +31,7 @@ export default class Camera{
             this.initialPosition = new THREE.Vector3(-4,4,8);
         }else{
             //Phone
-            this.initialPosition = new THREE.Vector3(-4,8,16);
+            this.initialPosition = new THREE.Vector3(-4,9,18);
         }
     }
 
@@ -98,17 +98,30 @@ export default class Camera{
     }
 
     moveToTelevision(){
-        this.stopCameraMovement()
-        gsap.to(this.instance.position, { 
-            duration:1, x: -5.321, y:1.7, z: -2.26,
-            onComplete: () => {
-                //this.experienceControls.removeProjectsCollider();
-                this.experienceControls.changeToTelevisionButtonsColliders();
-            }
-        })
-        gsap.to(this.controls.target, {
-            duration:1, x: -3, y: 1.7, z: -1.99
-        })
+        this.stopCameraMovement();
+        if(this.sizes.width<980){
+            gsap.to(this.instance.position, { 
+                duration:1, x: -8.321, y:1.7, z: -2,
+                onComplete: () => {
+                    //this.experienceControls.removeProjectsCollider();
+                    this.experienceControls.changeToTelevisionButtonsColliders();
+                }
+            })
+            gsap.to(this.controls.target, {
+                duration:1, x: -3, y: 1.7, z: -1.99
+            })
+        }else{
+            gsap.to(this.instance.position, { 
+                duration:1, x: -5.321, y:1.7, z: -2,
+                onComplete: () => {
+                    //this.experienceControls.removeProjectsCollider();
+                    this.experienceControls.changeToTelevisionButtonsColliders();
+                }
+            })
+            gsap.to(this.controls.target, {
+                duration:1, x: -3, y: 1.7, z: -1.99
+            })
+        }
     }
 
     moveToStart(){
