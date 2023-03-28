@@ -79,6 +79,14 @@ export default class Experience{
         this.world.spider.createProjectFromControls();
     }
 
+    changeAboutToCurriculum(){
+        this.world.room.changeAboutToCurriculum();
+    }
+    
+    changeCurriculumToAbout(){
+        this.world.room.changeCurriculumToAbout();
+    }
+
     destroy(){
         this.sizes.off('resize')
         this.time.off('tick')

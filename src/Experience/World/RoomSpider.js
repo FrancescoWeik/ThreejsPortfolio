@@ -16,6 +16,7 @@ export default class RoomSpider{
         this.currentIntersect = null;
         this.bellObjects = [];
         this.projectPicture = null;
+        this.aboutPicture = null;
         this.canUpdate = true;
 
         //Debug
@@ -67,6 +68,9 @@ export default class RoomSpider{
         this.textures.aboutColor = this.resources.items.AboutColor;
         this.textures.aboutColor.encoding = THREE.sRGBEncoding
 
+        this.textures.contactColor = this.resources.items.AboutContactColor;
+        this.textures.contactColor.encoding = THREE.sRGBEncoding
+
         
         this.projectTextures = [];
         this.setProjectTextures();
@@ -92,7 +96,7 @@ export default class RoomSpider{
                     case "WallLeft": child.material = wallLeftBakedMaterial; break;
                     case "WallRight": child.material = wallRightBakedMaterial; break;
                     case "PictureLeft": child.material = pictureLeftMaterial; this.projectPicture = child; break;
-                    case "PictureRight": child.material = aboutMaterial; break;
+                    case "PictureRight": child.material = aboutMaterial; this.aboutPicture = child; break;
                     case "bellSpehere": child.material = bellMaterial; this.bellObjects.push(child); break;
                     case "bellCylinder": child.material = bellMaterial; this.bellObjects.push(child); break;
                     case "bellBody": child.material = bellMaterial; this.bellObjects.push(child); break;
@@ -133,6 +137,17 @@ export default class RoomSpider{
     changeProjectPicture(position){
         this.projectPicture.material.map = this.projectTextures[position];
         this.projectPicture.material.needsUpdate = true;
+    }
+
+    changeAboutToCurriculum(){
+        this.aboutPicture.material.map = this.textures.contactColor;
+        this.aboutPicture.material.needsUpdate = true;
+
+    }
+
+    changeCurriculumToAbout(){
+        this.aboutPicture.material.map = this.resources.items.AboutColor;
+        this.aboutPicture.material.needsUpdate = true;
     }
 
     removeArrow(){

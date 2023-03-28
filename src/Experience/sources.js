@@ -89,7 +89,14 @@ export default [
     {
         name: 'AboutColor',
         type: 'texture',
-        path: 'textures/walls/AboutColorStretched.jpg'
+        path: 'textures/walls/AboutColorFirstPageStretched.jpg'
+        //path: 'textures/walls/AboutColorStretched.jpg'
+    },
+    {
+        name: 'AboutContactColor',
+        type: 'texture',
+        path: 'textures/walls/AboutColorSecondPageStretched.jpg'
+        //path: 'textures/walls/AboutColorStretched.jpg'
     },
     {
         name: 'PipThePirateTexture',

@@ -18,6 +18,7 @@ export default class Controls{
         this.initialSceneTest = [] //the objects to test when scene is opened
         this.projectsToTest = [] //objects to test when projects are clicked
         this.aboutToTest = [] //objects to test when about is clicked.
+        this.contactToTest = [] //objects to test when contact page is displayed
         this.televisionToTest = [] //objects to test when television is clicked
 
         this.readyForUpdate = false;
@@ -46,6 +47,7 @@ export default class Controls{
 
         this.setAboutCollider();
         this.setAboutButtonsColliders();
+        this.setContactButtonsColliders();
 
         this.setVideoCollider();
 
@@ -132,18 +134,72 @@ export default class Controls{
     }
 
     setAboutButtonsColliders(){
+        const geometry = new THREE.PlaneGeometry(0.4, 0.1);
+        const material = new THREE.MeshBasicMaterial({color:"#00ff00", wireframe:true})
         this.backAboutCollider = new THREE.Mesh(
+            geometry,
+            material
+        )
+
+        this.nextAboutCollider = new THREE.Mesh(
+            geometry,
+            material
+        )
+
+        this.backAboutCollider.position.set(1.9, 0, 1.45)
+        this.backAboutCollider.rotation.y = -Math.PI * 0.5
+
+        this.nextAboutCollider.position.set(1.9, 0, 2.25)
+        this.nextAboutCollider.rotation.y = - Math.PI * 0.5
+
+        this.backAboutCollider.visible = false;
+        this.nextAboutCollider.visible = false;
+
+        this.aboutToTest.push(this.backAboutCollider, this.nextAboutCollider)
+        this.scene.add(this.backAboutCollider, this.nextAboutCollider)
+    }
+
+    setContactButtonsColliders(){
+        const geometry = new THREE.PlaneGeometry(0.1, 0.1);
+        const material = new THREE.MeshBasicMaterial({color:"#00ff00", wireframe:true})
+
+        this.backContactCollider = new THREE.Mesh(
             new THREE.PlaneGeometry(0.4, 0.1),
             new THREE.MeshBasicMaterial({color:"#00ff00", wireframe:true})
         )
 
-        this.backAboutCollider.position.set(1.9, 0, 1.4)
-        this.backAboutCollider.rotation.y = -Math.PI * 0.5
+        this.linkedinCollider = new THREE.Mesh(
+            geometry,
+            material
+        )
 
-        this.backAboutCollider.visible = false;
+        this.githubCollider = new THREE.Mesh(
+            geometry,
+            material
+        )
 
-        this.aboutToTest.push(this.backAboutCollider)
-        this.scene.add(this.backAboutCollider)
+        this.instagramCollider = new THREE.Mesh(
+            geometry,
+            material
+        )
+
+        this.backContactCollider.position.set(1.9, 0, 1.45)
+        this.backContactCollider.rotation.y = -Math.PI * 0.5
+
+        this.linkedinCollider.position.set(1.9, 0.03, 1.90)
+        this.linkedinCollider.rotation.y = -Math.PI * 0.5
+        this.githubCollider.position.set(1.9, 0.03, 2.20)
+        this.githubCollider.rotation.y = -Math.PI * 0.5
+        this.instagramCollider.position.set(1.9, 0.03, 2.05)
+        this.instagramCollider.rotation.y = -Math.PI * 0.5
+
+        this.backContactCollider.visible = false;
+        this.linkedinCollider.visible = false;
+        this.githubCollider.visible = false;
+        this.instagramCollider.visible = false;
+
+        this.contactToTest.push(this.backContactCollider,this.linkedinCollider, this.githubCollider, this.instagramCollider)
+        this.scene.add(this.backContactCollider, this.linkedinCollider, this.githubCollider, this.instagramCollider)
     }
 
     addClickHandler(){
@@ -203,9 +259,15 @@ export default class Controls{
                     case this.nextButtonCollider: this.experience.createProjectFromControls(); break;
                     case this.backButtonCollider: this.camera.moveToStart(); break;
                     case this.backAboutCollider: this.camera.moveToStart(); break;
+                    case this.nextAboutCollider: this.experience.changeAboutToCurriculum(); this.objectsToTest = this.contactToTest; break;
+                    case this.backContactCollider: this.experience.changeCurriculumToAbout(); this.objectsToTest = this.aboutToTest; break;
                     case this.logoButtonCollider: this.goToProjectLink(); break;
                     case this.televisionButton: this.experience.world.television.changeTexture(); break;
                     case this.televisionBackButton: this.camera.moveToStart(); break;
+
+                    case this.linkedinCollider: this.goToLink("https://www.linkedin.com/in/francesco-weikmann-8494a8252/"); break;
+                    case this.githubCollider: this.goToLink("https://github.com/FrancescoWeik"); break;
+                    case this.instagramCollider: this.goToLink("https://www.instagram.com/francesco_weikmann/"); break;
                     default: break;
                 }
             }
@@ -260,5 +322,9 @@ export default class Controls{
             case 3: window.open("https://github.com/DigitalCommonsLab/bikingimprover", '_blank'); break;
             case 4: window.open("https://meteo-website-group19.onrender.com/", '_blank'); break;
         }
+    }
+
+    goToLink(link){
+        window.open(link,'_blank');
     }
 }
