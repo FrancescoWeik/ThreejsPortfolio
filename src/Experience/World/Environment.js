@@ -51,7 +51,7 @@ export default class Environment{
         /*const sunLightHelper = new THREE.PointLightHelper(this.sunLight, 0.2);
         this.scene.add(sunLightHelper);*/
 
-        this.bellLight = new THREE.PointLight("#b68715", 10)
+        this.bellLight = new THREE.PointLight("#ff2400", 3)
         this.bellLight.position.set(-1.92, 0.5 ,2.27)
         this.scene.add(this.bellLight)
         //const bellLightHelper = new THREE.PointLightHelper(this.bellLight, 0.2);

@@ -57,7 +57,7 @@ export default class Camera{
         this.controls.minAzimuthAngle = -Math.PI *0.5
         this.controls.maxAzimuthAngle = 0
         //this.controls.minPolarAngle = Math.PI *0.2
-        //this.controls.maxPolarAngle = Math.PI * 0.55
+        this.controls.maxPolarAngle = Math.PI * 0.5
 
     }
 
