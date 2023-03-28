@@ -163,9 +163,11 @@ export default class Controls{
         const geometry = new THREE.PlaneGeometry(0.1, 0.1);
         const material = new THREE.MeshBasicMaterial({color:"#00ff00", wireframe:true})
 
+        const cardGeometry = new THREE.PlaneGeometry(0.25, 0.3);
+
         this.backContactCollider = new THREE.Mesh(
             new THREE.PlaneGeometry(0.4, 0.1),
-            new THREE.MeshBasicMaterial({color:"#00ff00", wireframe:true})
+            material
         )
 
         this.linkedinCollider = new THREE.Mesh(
@@ -183,6 +185,16 @@ export default class Controls{
             material
         )
 
+        this.curriculumCollider = new THREE.Mesh(
+            cardGeometry, 
+            material
+        )
+
+        this.referenceCollider = new THREE.Mesh(
+            cardGeometry, 
+            material
+        )
+
         this.backContactCollider.position.set(1.9, 0, 1.45)
         this.backContactCollider.rotation.y = -Math.PI * 0.5
 
@@ -193,13 +205,21 @@ export default class Controls{
         this.instagramCollider.position.set(1.9, 0.03, 2.05)
         this.instagramCollider.rotation.y = -Math.PI * 0.5
 
+        this.curriculumCollider.position.set(1.9, 0.355, 1.6)
+        this.curriculumCollider.rotation.y = -Math.PI * 0.5
+        this.referenceCollider.position.set(1.9, 0.355, 2.05)
+        this.referenceCollider.rotation.y = -Math.PI * 0.5
+
         this.backContactCollider.visible = false;
         this.linkedinCollider.visible = false;
         this.githubCollider.visible = false;
         this.instagramCollider.visible = false;
 
-        this.contactToTest.push(this.backContactCollider,this.linkedinCollider, this.githubCollider, this.instagramCollider)
-        this.scene.add(this.backContactCollider, this.linkedinCollider, this.githubCollider, this.instagramCollider)
+        this.curriculumCollider.visible = false;
+        this.referenceCollider.visible = false;
+
+        this.contactToTest.push(this.backContactCollider,this.linkedinCollider, this.githubCollider, this.instagramCollider, this.curriculumCollider, this.referenceCollider)
+        this.scene.add(this.backContactCollider, this.linkedinCollider, this.githubCollider, this.instagramCollider, this.curriculumCollider, this.referenceCollider)
     }
 
     addClickHandler(){
@@ -268,6 +288,8 @@ export default class Controls{
                     case this.linkedinCollider: this.goToLink("https://www.linkedin.com/in/francesco-weikmann-8494a8252/"); break;
                     case this.githubCollider: this.goToLink("https://github.com/FrancescoWeik"); break;
                     case this.instagramCollider: this.goToLink("https://www.instagram.com/francesco_weikmann/"); break;
+                    case this.curriculumCollider: this.downloadDocument("CVFrancescoWeikmann.pdf");break;
+                    case this.referenceCollider: this.downloadDocument("reference.pdf");break;
                     default: break;
                 }
             }
@@ -327,4 +349,13 @@ export default class Controls{
     goToLink(link){
         window.open(link,'_blank');
     }
+
+    downloadDocument(element){
+		var a = document.createElement('a')
+		a.href = element
+		a.download = element.split('/').pop()
+		document.body.appendChild(a)
+		a.click()
+		document.body.removeChild(a)
+	}
 }
