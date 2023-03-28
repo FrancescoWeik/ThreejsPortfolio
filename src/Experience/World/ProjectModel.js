@@ -30,8 +30,4 @@ export default class ProjectModel{
             }
         })
     }
-
-    /*update(){
-
-    }*/
 }

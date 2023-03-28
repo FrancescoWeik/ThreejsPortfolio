@@ -99,6 +99,7 @@ export default class Spider{
         //create project based on number
         this.scene.add(this.projectResources[this.projectNumber]);
         this.currentProject = this.projectResources[this.projectNumber]
+
         //console.log(this.currentProject)
         this.goOut();      
     }
@@ -145,6 +146,7 @@ export default class Spider{
     }
 
     update(){
+        //this.projectResources[this.projectNumber].rotation.y += this.time.delta * 0.0001;
         this.animation.mixer.update(this.time.delta * 0.001)
     }
 }

@@ -1,6 +1,7 @@
 
 import Experience from "../Experience.js";
 import * as THREE from 'three'
+import gsap from 'gsap'
 
 export default class Controls{
     //creo "collider"
@@ -70,7 +71,6 @@ export default class Controls{
         this.projectsCollider.visible = false;
 
         this.scene.add(this.projectsCollider);
-
         this.initialSceneTest.push(this.projectsCollider);
     }
 

@@ -28,7 +28,7 @@ export default class Camera{
     checkPcOrPhoneZoom(){
         if(this.sizes.width >=969){
             //PC
-            this.initialPosition = new THREE.Vector3(-4,4,8);
+            this.initialPosition = new THREE.Vector3(-4.86,5.41,9.57);
         }else{
             //Phone
             this.initialPosition = new THREE.Vector3(-4,9,18);
@@ -167,7 +167,6 @@ export default class Camera{
         this.controls.maxDistance = Infinity
         this.controls.minAzimuthAngle = Infinity
         this.controls.maxAzimuthAngle = Infinity
-        console.log("yeah")
         //this.controls.minPolarAngle = Math.PI *0.2
         //this.controls.maxPolarAngle = Math.PI * 0.55
     }
