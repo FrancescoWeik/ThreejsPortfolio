@@ -279,7 +279,7 @@ export default class Controls{
                     case this.nextButtonCollider: this.experience.createProjectFromControls(); break;
                     case this.backButtonCollider: this.camera.moveToStart(); break;
                     case this.backAboutCollider: this.camera.moveToStart(); break;
-                    case this.nextAboutCollider: this.experience.changeAboutToCurriculum(); this.objectsToTest = this.contactToTest; break;
+                    case this.nextAboutCollider: if(this.objectsToTest == this.aboutToTest){this.experience.changeAboutToCurriculum(); this.objectsToTest = this.contactToTest;} break;
                     case this.backContactCollider: this.experience.changeCurriculumToAbout(); this.objectsToTest = this.aboutToTest; break;
                     case this.logoButtonCollider: this.goToProjectLink(); break;
                     case this.televisionButton: this.experience.world.television.changeTexture(); break;
