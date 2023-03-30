@@ -89,7 +89,7 @@ export default class RoomSpider{
 
         this.model.traverse((child) => {
             if(child instanceof THREE.Mesh){
-                console.log(child);
+                //console.log(child);
                 child.receiveShadow = true;
                 switch(child.name){
                     case "Floor": child.material = floorBakedMaterial; break;

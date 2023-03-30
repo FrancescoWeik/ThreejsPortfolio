@@ -29,14 +29,14 @@ export default class ButlerModel{
         const knifeMaterial = new THREE.MeshStandardMaterial({map: textures.knifeTexture})
         const cameraMaterial = new THREE.MeshStandardMaterial({map: textures.cameraTexture})
 
-        console.log(this.resource.scene);
+       // console.log(this.resource.scene);
 
         this.resource.scene.traverse((child) => {
             if(child instanceof THREE.Mesh){
                 child.castShadow = true;
                 switch(child.name){
-                    case "Knife": console.log(child.name); child.material = knifeMaterial; break;
-                    case "Camera":  console.log(child.name); child.material = cameraMaterial; break;
+                    case "Knife": /*console.log(child.name);*/ child.material = knifeMaterial; break;
+                    case "Camera":  /*console.log(child.name);*/ child.material = cameraMaterial; break;
                 }
             }
         })

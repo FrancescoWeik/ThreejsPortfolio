@@ -20,7 +20,7 @@ export default class ProjectModel{
 
     setModel(resourceTexture){
         this.model = this.resource.scene
-        console.log(this.position);
+        //console.log(this.position);
         this.model.position.set(this.position.x, this.position.y, this.position.z);
 
         this.model.traverse((child) => {

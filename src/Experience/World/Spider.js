@@ -75,7 +75,7 @@ export default class Spider{
 
     moveToCenter(){
         this.spiderGroup.visible = true;
-        console.log("I need to move!")
+        //console.log("I need to move!")
         gsap.to(this.spiderGroup.position, { duration:1, delay: 0.5, x: 0 })
         gsap.to(this.spiderGroup.position, { 
                 duration:1, delay: 1.5, y: -1.6, 
@@ -84,10 +84,10 @@ export default class Spider{
     }
 
     createProjectObject(){
-        console.log("woah");
+        //console.log("woah");
         //remove current project
         if(this.currentProject){
-            console.log(this.currentProject);
+            //console.log(this.currentProject);
             this.scene.remove(this.currentProject);
         }
         this.projectNumber ++;
@@ -105,10 +105,10 @@ export default class Spider{
     }
 
     createProjectFromControls(){
-        console.log("changing project via controls buttons");
+        //console.log("changing project via controls buttons");
         //remove current project
         if(this.currentProject){
-            console.log(this.currentProject);
+            //console.log(this.currentProject);
             this.scene.remove(this.currentProject);
         }
         this.projectNumber ++;
@@ -123,7 +123,7 @@ export default class Spider{
     }
 
     goOut(){
-        console.log("I need to go out!")
+        //console.log("I need to go out!")
         gsap.to(this.spiderGroup.position, { duration:1, delay: 0.2, y: 0 })
         gsap.to(this.spiderGroup.rotation, {duration:1, delay:0.2, y:-Math.PI/2})
         gsap.to(this.spiderGroup.position, { 

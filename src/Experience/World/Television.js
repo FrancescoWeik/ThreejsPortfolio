@@ -22,7 +22,7 @@ export default class Television{
         this.texture = this.resources.items.VideoTexture;
         this.blackTexture = this.resources.items.BlackTexture;
         this.notFoundTexture = this.resources.items.NotFoundTexture;
-        console.log(this.notFoundTexture);
+        //console.log(this.notFoundTexture);
         this.setModel();
     }
 
@@ -31,7 +31,7 @@ export default class Television{
         this.model = this.resource.scene
         this.model.traverse((child) => {
             if(child instanceof THREE.Mesh){
-                console.log(child);
+                //console.log(child);
                 //child.receiveShadow = true;
                 switch(child.name){
                     case "ButtonTV": child.material = new THREE.MeshStandardMaterial({color: "#ff2400"}); this.televisionButton=child; break;
@@ -53,7 +53,7 @@ export default class Television{
             if(this.clickTime>this.maxClicks){
                 //Chjange to broken tv
                 this.broken = true;
-                console.log("changingToBroken....");
+                //console.log("changingToBroken....");
                 this.monitor.material.map = this.notFoundTexture;
                 this.monitor.material.needsUpdate = true;
             }else{
@@ -70,6 +70,6 @@ export default class Television{
             }
         }
 
-        console.log("change texture...");
+        //console.log("change texture...");
     }
 }
