@@ -2,6 +2,7 @@ import Experience from '../Experience.js'
 import * as THREE from 'three'
 
 export default class ProjectModel{
+
     constructor(resource, resourceTexture, position){
         this.experience = new Experience();
         this.scene = this.experience.scene;
@@ -14,8 +15,12 @@ export default class ProjectModel{
         //setup
         this.resource = resource;
         
-        resourceTexture.encoding = THREE.sRGBEncoding
-        this.setModel(resourceTexture)
+        if(resourceTexture!=undefined){
+            resourceTexture.encoding = THREE.sRGBEncoding
+            this.setModel(resourceTexture)
+        }else{
+            this.setModelPos()
+        }
     }
 
     setModel(resourceTexture){
@@ -29,5 +34,12 @@ export default class ProjectModel{
                 child.material = new THREE.MeshStandardMaterial({map:resourceTexture}) 
             }
         })
+    }
+
+    setModelPos(){
+        this.model = this.resource.scene
+        //console.log(this.position);
+        this.model.position.set(this.position.x, this.position.y, this.position.z);
+
     }
 }

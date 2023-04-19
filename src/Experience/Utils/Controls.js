@@ -342,7 +342,8 @@ export default class Controls{
             case 1: window.open("https://francescow.itch.io/my-videogame", '_blank'); break;
             case 2: window.open("https://francescow.itch.io/its-always-the-butler", '_blank'); break;
             case 3: window.open("https://github.com/DigitalCommonsLab/bikingimprover", '_blank'); break;
-            case 4: window.open("https://meteo-website-group19.onrender.com/", '_blank'); break;
+            case 4: window.open("https://francescow.itch.io/blackjack/", '_blank'); break; //have to use the itch.io game page
+            case 5: window.open("https://meteo-website-group19.onrender.com/", '_blank'); break;
         }
     }
 

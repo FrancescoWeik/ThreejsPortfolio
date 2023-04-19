@@ -128,6 +128,7 @@ export default class RoomSpider{
         this.projectTextures.push(this.resources.items.LittleGuyColor)
         this.projectTextures.push(this.resources.items.ButlerColor)
         this.projectTextures.push(this.resources.items.BikingImproverColor)
+        this.projectTextures.push(this.resources.items.BlackjackColor)
 
         for(let i of this.projectTextures){
             i.encoding = THREE.sRGBEncoding;

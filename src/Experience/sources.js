@@ -87,6 +87,11 @@ export default [
         path: 'textures/walls/BikingColorResized.jpg'
     },
     {
+        name: 'BlackjackColor',
+        type: 'texture',
+        path: 'textures/walls/BlackjackColor.jpg'
+    },
+    {
         name: 'AboutColor',
         type: 'texture',
         path: 'textures/walls/AboutColorFirstPageStretched.jpg'
@@ -161,6 +166,12 @@ export default [
         type: "gltfModel",
         path: 'models/Room/KnifeCamera.glb',
         number: 3
+    },
+    {
+        name: "CardModel",
+        type: "gltfModel",
+        path: "models/Room/PlayingCardAce.glb",
+        number:4
     },
     {
         name: 'VideoTexture',

@@ -10,13 +10,14 @@ export default class Spider{
         this.time = this.experience.time;
         this.debug = this.experience.debug
         this.projectNumber = 0;
-        this.numberOfProjects = 3;
+        this.numberOfProjects = 4;
         this.currentProject = null;
         this.spiderGroup = new THREE.Group();
         this.pip = this.experience.world.pip;
         this.littleGuy = this.experience.world.littleGuy
         this.bikingImprover = this.experience.world.bikingImprover
         this.butler = this.experience.world.butler
+        this.blackjack = this.experience.world.blackjack
 
         //Debug
         if(this.debug.active){
@@ -41,6 +42,9 @@ export default class Spider{
       this.projectResources.push(this.littleGuy.model)
       this.projectResources.push(this.butler.model)
       this.projectResources.push(this.bikingImprover.model)
+
+      this.projectResources.push(this.blackjack.model)
+      console.log(this.blackjack.model)
     }
 
     setModel(){
@@ -99,6 +103,8 @@ export default class Spider{
         //create project based on number
         this.scene.add(this.projectResources[this.projectNumber]);
         this.currentProject = this.projectResources[this.projectNumber]
+
+        console.log(this.currentProject);
 
         //console.log(this.currentProject)
         this.goOut();      

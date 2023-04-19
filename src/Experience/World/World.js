@@ -24,10 +24,13 @@ export default class World{
             //Setup
             this.room = new RoomSpider();
             this.television = new Television();
+
             this.pip = new ProjectModel(this.resources.items.PipThePirateModel, this.resources.items.PipThePirateTexture, new THREE.Vector3(0.1,-0.6,0.25))
             this.littleGuy = new ProjectModel(this.resources.items.TheLittleGuyModel, this.resources.items.LittleGuyTexture, new THREE.Vector3(0.14,-0.3,0.263))
             this.butler = new ButlerModel();
             this.bikingImprover = new ProjectModel(this.resources.items.BikingImproverModel, this.resources.items.BikingImproverTexture, new THREE.Vector3(0.1,-0.3,0.25))
+            this.blackjack = new ProjectModel(this.resources.items.CardModel, undefined, new THREE.Vector3(0, - 0.3, 0))
+
             this.spider = new Spider();
 
             this.flyingSpiders = new FlyingSpiders();
