@@ -44,7 +44,6 @@ export default class Spider{
       this.projectResources.push(this.bikingImprover.model)
 
       this.projectResources.push(this.blackjack.model)
-      console.log(this.blackjack.model)
     }
 
     setModel(){
@@ -104,7 +103,7 @@ export default class Spider{
         this.scene.add(this.projectResources[this.projectNumber]);
         this.currentProject = this.projectResources[this.projectNumber]
 
-        console.log(this.currentProject);
+        //console.log(this.currentProject);
 
         //console.log(this.currentProject)
         this.goOut();      
