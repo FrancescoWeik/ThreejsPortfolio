@@ -192,7 +192,10 @@ export default [
         name: "TelevisionModel",
         type: "gltfModel",
         path: 'models/Room/Television.glb',
-    }
-
-    
+    },
+    {
+        name: 'lakeTexture',
+        type: 'texture',
+        path: 'textures/pond/Lake.png'
+    },
 ]

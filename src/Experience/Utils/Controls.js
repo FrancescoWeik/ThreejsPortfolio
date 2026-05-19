@@ -32,10 +32,10 @@ export default class Controls{
         this.preLoader.on('start', () =>
         {
             //setup
-            this.setColliders(); //these are colliders that will be invisible...
-            this.objectsToTest = this.initialSceneTest;
-            this.addClickHandler();
-            this.readyForUpdate = true;
+            //this.setColliders(); //these are colliders that will be invisible...
+            //this.objectsToTest = this.initialSceneTest;
+            //this.addClickHandler();
+            //this.readyForUpdate = true;
 
             this.camera.experienceControls = this.experience.controls;
         })

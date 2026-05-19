@@ -6,6 +6,7 @@ import Renderer from "./Renderer.js"
 import World from "./World/World.js"
 import Resources from "./Utils/Resources.js"
 import sources from './sources.js'
+import ducks from './ducks.js'
 import Debug from './Utils/Debug.js'
 import Controls from './Utils/Controls.js'
 import PreLoader from "./Preloader.js"
@@ -31,7 +32,7 @@ export default class Experience{
         this.sizes = new Sizes;
         this.time = new Time();
         this.scene = new THREE.Scene();
-        this.resources = new Resources(sources);
+        this.resources = new Resources(sources, ducks);
         this.preLoader = new PreLoader()
         this.camera = new Camera();
         this.renderer = new Renderer();

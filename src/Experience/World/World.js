@@ -2,6 +2,7 @@ import Experience from '../Experience.js'
 import Environment from './Environment.js'
 //import Floor from './Floor.js'
 //import Fox from './Fox.js'
+import Pond from "./Pond.js"
 import RoomSpider from './RoomSpider.js'
 import Spider from './Spider.js'
 import ProjectModel from './ProjectModel.js'
@@ -22,7 +23,8 @@ export default class World{
         //Wait for resources
         this.resources.on('ready', () => {
             //Setup
-            this.room = new RoomSpider();
+            this.room = new Pond(this.scene);
+            /*this.room = new RoomSpider();
             this.television = new Television();
 
             this.pip = new ProjectModel(this.resources.items.PipThePirateModel, this.resources.items.PipThePirateTexture, new THREE.Vector3(0.1,-0.6,0.25))
@@ -35,20 +37,23 @@ export default class World{
 
             this.flyingSpiders = new FlyingSpiders();
             
-            //this.videoProjects = new VideoProjects()
-            this.environment = new Environment();
+            //this.videoProjects = new VideoProjects()*/
+            //this.environment = new Environment();
         })
     }
 
     update(){
-        if(this.spider){
-            this.spider.update();
-        }
+        //if(this.spider){
+        //    this.spider.update();
+        //}
+        //if(this.room){
+        //    this.room.update();
+        //}
+        //if(this.flyingSpiders){
+        //    this.flyingSpiders.update();
+        //}
         if(this.room){
             this.room.update();
-        }
-        if(this.flyingSpiders){
-            this.flyingSpiders.update();
         }
     }
 }

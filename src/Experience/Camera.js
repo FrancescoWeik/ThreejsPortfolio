@@ -11,60 +11,103 @@ export default class Camera{
         this.canvas = this.experience.canvas;
         this.debug = this.experience.debug;
         this.experienceControls = null; //initialized on controls...
-        this.initialPosition = new THREE.Vector3(-4,4,8);
+        this.initialPosition = new THREE.Vector3(0,4,9.57);
+        this.initialMinZoom = 2;
+        this.initialMaxZoom = 0.8;
 
         this.checkPcOrPhoneZoom();
         this.setInstance()
         this.setOrbitControls();
 
-        //Debug
-        if(this.debug.active){
-            this.debugFolder = this.debug.ui.addFolder('Camera');
-            this.addDebugValues();
-        }
+        this.mouse = new THREE.Vector2();
+        window.addEventListener('mousemove', (event) => {
+            this.mouse.x = (event.clientX / this.sizes.width) - 0.5;
+            this.mouse.y = (event.clientY / this.sizes.height) - 0.5;
+        });
 
     }
 
     checkPcOrPhoneZoom(){
         if(this.sizes.width >=969){
             //PC
-            this.initialPosition = new THREE.Vector3(-4.86,5.41,9.57);
+            this.initialPosition = new THREE.Vector3(-0,5,9.57);
+            this.initialMinZoom = 0.5
+            this.initialMaxZoom = 2
         }else{
+            console.log("PHONE");
             //Phone
-            this.initialPosition = new THREE.Vector3(-4,9,18);
+            this.initialPosition = new THREE.Vector3(0,9,18);
+            this.initialMinZoom = 0.5
+            this.initialMaxZoom = 0.8
         }
     }
+    
+   setInstance() {
+    this.frustumSize = 10; 
+    const aspect = this.sizes.width / this.sizes.height;
 
-    setInstance(){
-        this.instance = new THREE.PerspectiveCamera(35, this.sizes.width / this.sizes.height, 0.1, 100)
-        this.instance.position.set(this.initialPosition.x,this.initialPosition.y,this.initialPosition.z)
-        this.scene.add(this.instance)
-    }
+    this.instance = new THREE.OrthographicCamera(
+        this.frustumSize * aspect / -2,
+        this.frustumSize * aspect / 2,
+        this.frustumSize / 2,
+        this.frustumSize / -2,
+        0.1,
+        1000 // Increased Far plane just in case
+    );
+
+    this.instance.position.copy(this.initialPosition);
+    this.scene.add(this.instance);
+}
 
     setOrbitControls(){
         this.controls = new OrbitControls(this.instance, this.canvas)
+
         this.controls.enableDamping = true;
 
         this.controls.enablePan = false
         this.controls.enableRotate = true;
-        this.controls.enableZoom = true;
+        //this.controls.enableZoom = true;
         //this.controls.rotateSpeed = 1.2
         //this.controls.zoomSpeed = 0.8
         //this.controls.target.z = -1
 
         this.controls.minDistance = 0
         this.controls.maxDistance = 22
+        this.controls.maxZoom = this.initialMaxZoom || 2
+        this.controls.minZoom = this.initialMinZoom || 0.5;
+        //this.controls.zoom = this.initialZoom;
+
+        const currentPolarAngle = this.controls.getPolarAngle();
+
+        // 4. Lock it
+        this.controls.minPolarAngle = currentPolarAngle;
+        this.controls.maxPolarAngle = currentPolarAngle;
+
+        this.controls.minPolarAngle = 0.1;
+        this.controls.maxPolarAngle =  Math.PI * 0.5 *0.7;
+        this.controls.minAzimuthAngle = -Math.PI * 0.5 * 0.7;
+        this.controls.maxAzimuthAngle = Math.PI * 0.5 * 0.7;
+        /*
         this.controls.minAzimuthAngle = -Math.PI *0.5
         this.controls.maxAzimuthAngle = 0
         //this.controls.minPolarAngle = Math.PI *0.2
-        this.controls.maxPolarAngle = Math.PI * 0.5
-
+        this.controls.maxPolarAngle = Math.PI * 0.5*/
+        // --- The fix is here ---
+        // Locking the vertical angle to 90 degrees (Math.PI / 2) 
+        // keeps the camera strictly on the horizon.
     }
 
-    resize(){
+    resize() {
         this.checkPcOrPhoneZoom();
-        this.instance.aspect = this.sizes.width/this.sizes.height;
-        this.instance.updateProjectionMatrix()
+        
+        // Update the Orthographic frustum based on new aspect ratio
+        const aspect = this.sizes.width / this.sizes.height;
+        this.instance.left = this.frustumSize * aspect / -2;
+        this.instance.right = this.frustumSize * aspect / 2;
+        this.instance.top = this.frustumSize / 2;
+        this.instance.bottom = this.frustumSize / -2;
+        
+        this.instance.updateProjectionMatrix();
     }
 
     moveToProjects(){
@@ -142,6 +185,15 @@ export default class Camera{
         this.controls.update();
         //console.log(this.instance.position);
         //console.log(this.controls.target);
+        // Subtle parallax sway
+        // This shifts the camera slightly based on mouse position
+        const parallaxX = this.mouse.x * 0.5;
+        const parallaxY = -this.mouse.y * 0.5 * 0.7;
+        
+        // Smoothly interpolate the camera position for a "weighty" feel
+        this.instance.position.x += (this.initialPosition.x + parallaxX - this.instance.position.x) * 0.05;
+        this.instance.position.y += (this.initialPosition.y + parallaxY - this.instance.position.y) * 0.05;
+
     }
 
     stopCameraMovement(){
@@ -164,7 +216,7 @@ export default class Camera{
         this.controls.enableDamping = true
         this.controls.enablePan = true
         this.controls.minDistance = 0
-        this.controls.maxDistance = Infinity
+        this.controls.maxDistance = 22
         this.controls.minAzimuthAngle = Infinity
         this.controls.maxAzimuthAngle = Infinity
         //this.controls.minPolarAngle = Math.PI *0.2
