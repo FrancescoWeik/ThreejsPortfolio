@@ -33,7 +33,9 @@ export default class Pond {
         const outerLakeTexture = this.resources.items.outerLakeTexture;
         const outerLakeMaterial = new THREE.MeshBasicMaterial({
             map: outerLakeTexture,
-            transparent: true
+            transparent: true,
+            depthTest: false,
+            depthWrite: false,
         });
         // Both textures are 2816×1536 px — same canvas, same world size.
         // Aspect ratio 2816/1536 = 11/6  →  PlaneGeometry(22, 12)
@@ -43,7 +45,9 @@ export default class Pond {
         const lakeTexture = this.resources.items.lakeTexture;
         const lakeMaterial = new THREE.MeshBasicMaterial({
             map: lakeTexture,
-            transparent: true
+            transparent: true,
+            depthTest: false,
+            depthWrite: false,
         });
         this.lake = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), lakeMaterial);
         this.lake.rotation.x = -Math.PI * 0.5;
@@ -67,6 +71,10 @@ export default class Pond {
             );
             this.duckList.push(newDuck);
         }
+
+
+        this.outerLake.renderOrder = 0;
+        this.lake.renderOrder = 0;
     }
 
     setupClickHandler() {
