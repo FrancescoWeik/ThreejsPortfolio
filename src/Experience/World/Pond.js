@@ -39,22 +39,22 @@ export default class Pond {
         // Aspect ratio 2816/1536 = 11/6  →  PlaneGeometry(22, 12)
         const W = 22, H = 12;
 
-        this.outerLake = new THREE.Mesh(new THREE.PlaneGeometry(10,10), outerLakeMaterial);
-        this.outerLake.rotation.x = -Math.PI * 0.5;
-        this.outerLake.position.y = 0.0;
-        this.scene.add(this.outerLake);
-
-        // ── Inner lake — ducks swim here ────────────────────────────────────
+        // Inner lake first (lower y = rendered below outer lake)
         const lakeTexture = this.resources.items.lakeTexture;
         const lakeMaterial = new THREE.MeshBasicMaterial({
             map: lakeTexture,
             transparent: true
         });
-        const lakeGeometry = new THREE.PlaneGeometry(10, 10);
-        this.lake = new THREE.Mesh(lakeGeometry, lakeMaterial);
+        this.lake = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), lakeMaterial);
         this.lake.rotation.x = -Math.PI * 0.5;
-        this.lake.position.y = 0.01; // 1 cm above outer lake, no z-fighting
+        this.lake.position.y = 0.0;
         this.scene.add(this.lake);
+
+        // Outer lake on top (higher y = rendered over the water so shore/grass overlaps edges)
+        this.outerLake = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), outerLakeMaterial);
+        this.outerLake.rotation.x = -Math.PI * 0.5;
+        this.outerLake.position.y = 0.01;
+        this.scene.add(this.outerLake);
 
         for (const singleDuck of duckData) {
             const duckTexture = this.resources.duckItems[singleDuck.name];
