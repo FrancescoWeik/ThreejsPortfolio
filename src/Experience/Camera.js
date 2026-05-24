@@ -68,7 +68,7 @@ export default class Camera{
 
         this.controls.enablePan = false
         this.controls.enableRotate = true;
-        //this.controls.enableZoom = true;
+        this.controls.enableZoom = false; // zoom only via duck clicks, not scroll/pinch
         //this.controls.rotateSpeed = 1.2
         //this.controls.zoomSpeed = 0.8
         //this.controls.target.z = -1
@@ -198,9 +198,12 @@ export default class Camera{
         this.isZoomedIn = true;
         this.stopCameraMovement();
 
-        // Maintain the same camera-to-target offset, recentered on the duck
+        // Shift the view centre slightly to the right of the duck so the duck
+        // sits in the left portion of the screen, leaving room for the popup card.
+        const popupOffset = this.sizes.width >= 769 ? 0.9 : 0;
+
         gsap.to(this.instance.position, {
-            x: duckPosition.x,
+            x: duckPosition.x + popupOffset,
             y: duckPosition.y + this.initialPosition.y,
             z: duckPosition.z + this.initialPosition.z,
             duration: 1,
@@ -208,7 +211,7 @@ export default class Camera{
         });
 
         gsap.to(this.controls.target, {
-            x: duckPosition.x,
+            x: duckPosition.x + popupOffset,
             y: duckPosition.y,
             z: duckPosition.z,
             duration: 1,
@@ -216,7 +219,7 @@ export default class Camera{
         });
 
         gsap.to(this.instance, {
-            zoom: 4,
+            zoom: 3,
             duration: 1,
             ease: 'power2.inOut',
             onUpdate: () => { this.instance.updateProjectionMatrix(); },
@@ -261,7 +264,7 @@ export default class Camera{
 
     enableCameraMovement(){
         this.controls.enableRotate = true
-        this.controls.enableZoom = true
+        this.controls.enableZoom = false // stays disabled — only duck clicks zoom
         this.controls.enableDamping = true
         //this.controls.enablePan = true
     }

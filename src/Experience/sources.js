@@ -198,4 +198,9 @@ export default [
         type: 'texture',
         path: 'textures/pond/Lake.png'
     },
+    {
+        name: 'outerLakeTexture',
+        type: 'texture',
+        path: 'textures/pond/OuterLake.png'
+    },
 ]

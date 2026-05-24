@@ -3,6 +3,7 @@ import Experience from '../Experience.js'
 import gsap from 'gsap'
 import duckData from '../ducks.js'
 import Duck from "./Duck.js"
+import DuckPopup from "./DuckPopup.js"
 
 // Zoom state machine values
 const IDLE        = 'IDLE';
@@ -21,22 +22,38 @@ export default class Pond {
         this.zoomedDuck = null;
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
+        this.popup = new DuckPopup();
 
         this.createPond();
         this.setupClickHandler();
     }
 
     createPond() {
-        const lakeTexture = this.resources.items.lakeTexture;
+        // ── Outer lake (background) ─────────────────────────────────────────
+        const outerLakeTexture = this.resources.items.outerLakeTexture;
+        const outerLakeMaterial = new THREE.MeshBasicMaterial({
+            map: outerLakeTexture,
+            transparent: true
+        });
+        // Both textures are 2816×1536 px — same canvas, same world size.
+        // Aspect ratio 2816/1536 = 11/6  →  PlaneGeometry(22, 12)
+        const W = 22, H = 12;
 
-        const lakeGeometry = new THREE.PlaneGeometry(10, 10);
+        this.outerLake = new THREE.Mesh(new THREE.PlaneGeometry(10,10), outerLakeMaterial);
+        this.outerLake.rotation.x = -Math.PI * 0.5;
+        this.outerLake.position.y = 0.0;
+        this.scene.add(this.outerLake);
+
+        // ── Inner lake — ducks swim here ────────────────────────────────────
+        const lakeTexture = this.resources.items.lakeTexture;
         const lakeMaterial = new THREE.MeshBasicMaterial({
             map: lakeTexture,
             transparent: true
         });
+        const lakeGeometry = new THREE.PlaneGeometry(10, 10);
         this.lake = new THREE.Mesh(lakeGeometry, lakeMaterial);
         this.lake.rotation.x = -Math.PI * 0.5;
-        this.lake.position.y = 0.01;
+        this.lake.position.y = 0.01; // 1 cm above outer lake, no z-fighting
         this.scene.add(this.lake);
 
         for (const singleDuck of duckData) {
@@ -69,20 +86,24 @@ export default class Pond {
                 // Clicked a duck — zoom in regardless of whether already zoomed
                 const clickedDuck = this.duckList.find(d => d.duck === intersects[0].object);
 
-                // If we were already zoomed on a different duck, unfreeze it first
+                // If we were already zoomed on a different duck, dismiss its card and unfreeze it
                 if (this.zoomedDuck && this.zoomedDuck !== clickedDuck) {
+                    this.popup.hide();
                     this.zoomedDuck.resumeMovement();
                 }
 
                 this.zoomedDuck = clickedDuck;
                 this.zoomedDuck.HideDuckOnClick();
 
+                this.popup.show(clickedDuck); // card slides in while camera zooms
                 this.zoomState = ZOOMING_IN;
                 this.experience.camera.zoomToDuck(clickedDuck.duck.position, () => {
                     this.zoomState = ZOOMED_IN;
                 });
             } else if (this.zoomState === ZOOMED_IN) {
-                // Clicked outside while zoomed in — zoom back out
+                // Clicked outside while zoomed in — dismiss card, zoom back out
+                this.popup.hide();
+
                 if (this.zoomedDuck) {
                     this.zoomedDuck.resumeMovement();
                     this.zoomedDuck = null;
