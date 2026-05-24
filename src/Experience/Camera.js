@@ -15,6 +15,8 @@ export default class Camera{
         this.initialMinZoom = 2;
         this.initialMaxZoom = 0.8;
 
+        this.isZoomedIn = false;
+
         this.checkPcOrPhoneZoom();
         this.setInstance()
         this.setOrbitControls();
@@ -183,17 +185,71 @@ export default class Camera{
 
     update(){
         this.controls.update();
-        //console.log(this.instance.position);
-        //console.log(this.controls.target);
-        // Subtle parallax sway
-        // This shifts the camera slightly based on mouse position
-        const parallaxX = this.mouse.x * 0.5;
-        const parallaxY = -this.mouse.y * 0.5 * 0.7;
-        
-        // Smoothly interpolate the camera position for a "weighty" feel
-        this.instance.position.x += (this.initialPosition.x + parallaxX - this.instance.position.x) * 0.05;
-        this.instance.position.y += (this.initialPosition.y + parallaxY - this.instance.position.y) * 0.05;
 
+        if (!this.isZoomedIn) {
+            const parallaxX = this.mouse.x * 0.5;
+            const parallaxY = -this.mouse.y * 0.5 * 0.7;
+            this.instance.position.x += (this.initialPosition.x + parallaxX - this.instance.position.x) * 0.05;
+            this.instance.position.y += (this.initialPosition.y + parallaxY - this.instance.position.y) * 0.05;
+        }
+    }
+
+    zoomToDuck(duckPosition, onComplete) {
+        this.isZoomedIn = true;
+        this.stopCameraMovement();
+
+        // Maintain the same camera-to-target offset, recentered on the duck
+        gsap.to(this.instance.position, {
+            x: duckPosition.x,
+            y: duckPosition.y + this.initialPosition.y,
+            z: duckPosition.z + this.initialPosition.z,
+            duration: 1,
+            ease: 'power2.inOut'
+        });
+
+        gsap.to(this.controls.target, {
+            x: duckPosition.x,
+            y: duckPosition.y,
+            z: duckPosition.z,
+            duration: 1,
+            ease: 'power2.inOut'
+        });
+
+        gsap.to(this.instance, {
+            zoom: 4,
+            duration: 1,
+            ease: 'power2.inOut',
+            onUpdate: () => { this.instance.updateProjectionMatrix(); },
+            onComplete: () => { if (onComplete) onComplete(); }
+        });
+    }
+
+    zoomOut(onComplete) {
+        gsap.to(this.instance.position, {
+            x: this.initialPosition.x,
+            y: this.initialPosition.y,
+            z: this.initialPosition.z,
+            duration: 1,
+            ease: 'power2.inOut'
+        });
+
+        gsap.to(this.controls.target, {
+            x: 0, y: 0, z: 0,
+            duration: 1,
+            ease: 'power2.inOut'
+        });
+
+        gsap.to(this.instance, {
+            zoom: 1,
+            duration: 1,
+            ease: 'power2.inOut',
+            onUpdate: () => { this.instance.updateProjectionMatrix(); },
+            onComplete: () => {
+                this.enableCameraMovement();
+                this.isZoomedIn = false;
+                if (onComplete) onComplete();
+            }
+        });
     }
 
     stopCameraMovement(){

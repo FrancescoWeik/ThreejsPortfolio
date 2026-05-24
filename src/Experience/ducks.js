@@ -6,9 +6,7 @@ export default [
         title: "Francesco",
         description: "questa è un'anatra",
         profileLink: "link",
-
     },
-
     {
         name: "LuDuck",
         type: 'texture',
@@ -16,9 +14,7 @@ export default [
         title: "Lucas",
         description: "questa è un'anatra",
         profileLink: "link",
-
     },
-
     {
         name: "ArriDuck",
         type: 'texture',
@@ -26,6 +22,37 @@ export default [
         title: "Arrigo",
         description: "questa è un'anatra",
         profileLink: "link",
-
-    } 
+    },
+    {
+        name: "Duck4",
+        type: 'texture',
+        path: 'textures/pond/Duck.png',
+        title: "Duck 4",
+        description: "questa è un'anatra",
+        profileLink: "link",
+    },
+    {
+        name: "Duck5",
+        type: 'texture',
+        path: 'textures/pond/Duck.png',
+        title: "Duck 5",
+        description: "questa è un'anatra",
+        profileLink: "link",
+    },
+    {
+        name: "Duck6",
+        type: 'texture',
+        path: 'textures/pond/Duck.png',
+        title: "Duck 6",
+        description: "questa è un'anatra",
+        profileLink: "link",
+    },
+    {
+        name: "Duck7",
+        type: 'texture',
+        path: 'textures/pond/Duck.png',
+        title: "Duck 7",
+        description: "questa è un'anatra",
+        profileLink: "link",
+    },
 ]
