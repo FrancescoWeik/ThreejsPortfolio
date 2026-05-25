@@ -15,7 +15,8 @@ export default class Camera{
         this.initialMinZoom = 2;
         this.initialMaxZoom = 0.8;
 
-        this.isZoomedIn = false;
+        this.isZoomedIn     = false;
+        this.enableParallax = true;   // Pond sets this to false for full orbit
 
         this.checkPcOrPhoneZoom();
         this.setInstance()
@@ -82,13 +83,11 @@ export default class Camera{
         const currentPolarAngle = this.controls.getPolarAngle();
 
         // 4. Lock it
-        this.controls.minPolarAngle = currentPolarAngle;
-        this.controls.maxPolarAngle = currentPolarAngle;
-
-        this.controls.minPolarAngle = 0.1;
-        this.controls.maxPolarAngle =  Math.PI * 0.5 *0.7;
-        this.controls.minAzimuthAngle = -Math.PI * 0.5 * 0.7;
-        this.controls.maxAzimuthAngle = Math.PI * 0.5 * 0.7;
+        // Rotazione completa attorno alla sfera
+        this.controls.minPolarAngle = 0.0;
+        this.controls.maxPolarAngle = Math.PI;
+        this.controls.minAzimuthAngle = -Infinity;
+        this.controls.maxAzimuthAngle = Infinity;
         /*
         this.controls.minAzimuthAngle = -Math.PI *0.5
         this.controls.maxAzimuthAngle = 0
@@ -186,7 +185,7 @@ export default class Camera{
     update(){
         this.controls.update();
 
-        if (!this.isZoomedIn) {
+        if (!this.isZoomedIn && this.enableParallax) {
             const parallaxX = this.mouse.x * 0.5;
             const parallaxY = -this.mouse.y * 0.5 * 0.7;
             this.instance.position.x += (this.initialPosition.x + parallaxX - this.instance.position.x) * 0.05;

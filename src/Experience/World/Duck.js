@@ -52,7 +52,6 @@ export default class Duck {
     }
 
     spawnDuck(duckTexture) {
-        // Crop the texture so the plane shows only the duck sprite
         
 
         const geo = new THREE.PlaneGeometry(1, 1);
