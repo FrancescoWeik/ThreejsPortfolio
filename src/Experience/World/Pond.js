@@ -4,7 +4,6 @@ import Experience from '../Experience.js'
 
 const WATER_R = 2.5
 const BALL_R  = 0.18
-const PHI_SPD = 0.006
 
 // ── Background ────────────────────────────────────────────────────────────────
 
@@ -57,50 +56,6 @@ void main() {
 }
 `
 
-// ── Splash particles ──────────────────────────────────────────────────────────
-
-const splashVertex = /* glsl */`
-attribute vec3  aSeed;        // x: azimuth, y: speed factor 0-1, z: phase offset 0-1
-uniform   float uTime;
-uniform   vec3  uBallPos;
-uniform   float uSplashScale;
-varying   float vAlpha;
-
-void main() {
-    float phase = fract(uTime * 1.3 + aSeed.z);
-
-    vec3 ballN = normalize(uBallPos);
-    vec3 up    = abs(ballN.y) < 0.98 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
-    vec3 right = normalize(cross(up, ballN));
-    vec3 fwd   = cross(ballN, right);
-
-    // Launch direction: cone spreading outward from ball normal
-    float az        = aSeed.x;
-    float el        = 0.35 + aSeed.y * 0.45;
-    vec3  launchDir = normalize(
-        ballN * sin(el) + right * cos(el) * cos(az) + fwd * cos(el) * sin(az)
-    );
-
-    float speed = (0.55 + aSeed.y * 0.95) * uSplashScale;
-    vec3  pos   = uBallPos + launchDir * speed * phase
-                - vec3(0.0, 2.8 * phase * phase, 0.0);
-
-    vAlpha = smoothstep(0.0, 0.08, phase) * smoothstep(1.0, 0.70, phase);
-
-    vec4 mvPos  = modelViewMatrix * vec4(pos, 1.0);
-    gl_Position = projectionMatrix * mvPos;
-    gl_PointSize = max(1.5, (1.0 - phase) * 5.5 * uSplashScale * (550.0 / -mvPos.z));
-}
-`
-const splashFragment = /* glsl */`
-uniform vec3  uDropColor;
-varying float vAlpha;
-void main() {
-    float d = length(gl_PointCoord - 0.5);
-    if (d > 0.5) discard;
-    gl_FragColor = vec4(uDropColor, smoothstep(0.5, 0.15, d) * vAlpha);
-}
-`
 
 // ── Water vertex ──────────────────────────────────────────────────────────────
 
@@ -179,6 +134,8 @@ uniform float uFoamAmount;
 uniform float uSpecStr;
 uniform float uShininess;
 uniform float uBaseOpacity;
+uniform float uSparkleStr;
+uniform float uMicroStr;
 
 varying vec3  vPos;
 varying vec3  vNorm;
@@ -235,12 +192,15 @@ float fbm(vec2 p) {
 }
 
 void main() {
+    vec3  viewDir = normalize(-vViewPos);
+
     vec2  nuv  = vNorm.xz * 1.5 + vec2(uTime * 0.06, vNorm.y * 0.5);
     vec3  dist = vNorm * (fbm(nuv) - 0.5) * uDistortAmt;
     vec3  p3   = vPos * uCellScale + vec3(0.025, 0.01, 0.005) * uTime + dist;
 
     float f1   = voronoiF1(p3);
     float sf1  = voronoiSF1(p3);
+
     float edge = f1 - sf1;
 
     // Ripple rings from ball
@@ -258,8 +218,8 @@ void main() {
     edge += fp * (fbm(vNorm.xz*13.0+vec2(uTime*1.1, vNorm.y*3.5))*0.65
                 + fbm(vNorm.xz*27.0+vec2(uTime*2.3,-vNorm.y*6.0))*0.35) * uFoamAmount;
 
-    // Foam on wave crests (free — just uses the varying already computed)
-    edge += smoothstep(0.52, 1.0, vWaveCrest) * 0.48;
+    // Foam on wave crests
+    edge += smoothstep(0.52, 1.0, vWaveCrest) * 0.35;
 
     // Colour ramp
     float t    = smoothstep(uEdgeLow, uEdgeHigh, edge);
@@ -268,10 +228,23 @@ void main() {
     vec3  col  = mix(mix(uDeepColor, uMidColor, seg0),
                      mix(uMidColor,  uHighColor, seg1), step(uMidPos, t));
 
-    // Blinn-Phong specular
-    vec3  viewDir = normalize(-vViewPos);
-    vec3  halfVec = normalize(normalize(vec3(5.0,8.0,4.0)) + viewDir);
-    col += pow(max(dot(vNorm, halfVec), 0.0), uShininess) * uSpecStr;
+    // View-depth: gentle darkening at grazing angles (don't crush the brightness)
+    float viewFacing = max(dot(vNorm, viewDir), 0.0);
+    col = mix(col, uDeepColor * 0.75, pow(1.0 - viewFacing, 2.5) * 0.28);
+
+    // Micro-ripple: perturb normal with high-freq fBm for capillary wave detail
+    vec2  microUV = vPos.xz * 12.0 + vec2(uTime * 0.8, uTime * 0.6);
+    float microN  = (fbm(microUV) - 0.5) * uMicroStr;
+    vec3  pertN   = normalize(vNorm + vec3(microN, 0.0, microN));
+
+    // Blinn-Phong specular on perturbed normal
+    vec3  halfVec = normalize(normalize(vec3(5.0, 8.0, 4.0)) + viewDir);
+    col += pow(max(dot(pertN, halfVec), 0.0), uShininess) * uSpecStr;
+
+    // Sparkle: animated micro-reflections at Voronoi cell centres
+    float sparkle = pow(1.0 - smoothstep(0.0, 0.15, f1), 6.0);
+    sparkle *= 0.5 + 0.5 * sin(uTime * 3.0 + hash3(floor(p3)).x * 6.2831);
+    col += sparkle * uHighColor * uSparkleStr;
 
     // Fresnel alpha
     float cosT  = max(dot(vNorm, viewDir), 0.0);
@@ -294,16 +267,17 @@ export default class Pond {
         this.camera.enableParallax = false
 
         this.params = {
-            deepColor:  '#266fa6',
-            midColor:   '#84b5d2',
-            highColor:  '#ffffff',
-            cellScale:  2.13,
-            cellSpeed:  0.77,
-            smoothness: 0.76,
-            distortAmt: 0.10,
-            edgeLow:    0.22,
-            edgeHigh:   0.245,
-            midPos:     0.76,
+            deepColor:  '#1a6fa0',
+            midColor:   '#6dd0ef',
+            highColor:  '#eaf8ff',
+            cellScale:  1.2,
+            cellSpeed:  0.45,
+            smoothness: 0.72,
+            distortAmt: 0.14,
+            edgeLow:    0.05,
+            edgeHigh:   0.55,
+            midPos:     0.55,
+            bottomColor: '#a8dff0',
             rippleSpeed:     0.25,
             rippleWidth:     0.06,
             rippleIntensity: 1.0,
@@ -317,6 +291,8 @@ export default class Pond {
             specStr:     0.55,
             shininess:   40,
             baseOpacity: 0.40,
+            sparkleStr:  1.2,
+            microStr:    0.10,
             // background
             bgBot:       '#050d1a',
             bgTop:       '#0d2035',
@@ -325,17 +301,16 @@ export default class Pond {
             // halo
             glowColor:   '#3399ff',
             glowStr:     0.28,
-            // splashes
-            splashScale: 1.0,
-            dropColor:   '#c8eeff',
+            // ball
+            ballSpeed:   0.006,
         }
 
         this.addLights()
         this.createBackground()
+        this.createBottom()
         this.createWaterSphere()
         this.createGlow()
         this.createBall()
-        this.createSplash()
         this.createGUI()
     }
 
@@ -365,6 +340,18 @@ export default class Pond {
         const mesh = new THREE.Mesh(geo, mat)
         mesh.renderOrder = -1
         this.scene.add(mesh)
+    }
+
+    createBottom() {
+        const p = this.params
+        const geo = new THREE.SphereGeometry(WATER_R * 0.94, 64, 32)
+        const mat = new THREE.MeshStandardMaterial({
+            color:     new THREE.Color(p.bottomColor),
+            roughness: 0.85,
+            metalness: 0.0,
+        })
+        this.bottomMesh = new THREE.Mesh(geo, mat)
+        this.scene.add(this.bottomMesh)
     }
 
     createGlow() {
@@ -412,6 +399,8 @@ export default class Pond {
             uSpecStr:     { value: p.specStr },
             uShininess:   { value: p.shininess },
             uBaseOpacity: { value: p.baseOpacity },
+            uSparkleStr:  { value: p.sparkleStr },
+            uMicroStr:    { value: p.microStr },
         }
 
         const geo = new THREE.SphereGeometry(WATER_R, 128, 128)
@@ -440,40 +429,6 @@ export default class Pond {
         this.scene.add(this.ball)
     }
 
-    createSplash() {
-        const p     = this.params
-        const count = 28
-        const seeds = new Float32Array(count * 3)
-        for (let i = 0; i < count; i++) {
-            seeds[i * 3 + 0] = Math.random() * Math.PI * 2
-            seeds[i * 3 + 1] = Math.random()
-            seeds[i * 3 + 2] = Math.random()
-        }
-
-        const geo = new THREE.BufferGeometry()
-        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3))
-        geo.setAttribute('aSeed',    new THREE.BufferAttribute(seeds, 3))
-
-        this.splashUniforms = {
-            uTime:        this.waterUniforms.uTime,
-            uBallPos:     { value: new THREE.Vector3() },
-            uSplashScale: { value: p.splashScale },
-            uDropColor:   { value: new THREE.Color(p.dropColor) },
-        }
-
-        const mat = new THREE.ShaderMaterial({
-            vertexShader:   splashVertex,
-            fragmentShader: splashFragment,
-            uniforms:       this.splashUniforms,
-            transparent:    true,
-            depthWrite:     false,
-            blending:       THREE.AdditiveBlending,
-        })
-
-        this.splashPoints = new THREE.Points(geo, mat)
-        this.splashPoints.frustumCulled = false
-        this.scene.add(this.splashPoints)
-    }
 
     createGUI() {
         const gui = new GUI({ title: '💧 Acqua' })
@@ -497,11 +452,12 @@ export default class Pond {
         onde.add(p, 'waveSpeed',  0.0, 3.0,  0.05).name('Velocità onde')        .onChange(v => { u.uWaveSpeed.value  = v })
 
         const ramp = gui.addFolder('Transizione colori')
-        ramp.add(p, 'edgeLow',  0.00, 0.30, 0.005).name('Soglia bassa')        .onChange(v => { u.uEdgeLow.value  = v })
-        ramp.add(p, 'edgeHigh', 0.05, 0.50, 0.005).name('Soglia alta')         .onChange(v => { u.uEdgeHigh.value = v })
+        ramp.add(p, 'edgeLow',  0.00, 0.50, 0.005).name('Soglia bassa')        .onChange(v => { u.uEdgeLow.value  = v })
+        ramp.add(p, 'edgeHigh', 0.05, 0.80, 0.005).name('Soglia alta')         .onChange(v => { u.uEdgeHigh.value = v })
         ramp.add(p, 'midPos',   0.10, 0.90, 0.01) .name('Posizione blu medio') .onChange(v => { u.uMidPos.value   = v })
 
         const palla = gui.addFolder('Pallina')
+        palla.add(p, 'ballSpeed',       0.0,  0.03,  0.0005).name('Velocità rotazione')
         palla.add(p, 'rippleSpeed',     0.05, 1.0,   0.01) .name('Velocità cerchi')   .onChange(v => { u.uRippleSpeed.value     = v })
         palla.add(p, 'rippleWidth',     0.005, 0.08, 0.001).name('Spessore cerchi')   .onChange(v => { u.uRippleWidth.value     = v })
         palla.add(p, 'rippleIntensity', 0.0,  1.0,   0.01) .name('Intensità cerchi')  .onChange(v => { u.uRippleIntensity.value = v })
@@ -513,8 +469,10 @@ export default class Pond {
         schiuma.add(p, 'foamAmount', 0.0,  3.0, 0.05).name('Quantità schiuma') .onChange(v => { u.uFoamAmount.value = v })
 
         const riflessi = gui.addFolder('Riflessi')
-        riflessi.add(p, 'specStr',   0.0, 2.0, 0.01).name('Intensità riflesso').onChange(v => { u.uSpecStr.value   = v })
-        riflessi.add(p, 'shininess', 4,   256,  1)  .name('Brillantezza')      .onChange(v => { u.uShininess.value = v })
+        riflessi.add(p, 'specStr',   0.0, 2.0,  0.01).name('Intensità riflesso').onChange(v => { u.uSpecStr.value    = v })
+        riflessi.add(p, 'shininess', 4,   256,   1)  .name('Brillantezza')      .onChange(v => { u.uShininess.value  = v })
+        riflessi.add(p, 'sparkleStr',0.0, 2.0,  0.05).name('Sparkle')           .onChange(v => { u.uSparkleStr.value = v })
+        riflessi.add(p, 'microStr',  0.0, 0.4,  0.01).name('Micro-increspature').onChange(v => { u.uMicroStr.value   = v })
 
         const sfondo = gui.addFolder('Sfondo')
         sfondo.addColor(p, 'bgBot')      .name('Colore basso')    .onChange(v => { this.bgUniforms.uBotColor.value.set(v) })
@@ -526,19 +484,18 @@ export default class Pond {
         halo.addColor(p, 'glowColor').name('Colore alone').onChange(v => { this.glowUniforms.uGlowColor.value.set(v) })
         halo.add(p, 'glowStr', 0.0, 1.0, 0.01).name('Intensità alone').onChange(v => { this.glowUniforms.uGlowStr.value = v })
 
-        const schizzi = gui.addFolder('Schizzi')
-        schizzi.add(p, 'splashScale', 0.0, 2.5, 0.05).name('Scala schizzi') .onChange(v => { this.splashUniforms.uSplashScale.value = v })
-        schizzi.addColor(p, 'dropColor')               .name('Colore gocce') .onChange(v => { this.splashUniforms.uDropColor.value.set(v) })
-
         const trasparenza = gui.addFolder('Trasparenza')
         trasparenza.add(p, 'baseOpacity', 0.0, 1.0, 0.01).name('Opacità base').onChange(v => { u.uBaseOpacity.value = v })
+
+        const fondo = gui.addFolder('Fondo')
+        fondo.addColor(p, 'bottomColor').name('Colore fondo').onChange(v => { this.bottomMesh.material.color.set(v) })
     }
 
     update() {
         const t = this.time.elapsed * 0.001
         this.waterUniforms.uTime.value = t
 
-        this.phi += PHI_SPD
+        this.phi += this.params.ballSpeed
         const theta = Math.PI * 0.45 + Math.sin(t * 0.28) * 0.38
 
         const nx = Math.sin(theta) * Math.cos(this.phi)
@@ -551,6 +508,5 @@ export default class Pond {
         this.ball.rotation.y += 0.015
 
         this.waterUniforms.uBallDir.value.set(nx, ny, nz)
-        this.splashUniforms.uBallPos.value.copy(this.ball.position)
     }
 }
