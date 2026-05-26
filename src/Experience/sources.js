@@ -203,4 +203,9 @@ export default [
         type: 'texture',
         path: 'textures/pond/OuterLake.png'
     },
+    {
+        name: 'duckModel',
+        type: 'gltfModel',
+        path: 'models/Duck/DUCK.glb'
+    },
 ]

@@ -57,6 +57,97 @@ void main() {
 `
 
 
+// ── Bottom ground ─────────────────────────────────────────────────────────────
+
+const bottomVertex = /* glsl */`
+varying vec3 vPos;
+varying vec3 vNorm;
+void main() {
+    vPos        = position;
+    vNorm       = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`
+
+const bottomFragment = /* glsl */`
+uniform vec3  uCrackColor;
+uniform vec3  uStoneA;
+uniform vec3  uStoneB;
+uniform float uPebbleScale;
+
+varying vec3 vPos;
+varying vec3 vNorm;
+
+// ── Hash ──────────────────────────────────────────────────────────────────────
+vec3 h3b(vec3 p) {
+    p = vec3(dot(p, vec3(127.1, 311.7,  74.7)),
+             dot(p, vec3(269.5, 183.3, 246.1)),
+             dot(p, vec3(113.5, 271.9, 124.6)));
+    return fract(sin(p) * 43758.5453);
+}
+
+// ── Voronoi: returns (f2-f1, cellHash) ───────────────────────────────────────
+// f2-f1 = 0 at crack borders, larger inside pebble
+vec2 pebVoronoi(vec3 p) {
+    vec3  i = floor(p), f = fract(p);
+    float d1 = 8.0, d2 = 8.0, ch = 0.0;
+    for (int z=-1;z<=1;z++) for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+        vec3  n = vec3(float(x), float(y), float(z));
+        vec3  h = h3b(i + n);
+        float d = length(n + 0.5 + 0.45 * sin(6.2831 * h) - f);
+        if (d < d1) { d2 = d1; d1 = d; ch = fract(dot(h, vec3(0.31, 0.47, 0.22))); }
+        else if (d < d2) { d2 = d; }
+    }
+    return vec2(d2 - d1, ch);
+}
+
+// ── 2D value noise for surface texture ───────────────────────────────────────
+float n2b(vec2 p) {
+    vec2  i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+    float a = fract(sin(dot(i,            vec2(127.1, 311.7))) * 43758.5453);
+    float b = fract(sin(dot(i+vec2(1,0),  vec2(127.1, 311.7))) * 43758.5453);
+    float c = fract(sin(dot(i+vec2(0,1),  vec2(127.1, 311.7))) * 43758.5453);
+    float d = fract(sin(dot(i+vec2(1,1),  vec2(127.1, 311.7))) * 43758.5453);
+    return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+
+void main() {
+    vec3  p3   = vPos * uPebbleScale;
+    vec2  vr   = pebVoronoi(p3);
+    float edge = vr.x;    // 0 = crack, larger = inside pebble
+    float ch   = vr.y;    // per-pebble random [0,1]
+
+    // Surface micro-noise (slight color variation inside each pebble)
+    float surf = n2b(vNorm.xz * uPebbleScale * 5.0) * 0.12 - 0.06;
+
+    // Three stone types blended via step — no branching
+    vec3 grayStone  = mix(vec3(0.52, 0.57, 0.62), vec3(0.67, 0.70, 0.73), ch * 4.0);
+    vec3 warmStone  = mix(uStoneA,                 uStoneB,                 (ch - 0.25) * 2.5);
+    vec3 darkStone  = uStoneA * mix(0.60, 0.82, (ch - 0.65) * 5.0);
+    vec3 algaeStone = mix(vec3(0.36, 0.50, 0.25), vec3(0.48, 0.60, 0.32), (ch - 0.85) * 6.7);
+
+    vec3 pebCol = grayStone  * (1.0 - step(0.25, ch))
+                + warmStone  * step(0.25, ch) * (1.0 - step(0.65, ch))
+                + darkStone  * step(0.65, ch) * (1.0 - step(0.85, ch))
+                + algaeStone * step(0.85, ch);
+    pebCol = clamp(pebCol + surf, 0.0, 1.0);
+
+    // Crack: dark line at cell borders
+    float crack = 1.0 - smoothstep(0.03, 0.10, edge);
+    vec3  col   = mix(pebCol, uCrackColor, crack);
+
+    // Anime cel-shading: 2 discrete light bands
+    vec3  ld     = normalize(vec3(5.0, 8.0, 4.0));
+    float diff   = dot(vNorm, ld);
+    float shadow = smoothstep(-0.05, 0.10, diff);
+    float light  = smoothstep( 0.35, 0.50, diff);
+    float hilite = smoothstep( 0.72, 0.82, diff);
+    float lum    = 0.28 + shadow * 0.22 + light * 0.32 + hilite * 0.18;
+
+    gl_FragColor = vec4(col * lum, 1.0);
+}
+`
+
 // ── Water vertex ──────────────────────────────────────────────────────────────
 
 const waterVertex = /* glsl */`
@@ -134,8 +225,13 @@ uniform float uFoamAmount;
 uniform float uSpecStr;
 uniform float uShininess;
 uniform float uBaseOpacity;
-uniform float uSparkleStr;
 uniform float uMicroStr;
+
+uniform float uFlowSpeed;
+uniform float uFlowAngle;
+uniform float uStreakStr;
+uniform float uGlintScale;
+uniform float uGlintSize;
 
 varying vec3  vPos;
 varying vec3  vNorm;
@@ -173,6 +269,17 @@ float voronoiSF1(vec3 p) {
     }
     return res;
 }
+// Returns vec2(f1, cellHash) — cellHash is stable per Voronoi cell (nearest-site hash)
+vec2 voronoiF1H(vec3 p) {
+    vec3 i = floor(p), f = fract(p); float md = 8.0; float ch = 0.0;
+    for (int z=-1;z<=1;z++) for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+        vec3  n    = vec3(float(x), float(y), float(z));
+        vec3  seed = hash3(i + n);
+        float d    = length(n + cellPt3(seed) - f);
+        if (d < md) { md = d; ch = fract(dot(seed, vec3(0.39, 0.27, 0.34))); }
+    }
+    return vec2(md, ch);
+}
 
 // ── fBm ───────────────────────────────────────────────────────────────────────
 
@@ -194,14 +301,20 @@ float fbm(vec2 p) {
 void main() {
     vec3  viewDir = normalize(-vViewPos);
 
-    vec2  nuv  = vNorm.xz * 1.5 + vec2(uTime * 0.06, vNorm.y * 0.5);
+    // Directional flow vector
+    vec2  flowVec = vec2(cos(uFlowAngle), sin(uFlowAngle)) * uFlowSpeed;
+
+    // fBm distortion — scrolls in flow direction so distortion moves with water
+    vec2  nuv  = vNorm.xz * 1.5 + flowVec * uTime * 1.5 + vec2(0.0, vNorm.y * 0.5);
     vec3  dist = vNorm * (fbm(nuv) - 0.5) * uDistortAmt;
-    vec3  p3   = vPos * uCellScale + vec3(0.025, 0.01, 0.005) * uTime + dist;
 
-    float f1   = voronoiF1(p3);
-    float sf1  = voronoiSF1(p3);
-
-    float edge = f1 - sf1;
+    // Primary Voronoi layer — drives colour ramp + cell hash for reflections
+    vec3  p3    = vPos * uCellScale + vec3(flowVec.x, 0.0, flowVec.y) * uTime + dist;
+    vec2  vF1H  = voronoiF1H(p3);
+    float f1    = vF1H.x;
+    float cHash = vF1H.y;   // stable per Voronoi cell
+    float sf1   = voronoiSF1(p3);
+    float edge  = f1 - sf1;
 
     // Ripple rings from ball
     float angDist = acos(clamp(dot(normalize(vPos), uBallDir), -1.0, 1.0));
@@ -218,37 +331,68 @@ void main() {
     edge += fp * (fbm(vNorm.xz*13.0+vec2(uTime*1.1, vNorm.y*3.5))*0.65
                 + fbm(vNorm.xz*27.0+vec2(uTime*2.3,-vNorm.y*6.0))*0.35) * uFoamAmount;
 
-    // Foam on wave crests
-    edge += smoothstep(0.52, 1.0, vWaveCrest) * 0.35;
-
-    // Colour ramp
+    // Toon colour ramp (sharp bands, anime style)
     float t    = smoothstep(uEdgeLow, uEdgeHigh, edge);
     float seg0 = clamp(t / uMidPos, 0.0, 1.0);
     float seg1 = clamp((t - uMidPos) / (1.0 - uMidPos), 0.0, 1.0);
     vec3  col  = mix(mix(uDeepColor, uMidColor, seg0),
                      mix(uMidColor,  uHighColor, seg1), step(uMidPos, t));
 
-    // View-depth: gentle darkening at grazing angles (don't crush the brightness)
-    float viewFacing = max(dot(vNorm, viewDir), 0.0);
-    col = mix(col, uDeepColor * 0.75, pow(1.0 - viewFacing, 2.5) * 0.28);
-
-    // Micro-ripple: perturb normal with high-freq fBm for capillary wave detail
+    // Micro-ripple normal perturbation for subtle surface detail
     vec2  microUV = vPos.xz * 12.0 + vec2(uTime * 0.8, uTime * 0.6);
     float microN  = (fbm(microUV) - 0.5) * uMicroStr;
     vec3  pertN   = normalize(vNorm + vec3(microN, 0.0, microN));
 
-    // Blinn-Phong specular on perturbed normal
-    vec3  halfVec = normalize(normalize(vec3(5.0, 8.0, 4.0)) + viewDir);
-    col += pow(max(dot(pertN, halfVec), 0.0), uShininess) * uSpecStr;
+    // Voronoi-cell reflections: the interior of certain cells flashes to highColor,
+    // like mirror patches on water (anime style). cHash is stable per Voronoi cell
+    // so each cell has its own consistent phase — no circle geometry needed.
+    // uGlintScale = fraction of cells that reflect (0=nessuna, 1=tutte).
+    // uGlintSize  = quanto dentro la cella si illumina (soglia su 'edge').
+    float cellInside = 1.0 - smoothstep(0.0, uGlintSize, edge);
+    float rPhase  = cHash * 6.2831 + (1.0 - cHash) * 11.3;
+    float rRaw    = 0.5 + 0.5 * sin(uTime * (0.22 + cHash * 0.38) + rPhase);
+    float rFade   = smoothstep(0.52, 0.88, rRaw);
+    float rActive = step(1.0 - uGlintScale, cHash);
+    col += uHighColor * cellInside * rActive * rFade * uSpecStr;
 
-    // Sparkle: animated micro-reflections at Voronoi cell centres
-    float sparkle = pow(1.0 - smoothstep(0.0, 0.15, f1), 6.0);
-    sparkle *= 0.5 + 0.5 * sin(uTime * 3.0 + hash3(floor(p3)).x * 6.2831);
-    col += sparkle * uHighColor * uSparkleStr;
+    // Flow streaks — small directional dashes (anime water marks)
+    // Inline tiled approach: two layers, each with per-cell random dashes
+    float stCA = cos(uFlowAngle), stSA = sin(uFlowAngle);
 
-    // Fresnel alpha
-    float cosT  = max(dot(vNorm, viewDir), 0.0);
-    float alpha = clamp(mix(uBaseOpacity, 1.0, pow(1.0 - cosT, 3.0)), 0.0, 1.0);
+    // Layer A (coarser)
+    vec2  stUVa   = vNorm.xz * 4.5 + flowVec * uTime;
+    vec2  stCella = floor(stUVa);
+    vec2  stFraca = fract(stUVa);
+    float stRa    = fract(sin(dot(stCella, vec2(127.1, 311.7))) * 43758.5453);
+    float stRa2   = fract(sin(dot(stCella, vec2(269.5, 183.3))) * 43758.5453);
+    vec2  stDa    = stFraca - vec2(0.3 + stRa * 0.4, 0.3 + stRa2 * 0.4);
+    float stAa    =  stDa.x * stCA + stDa.y * stSA;
+    float stBa    = -stDa.x * stSA + stDa.y * stCA;
+    float stLena  = 0.11 + stRa2 * 0.08;
+    float stMarka = (1.0 - smoothstep(0.0, 0.028, abs(stBa)))
+                  * (1.0 - smoothstep(stLena * 0.4, stLena, abs(stAa)))
+                  * step(0.42, stRa) * (0.4 + stRa2 * 0.6);
+
+    // Layer B (finer)
+    vec2  stUVb   = vNorm.xz * 7.0 + flowVec * uTime * 1.3;
+    vec2  stCellb = floor(stUVb);
+    vec2  stFracb = fract(stUVb);
+    float stRb    = fract(sin(dot(stCellb, vec2(127.1, 311.7))) * 43758.5453);
+    float stRb2   = fract(sin(dot(stCellb, vec2(269.5, 183.3))) * 43758.5453);
+    vec2  stDb    = stFracb - vec2(0.3 + stRb * 0.4, 0.3 + stRb2 * 0.4);
+    float stAb    =  stDb.x * stCA + stDb.y * stSA;
+    float stBb    = -stDb.x * stSA + stDb.y * stCA;
+    float stLenb  = 0.11 + stRb2 * 0.08;
+    float stMarkb = (1.0 - smoothstep(0.0, 0.028, abs(stBb)))
+                  * (1.0 - smoothstep(stLenb * 0.4, stLenb, abs(stAb)))
+                  * step(0.42, stRb) * (0.4 + stRb2 * 0.6);
+
+    col += uHighColor * clamp(stMarka + stMarkb, 0.0, 1.0) * uStreakStr;
+
+    // Alpha: uniform base opacity, foam/edges slightly more opaque
+    // Deliberately no Fresnel → transparency is consistent across the whole sphere
+    float foamMask = smoothstep(uEdgeLow, uEdgeHigh, edge);
+    float alpha    = clamp(uBaseOpacity + foamMask * (0.92 - uBaseOpacity), 0.0, 1.0);
 
     gl_FragColor = vec4(col, alpha);
 }
@@ -262,6 +406,7 @@ export default class Pond {
         this.scene      = this.experience.scene
         this.time       = this.experience.time
         this.camera     = this.experience.camera
+        this.resources  = this.experience.resources
 
         this.phi = 0
         this.camera.enableParallax = false
@@ -270,14 +415,17 @@ export default class Pond {
             deepColor:  '#1a6fa0',
             midColor:   '#6dd0ef',
             highColor:  '#eaf8ff',
-            cellScale:  1.13,
-            cellSpeed:  0.45,
-            smoothness: 0.72,
-            distortAmt: 0.14,
+            cellScale:  4.61,
+            cellSpeed:  0.48,
+            smoothness: 0.61,
+            distortAmt: 0.45,
             edgeLow:    0.19,
             edgeHigh:   0.25,
             midPos:     0.21,
-            bottomColor: '#a8dff0',
+            crackColor:  '#0d0a07',
+            stoneA:      '#9e7a50',
+            stoneB:      '#c8a06a',
+            pebbleScale: 3.5,
             rippleSpeed:     0.25,
             rippleWidth:     0.06,
             rippleIntensity: 1.0,
@@ -285,13 +433,15 @@ export default class Pond {
             bobAmp:          0.055,
             foamRadius:  0.15,
             foamAmount:  1.20,
-            waveAmp:     0.18,
-            waveFreq:    2.5,
-            waveSpeed:   1.55,
-            specStr:     0.88,
+            waveAmp:     0.14,
+            waveFreq:    1.2,
+            waveSpeed:   1.25,
+            specStr:     2.0,
             shininess:   108,
+            glintScale:  0.40,
+            glintSize:   0.15,
             baseOpacity: 0.40,
-            sparkleStr:  1.0,
+            streakStr:   0.70,
             microStr:    0.4,
             // background
             bgBot:       '#050d1a',
@@ -300,9 +450,12 @@ export default class Pond {
             bgGlowRad:   8.0,
             // halo
             glowColor:   '#3399ff',
-            glowStr:     0.0,
+            glowStr:     0.07,
             // ball
             ballSpeed:   0.0045,
+            // flow & sparkles
+            flowSpeed:    0.9,
+            flowAngle:    0.3,
         }
 
         this.addLights()
@@ -344,11 +497,17 @@ export default class Pond {
 
     createBottom() {
         const p = this.params
-        const geo = new THREE.SphereGeometry(WATER_R * 0.80, 64, 32)
-        const mat = new THREE.MeshStandardMaterial({
-            color:     new THREE.Color(p.bottomColor),
-            roughness: 0.85,
-            metalness: 0.0,
+        this.bottomUniforms = {
+            uCrackColor:  { value: new THREE.Color(p.crackColor) },
+            uStoneA:      { value: new THREE.Color(p.stoneA) },
+            uStoneB:      { value: new THREE.Color(p.stoneB) },
+            uPebbleScale: { value: p.pebbleScale },
+        }
+        const geo = new THREE.SphereGeometry(WATER_R * 0.80, 128, 64)
+        const mat = new THREE.ShaderMaterial({
+            vertexShader:   bottomVertex,
+            fragmentShader: bottomFragment,
+            uniforms:       this.bottomUniforms,
         })
         this.bottomMesh = new THREE.Mesh(geo, mat)
         this.scene.add(this.bottomMesh)
@@ -398,9 +557,13 @@ export default class Pond {
             uWaveSpeed:   { value: p.waveSpeed },
             uSpecStr:     { value: p.specStr },
             uShininess:   { value: p.shininess },
+            uGlintScale:  { value: p.glintScale },
+            uGlintSize:   { value: p.glintSize },
             uBaseOpacity: { value: p.baseOpacity },
-            uSparkleStr:  { value: p.sparkleStr },
+            uStreakStr:   { value: p.streakStr },
             uMicroStr:    { value: p.microStr },
+            uFlowSpeed:    { value: p.flowSpeed },
+            uFlowAngle:    { value: p.flowAngle },
         }
 
         const geo = new THREE.SphereGeometry(WATER_R, 128, 128)
@@ -469,10 +632,11 @@ export default class Pond {
         schiuma.add(p, 'foamAmount', 0.0,  3.0, 0.05).name('Quantità schiuma') .onChange(v => { u.uFoamAmount.value = v })
 
         const riflessi = gui.addFolder('Riflessi')
-        riflessi.add(p, 'specStr',   0.0, 2.0,  0.01).name('Intensità riflesso').onChange(v => { u.uSpecStr.value    = v })
-        riflessi.add(p, 'shininess', 4,   256,   1)  .name('Brillantezza')      .onChange(v => { u.uShininess.value  = v })
-        riflessi.add(p, 'sparkleStr',0.0, 2.0,  0.05).name('Sparkle')           .onChange(v => { u.uSparkleStr.value = v })
-        riflessi.add(p, 'microStr',  0.0, 0.4,  0.01).name('Micro-increspature').onChange(v => { u.uMicroStr.value   = v })
+        riflessi.add(p, 'specStr',   0.0, 4.0,  0.05).name('Intensità')            .onChange(v => { u.uSpecStr.value    = v })
+        riflessi.add(p, 'glintScale',0.0, 1.0,  0.01).name('Celle riflettenti')   .onChange(v => { u.uGlintScale.value = v })
+        riflessi.add(p, 'glintSize', 0.0, 0.40, 0.01).name('Area interna cella')  .onChange(v => { u.uGlintSize.value  = v })
+        riflessi.add(p, 'streakStr', 0.0, 2.0,  0.05).name('Segni flusso')      .onChange(v => { u.uStreakStr.value = v })
+        riflessi.add(p, 'microStr',  0.0, 0.4,  0.01).name('Micro-increspature').onChange(v => { u.uMicroStr.value  = v })
 
         const sfondo = gui.addFolder('Sfondo')
         sfondo.addColor(p, 'bgBot')      .name('Colore basso')    .onChange(v => { this.bgUniforms.uBotColor.value.set(v) })
@@ -487,8 +651,16 @@ export default class Pond {
         const trasparenza = gui.addFolder('Trasparenza')
         trasparenza.add(p, 'baseOpacity', 0.0, 1.0, 0.01).name('Opacità base').onChange(v => { u.uBaseOpacity.value = v })
 
+        const flusso = gui.addFolder('Flusso')
+        flusso.add(p, 'flowSpeed', 0.0, 2.0,  0.01).name('Velocità flusso') .onChange(v => { u.uFlowSpeed.value = v })
+        flusso.add(p, 'flowAngle', 0.0, 6.28, 0.05).name('Direzione flusso').onChange(v => { u.uFlowAngle.value = v })
+
         const fondo = gui.addFolder('Fondo')
-        fondo.addColor(p, 'bottomColor').name('Colore fondo').onChange(v => { this.bottomMesh.material.color.set(v) })
+        const bu = this.bottomUniforms
+        fondo.addColor(p, 'crackColor') .name('Crepe')        .onChange(v => { bu.uCrackColor.value.set(v) })
+        fondo.addColor(p, 'stoneA')     .name('Pietra scura') .onChange(v => { bu.uStoneA.value.set(v) })
+        fondo.addColor(p, 'stoneB')     .name('Pietra chiara').onChange(v => { bu.uStoneB.value.set(v) })
+        fondo.add(p, 'pebbleScale', 0.5, 8.0, 0.1).name('Scala sassi').onChange(v => { bu.uPebbleScale.value = v })
     }
 
     update() {

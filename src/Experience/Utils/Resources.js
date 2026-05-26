@@ -1,5 +1,6 @@
 import EventEmitter from  './EventEmitter.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import * as THREE from 'three'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 
@@ -30,6 +31,7 @@ export default class Resources extends EventEmitter{
 
         this.loaders.textureLoader = new THREE.TextureLoader()
         this.loaders.cubeTextureLoader = new THREE.CubeTextureLoader()
+        this.loaders.exrLoader = new EXRLoader()
     }
 
     startLoading(){
@@ -70,6 +72,13 @@ export default class Resources extends EventEmitter{
                 source.path,
                 (file) =>{
                     this.sourceLoaded(source,file, isDuck)
+                }
+            )
+        }else if(source.type === "exrTexture"){
+            this.loaders.exrLoader.load(
+                source.path,
+                (file) => {
+                    this.sourceLoaded(source, file, isDuck)
                 }
             )
         }else if(source.type === "videoTexture"){
