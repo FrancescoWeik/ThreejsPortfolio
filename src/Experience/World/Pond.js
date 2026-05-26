@@ -270,29 +270,29 @@ export default class Pond {
             deepColor:  '#1a6fa0',
             midColor:   '#6dd0ef',
             highColor:  '#eaf8ff',
-            cellScale:  1.2,
+            cellScale:  1.13,
             cellSpeed:  0.45,
             smoothness: 0.72,
             distortAmt: 0.14,
-            edgeLow:    0.05,
-            edgeHigh:   0.55,
-            midPos:     0.55,
+            edgeLow:    0.19,
+            edgeHigh:   0.25,
+            midPos:     0.21,
             bottomColor: '#a8dff0',
             rippleSpeed:     0.25,
             rippleWidth:     0.06,
             rippleIntensity: 1.0,
             bobSpeed:        1.9,
             bobAmp:          0.055,
-            foamRadius:  0.50,
+            foamRadius:  0.15,
             foamAmount:  1.20,
-            waveAmp:     0.10,
+            waveAmp:     0.18,
             waveFreq:    2.5,
-            waveSpeed:   0.8,
-            specStr:     0.55,
-            shininess:   40,
+            waveSpeed:   1.55,
+            specStr:     0.88,
+            shininess:   108,
             baseOpacity: 0.40,
-            sparkleStr:  1.2,
-            microStr:    0.10,
+            sparkleStr:  1.0,
+            microStr:    0.4,
             // background
             bgBot:       '#050d1a',
             bgTop:       '#0d2035',
@@ -300,9 +300,9 @@ export default class Pond {
             bgGlowRad:   8.0,
             // halo
             glowColor:   '#3399ff',
-            glowStr:     0.28,
+            glowStr:     0.0,
             // ball
-            ballSpeed:   0.006,
+            ballSpeed:   0.0045,
         }
 
         this.addLights()
@@ -344,7 +344,7 @@ export default class Pond {
 
     createBottom() {
         const p = this.params
-        const geo = new THREE.SphereGeometry(WATER_R * 0.94, 64, 32)
+        const geo = new THREE.SphereGeometry(WATER_R * 0.80, 64, 32)
         const mat = new THREE.MeshStandardMaterial({
             color:     new THREE.Color(p.bottomColor),
             roughness: 0.85,
