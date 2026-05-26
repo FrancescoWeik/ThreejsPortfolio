@@ -6,145 +6,278 @@ const WATER_R = 2.5
 const BALL_R  = 0.18
 const PHI_SPD = 0.006
 
-// ── Shaders ───────────────────────────────────────────────────────────────────
+// ── Background ────────────────────────────────────────────────────────────────
 
-const waterVertex = /* glsl */`
-varying vec3 vPos;
-varying vec3 vNorm;
-
+const bgVertex = /* glsl */`
+varying vec3 vWorldPos;
 void main() {
-    vPos  = position;
-    vNorm = normalize(normal);
+    vWorldPos   = position;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `
+const bgFragment = /* glsl */`
+varying vec3 vWorldPos;
+uniform vec3  uBotColor;
+uniform vec3  uTopColor;
+uniform vec3  uGlowColor;
+uniform float uGlowRadius;  // world-space radius of central glow
+void main() {
+    float t   = clamp(vWorldPos.y / 18.0 * 0.5 + 0.5, 0.0, 1.0);
+    vec3  col = mix(uBotColor, uTopColor, t);
+    // Soft radial glow toward scene centre (the water sphere)
+    float dist  = length(vWorldPos.xz);          // horizontal distance
+    float glow  = exp(-dist * dist / (uGlowRadius * uGlowRadius));
+    col += uGlowColor * glow * 0.18;
+    gl_FragColor = vec4(col, 1.0);
+}
+`
+
+// ── Glow halo ─────────────────────────────────────────────────────────────────
+
+const glowVertex = /* glsl */`
+varying vec3 vNorm;
+varying vec3 vViewPos;
+void main() {
+    vNorm       = normalize(normalMatrix * normal);
+    vec4 mvPos  = modelViewMatrix * vec4(position, 1.0);
+    vViewPos    = mvPos.xyz;
+    gl_Position = projectionMatrix * mvPos;
+}
+`
+const glowFragment = /* glsl */`
+varying vec3  vNorm;
+varying vec3  vViewPos;
+uniform vec3  uGlowColor;
+uniform float uGlowStr;
+void main() {
+    vec3  v       = normalize(-vViewPos);
+    float fresnel = pow(1.0 - max(dot(vNorm, v), 0.0), 2.5);
+    float a       = fresnel * uGlowStr;
+    gl_FragColor  = vec4(uGlowColor * a, a);
+}
+`
+
+// ── Splash particles ──────────────────────────────────────────────────────────
+
+const splashVertex = /* glsl */`
+attribute vec3  aSeed;        // x: azimuth, y: speed factor 0-1, z: phase offset 0-1
+uniform   float uTime;
+uniform   vec3  uBallPos;
+uniform   float uSplashScale;
+varying   float vAlpha;
+
+void main() {
+    float phase = fract(uTime * 1.3 + aSeed.z);
+
+    vec3 ballN = normalize(uBallPos);
+    vec3 up    = abs(ballN.y) < 0.98 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 right = normalize(cross(up, ballN));
+    vec3 fwd   = cross(ballN, right);
+
+    // Launch direction: cone spreading outward from ball normal
+    float az        = aSeed.x;
+    float el        = 0.35 + aSeed.y * 0.45;
+    vec3  launchDir = normalize(
+        ballN * sin(el) + right * cos(el) * cos(az) + fwd * cos(el) * sin(az)
+    );
+
+    float speed = (0.55 + aSeed.y * 0.95) * uSplashScale;
+    vec3  pos   = uBallPos + launchDir * speed * phase
+                - vec3(0.0, 2.8 * phase * phase, 0.0);
+
+    vAlpha = smoothstep(0.0, 0.08, phase) * smoothstep(1.0, 0.70, phase);
+
+    vec4 mvPos  = modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * mvPos;
+    gl_PointSize = max(1.5, (1.0 - phase) * 5.5 * uSplashScale * (550.0 / -mvPos.z));
+}
+`
+const splashFragment = /* glsl */`
+uniform vec3  uDropColor;
+varying float vAlpha;
+void main() {
+    float d = length(gl_PointCoord - 0.5);
+    if (d > 0.5) discard;
+    gl_FragColor = vec4(uDropColor, smoothstep(0.5, 0.15, d) * vAlpha);
+}
+`
+
+// ── Water vertex ──────────────────────────────────────────────────────────────
+
+const waterVertex = /* glsl */`
+uniform float uTime;
+uniform float uWaveAmp;
+uniform float uWaveFreq;
+uniform float uWaveSpeed;
+
+varying vec3  vPos;
+varying vec3  vNorm;
+varying vec3  vViewPos;
+varying float vWaveCrest;   // normalised height → crest-foam in fragment shader
+
+float waveH(vec3 p, float t) {
+    float f = uWaveFreq, s = uWaveSpeed;
+    float w1 = sin(p.y                            * f        + t * s);
+    float w2 = sin((p.x * 0.866 + p.z * 0.5)   * f * 1.4   + t * s * 0.85);
+    float w3 = sin((p.x * 0.5   - p.z * 0.866) * f * 0.8   + t * s * 1.3);
+    float w4 = sin(p.y * f * 1.9 + p.x * 0.4    + t * s * 0.65);
+    return (w1 * 0.35 + w2 * 0.28 + w3 * 0.22 + w4 * 0.15) * uWaveAmp;
+}
+
+void main() {
+    vec3 n  = normalize(normal);
+    vec3 up = abs(n.y) < 0.98 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 T  = normalize(cross(up, n));
+    vec3 B  = cross(n, T);
+
+    float eps = 0.04;
+    float h0  = waveH(position,           uTime);
+    float hT  = waveH(position + T * eps, uTime);
+    float hB  = waveH(position + B * eps, uTime);
+
+    vec3 dispPos = position + n * h0;
+    vec3 dSdT    = T + n * ((hT - h0) / eps);
+    vec3 dSdB    = B + n * ((hB - h0) / eps);
+    vec3 dispN   = normalize(cross(dSdT, dSdB));
+    if (dot(dispN, n) < 0.0) dispN = -dispN;
+
+    vWaveCrest  = h0 / max(uWaveAmp, 0.001);   // roughly -1 … +1
+    vPos        = dispPos;
+    vNorm       = dispN;
+    vec4 mvPos  = modelViewMatrix * vec4(dispPos, 1.0);
+    vViewPos    = mvPos.xyz;
+    gl_Position = projectionMatrix * mvPos;
+}
+`
+
+// ── Water fragment ────────────────────────────────────────────────────────────
 
 const waterFragment = /* glsl */`
 uniform float uTime;
 
-// Colours
 uniform vec3  uDeepColor;
 uniform vec3  uMidColor;
 uniform vec3  uHighColor;
 
-// Pattern
 uniform float uCellScale;
 uniform float uCellSpeed;
 uniform float uSmoothness;
 uniform float uDistortAmt;
 
-// Colour ramp
 uniform float uEdgeLow;
 uniform float uEdgeHigh;
 uniform float uMidPos;
 
-// Ripple
 uniform vec3  uBallDir;
 uniform float uRippleSpeed;
 uniform float uRippleWidth;
 uniform float uRippleIntensity;
 
-varying vec3 vPos;
-varying vec3 vNorm;
+uniform float uFoamRadius;
+uniform float uFoamAmount;
 
-// ── Voronoi 3D (ported from cortiz2894/water-anime-shader, extended to 3D) ───
+uniform float uSpecStr;
+uniform float uShininess;
+uniform float uBaseOpacity;
+
+varying vec3  vPos;
+varying vec3  vNorm;
+varying vec3  vViewPos;
+varying float vWaveCrest;
+
+// ── Voronoi 3D ────────────────────────────────────────────────────────────────
 
 float smin(float a, float b, float k) {
     float h = max(k - abs(a - b), 0.0) / k;
     return min(a, b) - h * h * h * k / 6.0;
 }
-
 vec3 hash3(vec3 p) {
     p = vec3(dot(p, vec3(127.1, 311.7,  74.7)),
              dot(p, vec3(269.5, 183.3, 246.1)),
              dot(p, vec3(113.5, 271.9, 124.6)));
     return fract(sin(p) * 43758.5453);
 }
-
 vec3 cellPt3(vec3 seed) {
     return 0.5 + 0.5 * sin(uTime * uCellSpeed + 6.2831 * seed);
 }
-
 float voronoiF1(vec3 p) {
-    vec3 i = floor(p), f = fract(p);
-    float md = 8.0;
-    for (int z = -1; z <= 1; z++)
-    for (int y = -1; y <= 1; y++)
-    for (int x = -1; x <= 1; x++) {
-        vec3 n  = vec3(float(x), float(y), float(z));
-        vec3 pt = cellPt3(hash3(i + n));
-        md = min(md, length(n + pt - f));
+    vec3 i = floor(p), f = fract(p); float md = 8.0;
+    for (int z=-1;z<=1;z++) for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+        vec3 n = vec3(float(x),float(y),float(z));
+        md = min(md, length(n + cellPt3(hash3(i+n)) - f));
     }
     return md;
 }
-
 float voronoiSF1(vec3 p) {
-    vec3 i = floor(p), f = fract(p);
-    float res = 8.0;
-    for (int z = -1; z <= 1; z++)
-    for (int y = -1; y <= 1; y++)
-    for (int x = -1; x <= 1; x++) {
-        vec3 n  = vec3(float(x), float(y), float(z));
-        vec3 pt = cellPt3(hash3(i + n));
-        res = smin(res, length(n + pt - f), uSmoothness);
+    vec3 i = floor(p), f = fract(p); float res = 8.0;
+    for (int z=-1;z<=1;z++) for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+        vec3 n = vec3(float(x),float(y),float(z));
+        res = smin(res, length(n + cellPt3(hash3(i+n)) - f), uSmoothness);
     }
     return res;
 }
 
-// ── fBm for organic distortion ────────────────────────────────────────────────
+// ── fBm ───────────────────────────────────────────────────────────────────────
 
 float nHash(vec2 p) {
-    p = fract(p * vec2(127.1, 311.7));
-    p += dot(p, p + 45.32);
+    p = fract(p * vec2(127.1, 311.7)); p += dot(p, p + 45.32);
     return fract(p.x * p.y);
 }
 float vnoise(vec2 p) {
-    vec2 i = floor(p), f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(nHash(i),                  nHash(i + vec2(1.0, 0.0)), f.x),
-               mix(nHash(i + vec2(0.0, 1.0)), nHash(i + vec2(1.0, 1.0)), f.x), f.y);
+    vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+    return mix(mix(nHash(i),nHash(i+vec2(1,0)),f.x),
+               mix(nHash(i+vec2(0,1)),nHash(i+vec2(1,1)),f.x),f.y);
 }
 float fbm(vec2 p) {
-    float v = 0.0, a = 0.5;
-    for (int i = 0; i < 2; i++) { v += a * vnoise(p); p *= 2.0; a *= 0.5; }
+    float v=0.0,a=0.5;
+    for(int i=0;i<3;i++){v+=a*vnoise(p);p*=2.0;a*=0.5;}
     return v;
 }
 
 void main() {
-    // fBm distortion along the surface normal (stays on sphere, no pole artefact)
-    vec2  noiseUV  = vNorm.xz * 1.5 + vec2(uTime * 0.06, vNorm.y * 0.5);
-    float noiseFac = fbm(noiseUV);
-    vec3  distort  = vNorm * (noiseFac - 0.5) * uDistortAmt;
-
-    vec3 p3 = vPos * uCellScale + vec3(0.025, 0.01, 0.005) * uTime + distort;
+    vec2  nuv  = vNorm.xz * 1.5 + vec2(uTime * 0.06, vNorm.y * 0.5);
+    vec3  dist = vNorm * (fbm(nuv) - 0.5) * uDistortAmt;
+    vec3  p3   = vPos * uCellScale + vec3(0.025, 0.01, 0.005) * uTime + dist;
 
     float f1   = voronoiF1(p3);
     float sf1  = voronoiSF1(p3);
-    float edge = f1 - sf1;   // 0 at cell centres → positive at boundaries
+    float edge = f1 - sf1;
 
-    // Ripple rings — added to edge so they inherit the water colour ramp
+    // Ripple rings from ball
     float angDist = acos(clamp(dot(normalize(vPos), uBallDir), -1.0, 1.0));
-    float ripple = 0.0;
-    for (int r = 0; r < 3; r++) {
-        float offset = float(r) * 0.13;
-        float radius = mod(uTime * uRippleSpeed + offset, 0.28);
-        float ring   = smoothstep(uRippleWidth, 0.0, abs(angDist - radius));
-        float decay  = exp(-radius * 9.0);
-        ripple += ring * decay;
+    float ripple  = 0.0;
+    for (int r=0; r<3; r++) {
+        float off    = float(r) * 0.13;
+        float radius = mod(uTime * uRippleSpeed + off, 0.28);
+        ripple += smoothstep(uRippleWidth, 0.0, abs(angDist - radius)) * exp(-radius * 9.0);
     }
     edge += ripple * uRippleIntensity * 0.18;
 
-    // 3-stop colour ramp
+    // Foam near ball
+    float fp = smoothstep(uFoamRadius, 0.0, angDist);
+    edge += fp * (fbm(vNorm.xz*13.0+vec2(uTime*1.1, vNorm.y*3.5))*0.65
+                + fbm(vNorm.xz*27.0+vec2(uTime*2.3,-vNorm.y*6.0))*0.35) * uFoamAmount;
+
+    // Foam on wave crests (free — just uses the varying already computed)
+    edge += smoothstep(0.52, 1.0, vWaveCrest) * 0.48;
+
+    // Colour ramp
     float t    = smoothstep(uEdgeLow, uEdgeHigh, edge);
     float seg0 = clamp(t / uMidPos, 0.0, 1.0);
     float seg1 = clamp((t - uMidPos) / (1.0 - uMidPos), 0.0, 1.0);
-    vec3 col = mix(
-        mix(uDeepColor, uMidColor,  seg0),
-        mix(uMidColor,  uHighColor, seg1),
-        step(uMidPos, t)
-    );
+    vec3  col  = mix(mix(uDeepColor, uMidColor, seg0),
+                     mix(uMidColor,  uHighColor, seg1), step(uMidPos, t));
 
-    gl_FragColor = vec4(col, 1.0);
+    // Blinn-Phong specular
+    vec3  viewDir = normalize(-vViewPos);
+    vec3  halfVec = normalize(normalize(vec3(5.0,8.0,4.0)) + viewDir);
+    col += pow(max(dot(vNorm, halfVec), 0.0), uShininess) * uSpecStr;
+
+    // Fresnel alpha
+    float cosT  = max(dot(vNorm, viewDir), 0.0);
+    float alpha = clamp(mix(uBaseOpacity, 1.0, pow(1.0 - cosT, 3.0)), 0.0, 1.0);
+
+    gl_FragColor = vec4(col, alpha);
 }
 `
 
@@ -158,32 +291,51 @@ export default class Pond {
         this.camera     = this.experience.camera
 
         this.phi = 0
-
-        // Stop the mouse-parallax from fighting OrbitControls
         this.camera.enableParallax = false
 
         this.params = {
-            deepColor:  '#0a4a7a',
-            midColor:   '#1d95dc',
-            highColor:  '#d1f5ff',
-            cellScale:  2.50,
-            cellSpeed:  1.50,
-            smoothness: 0.60,
-            distortAmt: 0.20,
-            edgeLow:    0.12,
-            edgeHigh:   0.255,
-            midPos:     0.21,
-            // ball
-            rippleSpeed:     0.18,
-            rippleWidth:     0.018,
-            rippleIntensity: 0.80,
-            bobSpeed:        2.5,
-            bobAmp:          0.07,
+            deepColor:  '#266fa6',
+            midColor:   '#84b5d2',
+            highColor:  '#ffffff',
+            cellScale:  2.13,
+            cellSpeed:  0.77,
+            smoothness: 0.76,
+            distortAmt: 0.10,
+            edgeLow:    0.22,
+            edgeHigh:   0.245,
+            midPos:     0.76,
+            rippleSpeed:     0.25,
+            rippleWidth:     0.06,
+            rippleIntensity: 1.0,
+            bobSpeed:        1.9,
+            bobAmp:          0.055,
+            foamRadius:  0.50,
+            foamAmount:  1.20,
+            waveAmp:     0.10,
+            waveFreq:    2.5,
+            waveSpeed:   0.8,
+            specStr:     0.55,
+            shininess:   40,
+            baseOpacity: 0.40,
+            // background
+            bgBot:       '#050d1a',
+            bgTop:       '#0d2035',
+            bgGlowColor: '#1a4a7a',
+            bgGlowRad:   8.0,
+            // halo
+            glowColor:   '#3399ff',
+            glowStr:     0.28,
+            // splashes
+            splashScale: 1.0,
+            dropColor:   '#c8eeff',
         }
 
         this.addLights()
+        this.createBackground()
         this.createWaterSphere()
+        this.createGlow()
         this.createBall()
+        this.createSplash()
         this.createGUI()
     }
 
@@ -192,6 +344,46 @@ export default class Pond {
         const dir = new THREE.DirectionalLight(0xffffff, 1.0)
         dir.position.set(5, 8, 4)
         this.scene.add(dir)
+    }
+
+    createBackground() {
+        const p = this.params
+        this.bgUniforms = {
+            uBotColor:   { value: new THREE.Color(p.bgBot) },
+            uTopColor:   { value: new THREE.Color(p.bgTop) },
+            uGlowColor:  { value: new THREE.Color(p.bgGlowColor) },
+            uGlowRadius: { value: p.bgGlowRad },
+        }
+        const geo  = new THREE.SphereGeometry(18, 32, 16)
+        const mat  = new THREE.ShaderMaterial({
+            vertexShader:   bgVertex,
+            fragmentShader: bgFragment,
+            uniforms:       this.bgUniforms,
+            side:           THREE.BackSide,
+            depthWrite:     false,
+        })
+        const mesh = new THREE.Mesh(geo, mat)
+        mesh.renderOrder = -1
+        this.scene.add(mesh)
+    }
+
+    createGlow() {
+        const p = this.params
+        this.glowUniforms = {
+            uGlowColor: { value: new THREE.Color(p.glowColor) },
+            uGlowStr:   { value: p.glowStr },
+        }
+        const geo = new THREE.SphereGeometry(WATER_R * 1.12, 64, 32)
+        const mat = new THREE.ShaderMaterial({
+            vertexShader:   glowVertex,
+            fragmentShader: glowFragment,
+            uniforms:       this.glowUniforms,
+            transparent:    true,
+            side:           THREE.FrontSide,
+            depthWrite:     false,
+            blending:       THREE.AdditiveBlending,
+        })
+        this.scene.add(new THREE.Mesh(geo, mat))
     }
 
     createWaterSphere() {
@@ -212,6 +404,14 @@ export default class Pond {
             uRippleSpeed:     { value: p.rippleSpeed },
             uRippleWidth:     { value: p.rippleWidth },
             uRippleIntensity: { value: p.rippleIntensity },
+            uFoamRadius:  { value: p.foamRadius },
+            uFoamAmount:  { value: p.foamAmount },
+            uWaveAmp:     { value: p.waveAmp },
+            uWaveFreq:    { value: p.waveFreq },
+            uWaveSpeed:   { value: p.waveSpeed },
+            uSpecStr:     { value: p.specStr },
+            uShininess:   { value: p.shininess },
+            uBaseOpacity: { value: p.baseOpacity },
         }
 
         const geo = new THREE.SphereGeometry(WATER_R, 128, 128)
@@ -219,8 +419,10 @@ export default class Pond {
             vertexShader:   waterVertex,
             fragmentShader: waterFragment,
             uniforms:       this.waterUniforms,
+            transparent:    true,
+            side:           THREE.FrontSide,
+            depthWrite:     false,
         })
-
         this.waterSphere = new THREE.Mesh(geo, mat)
         this.scene.add(this.waterSphere)
     }
@@ -238,12 +440,47 @@ export default class Pond {
         this.scene.add(this.ball)
     }
 
+    createSplash() {
+        const p     = this.params
+        const count = 28
+        const seeds = new Float32Array(count * 3)
+        for (let i = 0; i < count; i++) {
+            seeds[i * 3 + 0] = Math.random() * Math.PI * 2
+            seeds[i * 3 + 1] = Math.random()
+            seeds[i * 3 + 2] = Math.random()
+        }
+
+        const geo = new THREE.BufferGeometry()
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3))
+        geo.setAttribute('aSeed',    new THREE.BufferAttribute(seeds, 3))
+
+        this.splashUniforms = {
+            uTime:        this.waterUniforms.uTime,
+            uBallPos:     { value: new THREE.Vector3() },
+            uSplashScale: { value: p.splashScale },
+            uDropColor:   { value: new THREE.Color(p.dropColor) },
+        }
+
+        const mat = new THREE.ShaderMaterial({
+            vertexShader:   splashVertex,
+            fragmentShader: splashFragment,
+            uniforms:       this.splashUniforms,
+            transparent:    true,
+            depthWrite:     false,
+            blending:       THREE.AdditiveBlending,
+        })
+
+        this.splashPoints = new THREE.Points(geo, mat)
+        this.splashPoints.frustumCulled = false
+        this.scene.add(this.splashPoints)
+    }
+
     createGUI() {
         const gui = new GUI({ title: '💧 Acqua' })
         gui.domElement.style.maxHeight = (window.innerHeight - 20) + 'px'
         gui.domElement.style.overflowY = 'auto'
-        const u   = this.waterUniforms
-        const p   = this.params
+        const u = this.waterUniforms
+        const p = this.params
 
         const colori = gui.addFolder('Colori')
         colori.addColor(p, 'deepColor') .name('Blu profondo')    .onChange(v => u.uDeepColor.value.set(v))
@@ -251,10 +488,13 @@ export default class Pond {
         colori.addColor(p, 'highColor') .name('Schiuma / bordi') .onChange(v => u.uHighColor.value.set(v))
 
         const onde = gui.addFolder('Onde')
-        onde.add(p, 'cellScale',  0.2, 2.5, 0.01).name('Dimensione celle')     .onChange(v => { u.uCellScale.value  = v })
-        onde.add(p, 'cellSpeed',  0.0, 2.0, 0.01).name('Velocità animazione')  .onChange(v => { u.uCellSpeed.value  = v })
-        onde.add(p, 'smoothness', 0.1, 1.5, 0.01).name('Morbidezza bordi')     .onChange(v => { u.uSmoothness.value = v })
-        onde.add(p, 'distortAmt', 0.0, 0.8, 0.01).name('Distorsione / rumore') .onChange(v => { u.uDistortAmt.value = v })
+        onde.add(p, 'cellScale',  0.2, 5.0,  0.01).name('Dimensione celle')     .onChange(v => { u.uCellScale.value  = v })
+        onde.add(p, 'cellSpeed',  0.0, 2.0,  0.01).name('Velocità animazione')  .onChange(v => { u.uCellSpeed.value  = v })
+        onde.add(p, 'smoothness', 0.1, 1.5,  0.01).name('Morbidezza bordi')     .onChange(v => { u.uSmoothness.value = v })
+        onde.add(p, 'distortAmt', 0.0, 0.8,  0.01).name('Distorsione / rumore') .onChange(v => { u.uDistortAmt.value = v })
+        onde.add(p, 'waveAmp',    0.0, 0.5,  0.01).name('Altezza onde')         .onChange(v => { u.uWaveAmp.value    = v })
+        onde.add(p, 'waveFreq',   0.3, 8.0,  0.1) .name('Frequenza onde')       .onChange(v => { u.uWaveFreq.value   = v })
+        onde.add(p, 'waveSpeed',  0.0, 3.0,  0.05).name('Velocità onde')        .onChange(v => { u.uWaveSpeed.value  = v })
 
         const ramp = gui.addFolder('Transizione colori')
         ramp.add(p, 'edgeLow',  0.00, 0.30, 0.005).name('Soglia bassa')        .onChange(v => { u.uEdgeLow.value  = v })
@@ -262,11 +502,36 @@ export default class Pond {
         ramp.add(p, 'midPos',   0.10, 0.90, 0.01) .name('Posizione blu medio') .onChange(v => { u.uMidPos.value   = v })
 
         const palla = gui.addFolder('Pallina')
-        palla.add(p, 'rippleSpeed',     0.05, 1.0,  0.01) .name('Velocità cerchi')   .onChange(v => { u.uRippleSpeed.value     = v })
-        palla.add(p, 'rippleWidth',     0.005, 0.06, 0.001).name('Spessore cerchi')   .onChange(v => { u.uRippleWidth.value     = v })
-        palla.add(p, 'rippleIntensity', 0.0,  1.0,  0.01) .name('Intensità cerchi')  .onChange(v => { u.uRippleIntensity.value = v })
-        palla.add(p, 'bobSpeed',        0.5,  6.0,  0.1)  .name('Velocità ondeggio')
-        palla.add(p, 'bobAmp',          0.0,  0.2,  0.005).name('Ampiezza ondeggio')
+        palla.add(p, 'rippleSpeed',     0.05, 1.0,   0.01) .name('Velocità cerchi')   .onChange(v => { u.uRippleSpeed.value     = v })
+        palla.add(p, 'rippleWidth',     0.005, 0.08, 0.001).name('Spessore cerchi')   .onChange(v => { u.uRippleWidth.value     = v })
+        palla.add(p, 'rippleIntensity', 0.0,  1.0,   0.01) .name('Intensità cerchi')  .onChange(v => { u.uRippleIntensity.value = v })
+        palla.add(p, 'bobSpeed',        0.5,  6.0,   0.1)  .name('Velocità ondeggio')
+        palla.add(p, 'bobAmp',          0.0,  0.2,   0.005).name('Ampiezza ondeggio')
+
+        const schiuma = gui.addFolder('Schiuma pallina')
+        schiuma.add(p, 'foamRadius', 0.05, 1.5, 0.01).name('Raggio schiuma')   .onChange(v => { u.uFoamRadius.value = v })
+        schiuma.add(p, 'foamAmount', 0.0,  3.0, 0.05).name('Quantità schiuma') .onChange(v => { u.uFoamAmount.value = v })
+
+        const riflessi = gui.addFolder('Riflessi')
+        riflessi.add(p, 'specStr',   0.0, 2.0, 0.01).name('Intensità riflesso').onChange(v => { u.uSpecStr.value   = v })
+        riflessi.add(p, 'shininess', 4,   256,  1)  .name('Brillantezza')      .onChange(v => { u.uShininess.value = v })
+
+        const sfondo = gui.addFolder('Sfondo')
+        sfondo.addColor(p, 'bgBot')      .name('Colore basso')    .onChange(v => { this.bgUniforms.uBotColor.value.set(v) })
+        sfondo.addColor(p, 'bgTop')      .name('Colore alto')     .onChange(v => { this.bgUniforms.uTopColor.value.set(v) })
+        sfondo.addColor(p, 'bgGlowColor').name('Bagliore centro') .onChange(v => { this.bgUniforms.uGlowColor.value.set(v) })
+        sfondo.add(p, 'bgGlowRad', 1.0, 20.0, 0.5).name('Raggio bagliore').onChange(v => { this.bgUniforms.uGlowRadius.value = v })
+
+        const halo = gui.addFolder('Alone sfera')
+        halo.addColor(p, 'glowColor').name('Colore alone').onChange(v => { this.glowUniforms.uGlowColor.value.set(v) })
+        halo.add(p, 'glowStr', 0.0, 1.0, 0.01).name('Intensità alone').onChange(v => { this.glowUniforms.uGlowStr.value = v })
+
+        const schizzi = gui.addFolder('Schizzi')
+        schizzi.add(p, 'splashScale', 0.0, 2.5, 0.05).name('Scala schizzi') .onChange(v => { this.splashUniforms.uSplashScale.value = v })
+        schizzi.addColor(p, 'dropColor')               .name('Colore gocce') .onChange(v => { this.splashUniforms.uDropColor.value.set(v) })
+
+        const trasparenza = gui.addFolder('Trasparenza')
+        trasparenza.add(p, 'baseOpacity', 0.0, 1.0, 0.01).name('Opacità base').onChange(v => { u.uBaseOpacity.value = v })
     }
 
     update() {
@@ -280,13 +545,12 @@ export default class Pond {
         const ny = Math.cos(theta)
         const nz = Math.sin(theta) * Math.sin(this.phi)
 
-        // Embed ball with gentle bobbing — oscillates around the surface
-        const bob = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
+        const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
         const ballDist = WATER_R - BALL_R * 0.3 + bob
         this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
         this.ball.rotation.y += 0.015
 
-        // Drive ripple rings toward the ball's direction on the sphere
         this.waterUniforms.uBallDir.value.set(nx, ny, nz)
+        this.splashUniforms.uBallPos.value.copy(this.ball.position)
     }
 }
