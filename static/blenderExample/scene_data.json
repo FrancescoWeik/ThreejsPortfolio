@@ -1,0 +1,4215 @@
+{
+  "objects": [
+    {
+      "name": "Empty",
+      "type": "EMPTY",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        -1.9325472745209816e-36,
+        -5.4547450986256184e-21,
+        4.059834082451556e-14
+      ],
+      "scale": [
+        1.3855502605438232,
+        1.3855502605438232,
+        1.3855502605438232
+      ],
+      "visible": true
+    },
+    {
+      "name": "Empty.001",
+      "type": "EMPTY",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        1.1459155646484371,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true
+    },
+    {
+      "name": "flower",
+      "type": "MESH",
+      "location": [
+        -1.691027045249939,
+        0.0675383061170578,
+        0.6606305241584778
+      ],
+      "rotation_euler": [
+        96.46233817636154,
+        -0.5776793106705486,
+        39.71610543861469
+      ],
+      "scale": [
+        0.25178292393684387,
+        0.2534584105014801,
+        0.2789119780063629
+      ],
+      "visible": false,
+      "vertex_count": 4
+    },
+    {
+      "name": "Leaves Instance.060",
+      "type": "MESH",
+      "location": [
+        -1.9333926439285278,
+        0.06829726696014404,
+        0.09210920333862305
+      ],
+      "rotation_euler": [
+        -113.77690187328972,
+        -21.6423884135544,
+        534.6166101872267
+      ],
+      "scale": [
+        0.15129637718200684,
+        0.15129634737968445,
+        -0.15129639208316803
+      ],
+      "visible": false,
+      "vertex_count": 24436
+    },
+    {
+      "name": "Plane",
+      "type": "MESH",
+      "location": [
+        -3.3051905632019043,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true,
+      "vertex_count": 0
+    },
+    {
+      "name": "Plane.001",
+      "type": "MESH",
+      "location": [
+        -3.5683212280273438,
+        0.5011876225471497,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 7
+    },
+    {
+      "name": "Plane.002",
+      "type": "MESH",
+      "location": [
+        -4.036252975463867,
+        0.6940032839775085,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 8
+    },
+    {
+      "name": "Plane.003",
+      "type": "MESH",
+      "location": [
+        -3.9219493865966797,
+        0.17410513758659363,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 10
+    },
+    {
+      "name": "Plane.004",
+      "type": "MESH",
+      "location": [
+        -4.0047807693481445,
+        -0.3337935507297516,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 8
+    },
+    {
+      "name": "Plane.005",
+      "type": "MESH",
+      "location": [
+        -3.6695263385772705,
+        -0.3655613660812378,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 7
+    },
+    {
+      "name": "Plane.006",
+      "type": "MESH",
+      "location": [
+        -3.398282527923584,
+        -0.23255223035812378,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 7
+    },
+    {
+      "name": "Plane.007",
+      "type": "MESH",
+      "location": [
+        -3.433948516845703,
+        -0.6392987370491028,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 6
+    },
+    {
+      "name": "Plane.008",
+      "type": "MESH",
+      "location": [
+        -3.7141783237457275,
+        -0.776939332485199,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 7
+    },
+    {
+      "name": "Plane.009",
+      "type": "MESH",
+      "location": [
+        -4.039100646972656,
+        -0.7090096473693848,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 7
+    },
+    {
+      "name": "Plane.010",
+      "type": "MESH",
+      "location": [
+        -3.210181713104248,
+        0.15629678964614868,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 7
+    },
+    {
+      "name": "Plane.011",
+      "type": "MESH",
+      "location": [
+        -3.1187894344329834,
+        0.6757962107658386,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 5
+    },
+    {
+      "name": "Plane.012",
+      "type": "MESH",
+      "location": [
+        -2.824944496154785,
+        0.7039408683776855,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 5
+    },
+    {
+      "name": "Plane.013",
+      "type": "MESH",
+      "location": [
+        -2.4818756580352783,
+        0.6860228180885315,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 6
+    },
+    {
+      "name": "Plane.014",
+      "type": "MESH",
+      "location": [
+        -2.764801502227783,
+        0.3151687979698181,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 8
+    },
+    {
+      "name": "Plane.015",
+      "type": "MESH",
+      "location": [
+        -2.5905251502990723,
+        0.15307186543941498,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 8
+    },
+    {
+      "name": "Plane.016",
+      "type": "MESH",
+      "location": [
+        -3.0275416374206543,
+        -0.27219709753990173,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 9
+    },
+    {
+      "name": "Plane.017",
+      "type": "MESH",
+      "location": [
+        -2.5854663848876953,
+        -0.24184048175811768,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 8
+    },
+    {
+      "name": "Plane.018",
+      "type": "MESH",
+      "location": [
+        -2.5573179721832275,
+        -0.7063573598861694,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 5
+    },
+    {
+      "name": "Plane.019",
+      "type": "MESH",
+      "location": [
+        -3.043466567993164,
+        -0.6398907899856567,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 7
+    },
+    {
+      "name": "Plane.020",
+      "type": "MESH",
+      "location": [
+        -2.715510606765747,
+        0.08331606537103653,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 4
+    },
+    {
+      "name": "Plane.021",
+      "type": "MESH",
+      "location": [
+        34.91495895385742,
+        -2.436117938486859e-07,
+        0.8131431341171265
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 6
+    },
+    {
+      "name": "Plane.022",
+      "type": "MESH",
+      "location": [
+        34.51652908325195,
+        -2.459411234667641e-07,
+        0.8304797410964966
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 5
+    },
+    {
+      "name": "Plane.023",
+      "type": "MESH",
+      "location": [
+        34.2088623046875,
+        -2.436117938486859e-07,
+        0.8131431341171265
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 6
+    },
+    {
+      "name": "rock.001",
+      "type": "MESH",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 1410
+    },
+    {
+      "name": "rock.002",
+      "type": "MESH",
+      "location": [
+        0.7864406108856201,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 1538
+    },
+    {
+      "name": "rock.003",
+      "type": "MESH",
+      "location": [
+        -0.9506816864013672,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false,
+      "vertex_count": 1538
+    },
+    {
+      "name": "Sphere",
+      "type": "MESH",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true,
+      "vertex_count": 3200
+    },
+    {
+      "name": "Sphere.001",
+      "type": "MESH",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true,
+      "vertex_count": 450
+    },
+    {
+      "name": "Sphere.002",
+      "type": "MESH",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true,
+      "vertex_count": 224
+    },
+    {
+      "name": "Sphere.003",
+      "type": "MESH",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true,
+      "vertex_count": 20
+    },
+    {
+      "name": "Sun",
+      "type": "LIGHT",
+      "location": [
+        -1.3725897073745728,
+        -1.5893148183822632,
+        2.2956759929656982
+      ],
+      "rotation_euler": [
+        31.13513387865257,
+        -26.762643139949045,
+        -15.216988697155163
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true
+    },
+    {
+      "name": "Sun.001",
+      "type": "LIGHT",
+      "location": [
+        5.717485427856445,
+        6.036477088928223,
+        7.056568622589111
+      ],
+      "rotation_euler": [
+        52.80496769983937,
+        -21.835877427457106,
+        1121.1240799520078
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": false
+    }
+  ],
+  "materials": {
+    "Bush material.001": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Frame",
+          "type": "FRAME",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Vector Rotate.001",
+          "type": "VECTOR_ROTATE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Axis": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "Angle": 0.0,
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Attribute.002",
+          "type": "ATTRIBUTE",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Attribute",
+          "type": "ATTRIBUTE",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Attribute.001",
+          "type": "ATTRIBUTE",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Combine XYZ",
+          "type": "COMBXYZ",
+          "inputs": {
+            "X": 0.0,
+            "Y": 0.0,
+            "Z": 1.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Vector Math",
+          "type": "VECT_MATH",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Scale": 1.0
+          },
+          "outputs": {},
+          "operation": "DOT_PRODUCT"
+        },
+        {
+          "name": "Vector Rotate",
+          "type": "VECTOR_ROTATE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Axis": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "Angle": 0.0,
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Vector Rotate.002",
+          "type": "VECTOR_ROTATE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Axis": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "Angle": 0.0,
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Math.010",
+          "type": "MATH",
+          "inputs": {
+            "Value": 0.5
+          },
+          "outputs": {},
+          "operation": "MULTIPLY_ADD"
+        },
+        {
+          "name": "Hue/Saturation/Value",
+          "type": "HUE_SAT",
+          "inputs": {
+            "Hue": 0.559999942779541,
+            "Saturation": 1.0399999618530273,
+            "Value": 1.1799999475479126,
+            "Factor": 1.0,
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "ColorRamp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "ColorRamp.001",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Combine XYZ.Vector",
+          "to": "Vector Rotate.Vector"
+        },
+        {
+          "from": "Attribute.001.Vector",
+          "to": "Vector Rotate.Rotation"
+        },
+        {
+          "from": "Attribute.Vector",
+          "to": "Vector Rotate.001.Vector"
+        },
+        {
+          "from": "Attribute.002.Vector",
+          "to": "Vector Rotate.001.Rotation"
+        },
+        {
+          "from": "Vector Rotate.Vector",
+          "to": "Vector Math.Vector"
+        },
+        {
+          "from": "Vector Rotate.002.Vector",
+          "to": "Vector Math.Vector"
+        },
+        {
+          "from": "Vector Rotate.001.Vector",
+          "to": "Vector Rotate.002.Vector"
+        },
+        {
+          "from": "Vector Math.Value",
+          "to": "Math.010.Value"
+        },
+        {
+          "from": "Math.010.Value",
+          "to": "ColorRamp.Factor"
+        },
+        {
+          "from": "ColorRamp.Color",
+          "to": "Hue/Saturation/Value.Color"
+        },
+        {
+          "from": "Math.010.Value",
+          "to": "ColorRamp.001.Factor"
+        },
+        {
+          "from": "ColorRamp.001.Color",
+          "to": "Material Output.Surface"
+        }
+      ]
+    },
+    "Dots Stroke": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Frame",
+          "type": "FRAME",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Principled BSDF",
+          "type": "BSDF_PRINCIPLED",
+          "inputs": {
+            "Base Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ],
+            "Metallic": 0.0,
+            "Roughness": 0.5,
+            "IOR": 1.5,
+            "Alpha": 1.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0,
+            "Diffuse Roughness": 0.0,
+            "Subsurface Weight": 0.0,
+            "Subsurface Radius": [
+              1.0,
+              0.20000000298023224,
+              0.10000000149011612
+            ],
+            "Subsurface Scale": 0.05000000074505806,
+            "Subsurface IOR": 1.399999976158142,
+            "Subsurface Anisotropy": 0.0,
+            "Specular IOR Level": 0.5,
+            "Specular Tint": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Anisotropic": 0.0,
+            "Anisotropic Rotation": 0.0,
+            "Tangent": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Transmission Weight": 0.0,
+            "Coat Weight": 0.0,
+            "Coat Roughness": 0.029999999329447746,
+            "Coat IOR": 1.5,
+            "Coat Tint": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Coat Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Sheen Weight": 0.0,
+            "Sheen Roughness": 0.5,
+            "Sheen Tint": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Emission Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Emission Strength": 0.0,
+            "Thin Film Thickness": 0.0,
+            "Thin Film IOR": 1.3300000429153442
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output.001",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Diffuse BSDF",
+          "type": "BSDF_DIFFUSE",
+          "inputs": {
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ],
+            "Roughness": 0.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Principled BSDF.BSDF",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Diffuse BSDF.BSDF",
+          "to": "Material Output.001.Surface"
+        }
+      ]
+    },
+    "flowers": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Emission",
+          "type": "EMISSION",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Strength": 1.0,
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Image Texture",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "flowers.png"
+        },
+        {
+          "name": "Invert",
+          "type": "INVERT",
+          "inputs": {
+            "Factor": 1.0,
+            "Color": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Math",
+          "type": "MATH",
+          "inputs": {
+            "Value": 0.5
+          },
+          "outputs": {},
+          "operation": "GREATER_THAN"
+        }
+      ],
+      "links": [
+        {
+          "from": "Image Texture.Color",
+          "to": "Emission.Color"
+        },
+        {
+          "from": "Emission.Emission",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Transparent BSDF.BSDF",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Image Texture.Alpha",
+          "to": "Invert.Color"
+        },
+        {
+          "from": "Invert.Color",
+          "to": "Math.Value"
+        },
+        {
+          "from": "Math.Value",
+          "to": "Mix Shader.Factor"
+        }
+      ]
+    },
+    "Green Leaves 01": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Frame",
+          "type": "FRAME",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Frame.001",
+          "type": "FRAME",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Image Texture.001",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "Green Leaves 01_Roughness.jpg"
+        },
+        {
+          "name": "Image Texture.002",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "Green Leaves 01_Normal.jpg"
+        },
+        {
+          "name": "Reroute",
+          "type": "REROUTE",
+          "inputs": {
+            "Input": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Value",
+          "type": "VALUE",
+          "inputs": {},
+          "outputs": {},
+          "value": 1.0
+        },
+        {
+          "name": "Texture Coordinate",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Mapping",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Image Texture.003",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "Green Leaves 01_Opacity.jpg"
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Image Texture",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "Green Leaves 01_BaseColor.png"
+        },
+        {
+          "name": "Color Ramp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MULTIPLY"
+        },
+        {
+          "name": "Image Texture.004",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "Green Leaves 01_AmbientOcclusion.jpg"
+        },
+        {
+          "name": "Hue/Saturation/Value",
+          "type": "HUE_SAT",
+          "inputs": {
+            "Hue": 0.5099999904632568,
+            "Saturation": 1.100000023841858,
+            "Value": 1.0,
+            "Factor": 1.0,
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Math",
+          "type": "MATH",
+          "inputs": {
+            "Value": 0.5
+          },
+          "outputs": {},
+          "operation": "GREATER_THAN"
+        }
+      ],
+      "links": [
+        {
+          "from": "Reroute.Output",
+          "to": "Image Texture.004.Vector"
+        },
+        {
+          "from": "Reroute.Output",
+          "to": "Image Texture.Vector"
+        },
+        {
+          "from": "Reroute.Output",
+          "to": "Image Texture.001.Vector"
+        },
+        {
+          "from": "Reroute.Output",
+          "to": "Image Texture.002.Vector"
+        },
+        {
+          "from": "Reroute.Output",
+          "to": "Image Texture.003.Vector"
+        },
+        {
+          "from": "Texture Coordinate.UV",
+          "to": "Mapping.Vector"
+        },
+        {
+          "from": "Value.Value",
+          "to": "Mapping.Scale"
+        },
+        {
+          "from": "Mapping.Vector",
+          "to": "Reroute.Input"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Transparent BSDF.BSDF",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Image Texture.Color",
+          "to": "Color Ramp.Factor"
+        },
+        {
+          "from": "Hue/Saturation/Value.Color",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Color Ramp.Color",
+          "to": "Mix.A"
+        },
+        {
+          "from": "Image Texture.004.Color",
+          "to": "Mix.B"
+        },
+        {
+          "from": "Mix.Result",
+          "to": "Hue/Saturation/Value.Color"
+        },
+        {
+          "from": "Image Texture.003.Color",
+          "to": "Math.Value"
+        },
+        {
+          "from": "Math.Value",
+          "to": "Mix Shader.Factor"
+        }
+      ]
+    },
+    "Ground": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Diffuse BSDF",
+          "type": "BSDF_DIFFUSE",
+          "inputs": {
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ],
+            "Roughness": 0.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Shader to RGB",
+          "type": "SHADERTORGB",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Invert",
+          "type": "INVERT",
+          "inputs": {
+            "Factor": 1.0,
+            "Color": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "ColorRamp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Bump",
+          "type": "BUMP",
+          "inputs": {
+            "Strength": 1.0,
+            "Distance": 1.0,
+            "Filter Width": 1.0,
+            "Height": 1.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435-\u0442\u0435\u043a\u0441\u0442\u0443\u0440\u0430.004",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "Ground_2_2K_Normal.jpg"
+        },
+        {
+          "name": "\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435-\u0442\u0435\u043a\u0441\u0442\u0443\u0440\u0430.001",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "Ground_2_2K_Albedo.jpg"
+        },
+        {
+          "name": "Hue Saturation Value",
+          "type": "HUE_SAT",
+          "inputs": {
+            "Hue": 0.5,
+            "Saturation": 1.0,
+            "Value": 0.4000000059604645,
+            "Factor": 1.0,
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Hue Saturation Value.001",
+          "type": "HUE_SAT",
+          "inputs": {
+            "Hue": 0.5,
+            "Saturation": 1.2300000190734863,
+            "Value": 3.0,
+            "Factor": 1.0,
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Normal Map",
+          "type": "NORMAL_MAP",
+          "inputs": {
+            "Strength": 0.06000000238418579,
+            "Color": [
+              0.5,
+              0.5,
+              1.0,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.001",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Image Texture.001",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "test_1.jpg"
+        },
+        {
+          "name": "Mapping",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Noise Texture",
+          "type": "TEX_NOISE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.0,
+            "Scale": 9.600000381469727,
+            "Detail": 2.0,
+            "Roughness": 0.5,
+            "Lacunarity": 2.0,
+            "Offset": 0.0,
+            "Gain": 1.0,
+            "Distortion": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "ColorRamp.001",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.002",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Diffuse BSDF.001",
+          "type": "BSDF_DIFFUSE",
+          "inputs": {
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ],
+            "Roughness": 0.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Shader to RGB.001",
+          "type": "SHADERTORGB",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "ColorRamp.004",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Ambient Occlusion",
+          "type": "AMBIENT_OCCLUSION",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Distance": 1.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.003",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MULTIPLY"
+        },
+        {
+          "name": "ColorRamp.003",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.004",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MULTIPLY"
+        }
+      ],
+      "links": [
+        {
+          "from": "Diffuse BSDF.BSDF",
+          "to": "Shader to RGB.Shader"
+        },
+        {
+          "from": "Invert.Color",
+          "to": "Mix.Factor"
+        },
+        {
+          "from": "Hue Saturation Value.Color",
+          "to": "Mix.B"
+        },
+        {
+          "from": "Shader to RGB.Color",
+          "to": "ColorRamp.Factor"
+        },
+        {
+          "from": "ColorRamp.Color",
+          "to": "Invert.Color"
+        },
+        {
+          "from": "Bump.Normal",
+          "to": "Diffuse BSDF.Normal"
+        },
+        {
+          "from": "\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435-\u0442\u0435\u043a\u0441\u0442\u0443\u0440\u0430.004.Color",
+          "to": "Normal Map.Color"
+        },
+        {
+          "from": "Normal Map.Normal",
+          "to": "Bump.Normal"
+        },
+        {
+          "from": "Mix.002.Result",
+          "to": "Hue Saturation Value.001.Color"
+        },
+        {
+          "from": "Hue Saturation Value.001.Color",
+          "to": "Hue Saturation Value.Color"
+        },
+        {
+          "from": "Hue Saturation Value.001.Color",
+          "to": "Mix.A"
+        },
+        {
+          "from": "\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435-\u0442\u0435\u043a\u0441\u0442\u0443\u0440\u0430.001.Color",
+          "to": "Mix.001.A"
+        },
+        {
+          "from": "Mix.001.Result",
+          "to": "Mix.002.A"
+        },
+        {
+          "from": "Image Texture.001.Color",
+          "to": "Mix.002.B"
+        },
+        {
+          "from": "Mapping.Vector",
+          "to": "Noise Texture.Vector"
+        },
+        {
+          "from": "Texture Coordinate.Object",
+          "to": "Mapping.Vector"
+        },
+        {
+          "from": "Noise Texture.Factor",
+          "to": "ColorRamp.001.Factor"
+        },
+        {
+          "from": "ColorRamp.001.Color",
+          "to": "Mix.002.Factor"
+        },
+        {
+          "from": "Diffuse BSDF.001.BSDF",
+          "to": "Shader to RGB.001.Shader"
+        },
+        {
+          "from": "Shader to RGB.001.Color",
+          "to": "ColorRamp.004.Factor"
+        },
+        {
+          "from": "ColorRamp.004.Color",
+          "to": "Mix.003.B"
+        },
+        {
+          "from": "Mix.Result",
+          "to": "Mix.003.A"
+        },
+        {
+          "from": "Ambient Occlusion.Color",
+          "to": "ColorRamp.003.Factor"
+        },
+        {
+          "from": "ColorRamp.003.Color",
+          "to": "Mix.004.B"
+        },
+        {
+          "from": "Mix.003.Result",
+          "to": "Mix.004.A"
+        },
+        {
+          "from": "Mix.004.Result",
+          "to": "Material Output.Surface"
+        }
+      ]
+    },
+    "Material": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Mapping",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0011), order='XYZ'>",
+            "Scale": "<Vector (0.1100, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Noise Texture",
+          "type": "TEX_NOISE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.0,
+            "Scale": 70.61000061035156,
+            "Detail": 0.0,
+            "Roughness": 0.5,
+            "Lacunarity": 2.0,
+            "Offset": 0.0,
+            "Gain": 1.0,
+            "Distortion": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Noise Texture.001",
+          "type": "TEX_NOISE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.0020000000949949026,
+            "Scale": 3.25,
+            "Detail": 2.0,
+            "Roughness": 0.5,
+            "Lacunarity": 2.0,
+            "Offset": 0.0,
+            "Gain": 1.0,
+            "Distortion": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Invert Color",
+          "type": "INVERT",
+          "inputs": {
+            "Factor": 1.0,
+            "Color": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group.001",
+          "type": "GROUP",
+          "inputs": {
+            "A": [
+              0.5,
+              0.5,
+              0.5,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Group.005",
+          "type": "GROUP",
+          "inputs": {
+            "Value": 1.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.002",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "ADD"
+        },
+        {
+          "name": "Invert Color.001",
+          "type": "INVERT",
+          "inputs": {
+            "Factor": 1.0,
+            "Color": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group.007",
+          "type": "GROUP",
+          "inputs": {
+            "Factor": 0.12208300083875656,
+            "Location": "<Vector (-0.0800, 0.0000, 0.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mapping.001",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate.001",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Environment Texture",
+          "type": "TEX_ENVIRONMENT",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "forest.exr"
+        },
+        {
+          "name": "Mix.001",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Texture Coordinate.002",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Noise Texture.002",
+          "type": "TEX_NOISE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.0,
+            "Scale": 5.0,
+            "Detail": 2.0,
+            "Roughness": 0.5,
+            "Lacunarity": 2.0,
+            "Offset": 0.0,
+            "Gain": 1.0,
+            "Distortion": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.001",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mapping.002",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group.006",
+          "type": "GROUP",
+          "inputs": {
+            "Value": 50.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group.002",
+          "type": "GROUP",
+          "inputs": {
+            "Factor": 0.12208300083875656,
+            "Location": "<Vector (-0.0800, 0.0000, 0.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Hue/Saturation/Value",
+          "type": "HUE_SAT",
+          "inputs": {
+            "Hue": 0.5899999737739563,
+            "Saturation": 1.0,
+            "Value": 1.0,
+            "Factor": 1.0,
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group",
+          "type": "GROUP",
+          "inputs": {
+            "A": [
+              0.5,
+              0.5,
+              0.5,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group.003",
+          "type": "GROUP",
+          "inputs": {
+            "Factor": 1.0,
+            "B": [
+              0.5,
+              0.5,
+              0.5,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.003",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "ADD"
+        },
+        {
+          "name": "Mix.004",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Transparent BSDF",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              0.5190714001655579,
+              1.0,
+              0.9288921356201172,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.005",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "ADD"
+        },
+        {
+          "name": "Mix.007",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "ADD"
+        },
+        {
+          "name": "Group.009",
+          "type": "GROUP",
+          "inputs": {
+            "Value": 1.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group.010",
+          "type": "GROUP",
+          "inputs": {
+            "Value": 1.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.006",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Mix.008",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "ADD"
+        },
+        {
+          "name": "Glass BSDF",
+          "type": "BSDF_GLASS",
+          "inputs": {
+            "Color": [
+              0.5190709829330444,
+              1.0,
+              0.9288920164108276,
+              1.0
+            ],
+            "Roughness": 0.0,
+            "IOR": 1.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0,
+            "Thin Film Thickness": 0.0,
+            "Thin Film IOR": 1.3300000429153442
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Glass BSDF.001",
+          "type": "BSDF_GLASS",
+          "inputs": {
+            "Color": [
+              0.5190709829330444,
+              1.0,
+              0.9288920164108276,
+              1.0
+            ],
+            "Roughness": 0.0,
+            "IOR": 1.1799999475479126,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0,
+            "Thin Film Thickness": 0.0,
+            "Thin Film IOR": 1.3300000429153442
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mapping.003",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate.003",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Noise Texture.003",
+          "type": "TEX_NOISE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.007692307699471712,
+            "Scale": 5.0,
+            "Detail": 2.0,
+            "Roughness": 0.5,
+            "Lacunarity": 2.0,
+            "Offset": 0.0,
+            "Gain": 1.0,
+            "Distortion": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader.001",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.002",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Hue/Saturation/Value.001",
+          "type": "HUE_SAT",
+          "inputs": {
+            "Hue": 0.6000000238418579,
+            "Saturation": 2.0,
+            "Value": 1.0,
+            "Factor": 1.0,
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Value",
+          "type": "VALUE",
+          "inputs": {},
+          "outputs": {},
+          "value": 0.0
+        },
+        {
+          "name": "Material Output.001",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader.002",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Light Path",
+          "type": "LIGHT_PATH",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF.001",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Mapping.Vector",
+          "to": "Noise Texture.Vector"
+        },
+        {
+          "from": "Mix.Result",
+          "to": "Mapping.Vector"
+        },
+        {
+          "from": "Texture Coordinate.UV",
+          "to": "Mix.A"
+        },
+        {
+          "from": "Texture Coordinate.Object",
+          "to": "Noise Texture.001.Vector"
+        },
+        {
+          "from": "Noise Texture.001.Factor",
+          "to": "Mix.B"
+        },
+        {
+          "from": "Mapping.001.Vector",
+          "to": "Environment Texture.Vector"
+        },
+        {
+          "from": "Texture Coordinate.001.Object",
+          "to": "Mapping.001.Vector"
+        },
+        {
+          "from": "Environment Texture.Color",
+          "to": "Mix.001.A"
+        },
+        {
+          "from": "Mapping.002.Vector",
+          "to": "Noise Texture.002.Vector"
+        },
+        {
+          "from": "Texture Coordinate.002.Object",
+          "to": "Mapping.002.Vector"
+        },
+        {
+          "from": "Noise Texture.002.Factor",
+          "to": "Color Ramp.001.Factor"
+        },
+        {
+          "from": "Hue/Saturation/Value.001.Color",
+          "to": "Mix.001.B"
+        },
+        {
+          "from": "Noise Texture.Factor",
+          "to": "Color Ramp.Factor"
+        },
+        {
+          "from": "Mix.007.Result",
+          "to": "Mix Shader.Factor"
+        },
+        {
+          "from": "Mix.001.Result",
+          "to": "Hue/Saturation/Value.Color"
+        },
+        {
+          "from": "Hue/Saturation/Value.Color",
+          "to": "Group.A"
+        },
+        {
+          "from": "Invert Color.Color",
+          "to": "Group.001.A"
+        },
+        {
+          "from": "Color Ramp.Color",
+          "to": "Invert Color.Color"
+        },
+        {
+          "from": "Mix.008.Result",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Group.Result",
+          "to": "Group.003.B"
+        },
+        {
+          "from": "Group.001.Result",
+          "to": "Mix.002.A"
+        },
+        {
+          "from": "Group.005.Result",
+          "to": "Mix.002.B"
+        },
+        {
+          "from": "Group.003.Result",
+          "to": "Mix.003.A"
+        },
+        {
+          "from": "Group.006.Result",
+          "to": "Mix.003.B"
+        },
+        {
+          "from": "Group.002.Color",
+          "to": "Mix.004.Factor"
+        },
+        {
+          "from": "Mix.003.Result",
+          "to": "Mix.004.B"
+        },
+        {
+          "from": "Mix.002.Result",
+          "to": "Mix.005.A"
+        },
+        {
+          "from": "Invert Color.001.Color",
+          "to": "Mix.005.B"
+        },
+        {
+          "from": "Mix.004.Result",
+          "to": "Mix.006.A"
+        },
+        {
+          "from": "Mix.003.Result",
+          "to": "Mix.006.B"
+        },
+        {
+          "from": "Group.007.Color",
+          "to": "Invert Color.001.Color"
+        },
+        {
+          "from": "Mix.005.Result",
+          "to": "Mix.007.A"
+        },
+        {
+          "from": "Group.009.Color",
+          "to": "Mix.007.B"
+        },
+        {
+          "from": "Mix.006.Result",
+          "to": "Mix.008.A"
+        },
+        {
+          "from": "Group.010.Color",
+          "to": "Mix.008.B"
+        },
+        {
+          "from": "Glass BSDF.BSDF",
+          "to": "Mix Shader.001.Shader"
+        },
+        {
+          "from": "Glass BSDF.001.BSDF",
+          "to": "Mix Shader.001.Shader"
+        },
+        {
+          "from": "Mapping.003.Vector",
+          "to": "Noise Texture.003.Vector"
+        },
+        {
+          "from": "Texture Coordinate.003.Object",
+          "to": "Mapping.003.Vector"
+        },
+        {
+          "from": "Noise Texture.003.Factor",
+          "to": "Color Ramp.002.Factor"
+        },
+        {
+          "from": "Color Ramp.002.Color",
+          "to": "Mix Shader.001.Factor"
+        },
+        {
+          "from": "Mix Shader.001.Shader",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Color Ramp.001.Color",
+          "to": "Hue/Saturation/Value.001.Color"
+        },
+        {
+          "from": "Value.Value",
+          "to": "Material Output.Thickness"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Mix Shader.002.Shader"
+        },
+        {
+          "from": "Mix Shader.002.Shader",
+          "to": "Material Output.001.Surface"
+        },
+        {
+          "from": "Light Path.Is Shadow Ray",
+          "to": "Mix Shader.002.Factor"
+        },
+        {
+          "from": "Transparent BSDF.001.BSDF",
+          "to": "Mix Shader.002.Shader"
+        }
+      ]
+    },
+    "Material.001": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Diffuse BSDF",
+          "type": "BSDF_DIFFUSE",
+          "inputs": {
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ],
+            "Roughness": 0.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Shader to RGB",
+          "type": "SHADERTORGB",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Mapping",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Noise Texture",
+          "type": "TEX_NOISE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.0,
+            "Scale": 2.820000171661377,
+            "Detail": 1.3000000715255737,
+            "Roughness": 0.5,
+            "Lacunarity": 2.0,
+            "Offset": 0.0,
+            "Gain": 1.0,
+            "Distortion": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.002",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.001",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.003",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Mix.001",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "ADD"
+        },
+        {
+          "name": "Mapping.001",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate.001",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Voronoi Texture",
+          "type": "TEX_VORONOI",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.0,
+            "Scale": 2.3000001907348633,
+            "Detail": 0.0,
+            "Roughness": 0.5,
+            "Lacunarity": 2.0,
+            "Smoothness": 1.0,
+            "Exponent": 0.5,
+            "Randomness": 1.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Bump",
+          "type": "BUMP",
+          "inputs": {
+            "Strength": 0.03333386033773422,
+            "Distance": 1.0,
+            "Filter Width": 1.0,
+            "Height": 1.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Diffuse BSDF.BSDF",
+          "to": "Shader to RGB.Shader"
+        },
+        {
+          "from": "Mapping.Vector",
+          "to": "Noise Texture.Vector"
+        },
+        {
+          "from": "Texture Coordinate.Object",
+          "to": "Mapping.Vector"
+        },
+        {
+          "from": "Noise Texture.Factor",
+          "to": "Color Ramp.001.Factor"
+        },
+        {
+          "from": "Noise Texture.Factor",
+          "to": "Color Ramp.002.Factor"
+        },
+        {
+          "from": "Color Ramp.002.Color",
+          "to": "Mix.A"
+        },
+        {
+          "from": "Color Ramp.001.Color",
+          "to": "Mix.B"
+        },
+        {
+          "from": "Shader to RGB.Color",
+          "to": "Color Ramp.Factor"
+        },
+        {
+          "from": "Color Ramp.Color",
+          "to": "Mix.Factor"
+        },
+        {
+          "from": "Shader to RGB.Color",
+          "to": "Color Ramp.003.Factor"
+        },
+        {
+          "from": "Mix.001.Result",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Mix.Result",
+          "to": "Mix.001.A"
+        },
+        {
+          "from": "Color Ramp.003.Color",
+          "to": "Mix.001.B"
+        },
+        {
+          "from": "Mapping.001.Vector",
+          "to": "Voronoi Texture.Vector"
+        },
+        {
+          "from": "Texture Coordinate.001.Object",
+          "to": "Mapping.001.Vector"
+        },
+        {
+          "from": "Voronoi Texture.Distance",
+          "to": "Bump.Height"
+        },
+        {
+          "from": "Bump.Normal",
+          "to": "Diffuse BSDF.Normal"
+        }
+      ]
+    },
+    "Material.004": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Texture Coordinate",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Mapping",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Value",
+          "type": "VALUE",
+          "inputs": {},
+          "outputs": {},
+          "value": 1.0
+        },
+        {
+          "name": "Math.001",
+          "type": "MATH",
+          "inputs": {
+            "Value": 0.5
+          },
+          "outputs": {},
+          "operation": "DIVIDE"
+        },
+        {
+          "name": "Math",
+          "type": "MATH",
+          "inputs": {
+            "Value": 0.5
+          },
+          "outputs": {},
+          "operation": "ADD"
+        },
+        {
+          "name": "Gradient Texture",
+          "type": "TEX_GRADIENT",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate.001",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Noise Texture",
+          "type": "TEX_NOISE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "W": 0.0,
+            "Scale": 15.09999942779541,
+            "Detail": 0.0,
+            "Roughness": 0.0,
+            "Lacunarity": 2.0,
+            "Offset": 0.0,
+            "Gain": 1.0,
+            "Distortion": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Mapping.001",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Math.002",
+          "type": "MATH",
+          "inputs": {
+            "Value": 0.5
+          },
+          "outputs": {},
+          "operation": "MULTIPLY"
+        },
+        {
+          "name": "Mix Shader",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.001",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output.001",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader.001",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Light Path",
+          "type": "LIGHT_PATH",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF.001",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Texture Coordinate.UV",
+          "to": "Mapping.Vector"
+        },
+        {
+          "from": "Mapping.Vector",
+          "to": "Gradient Texture.Vector"
+        },
+        {
+          "from": "Gradient Texture.Color",
+          "to": "Color Ramp.Factor"
+        },
+        {
+          "from": "Color Ramp.Color",
+          "to": "Math.Value"
+        },
+        {
+          "from": "Math.001.Value",
+          "to": "Math.Value"
+        },
+        {
+          "from": "Value.Value",
+          "to": "Math.001.Value"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Noise Texture.Factor",
+          "to": "Math.002.Value"
+        },
+        {
+          "from": "Gradient Texture.Color",
+          "to": "Math.002.Value"
+        },
+        {
+          "from": "Texture Coordinate.001.Generated",
+          "to": "Mapping.001.Vector"
+        },
+        {
+          "from": "Mix.Result",
+          "to": "Noise Texture.Vector"
+        },
+        {
+          "from": "Math.Value",
+          "to": "Mix.A"
+        },
+        {
+          "from": "Mapping.001.Vector",
+          "to": "Mix.B"
+        },
+        {
+          "from": "Math.002.Value",
+          "to": "Color Ramp.001.Factor"
+        },
+        {
+          "from": "Color Ramp.001.Color",
+          "to": "Mix Shader.Factor"
+        },
+        {
+          "from": "Transparent BSDF.BSDF",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Color Ramp.001.Color",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Mix Shader.001.Shader"
+        },
+        {
+          "from": "Mix Shader.001.Shader",
+          "to": "Material Output.001.Surface"
+        },
+        {
+          "from": "Light Path.Is Shadow Ray",
+          "to": "Mix Shader.001.Factor"
+        },
+        {
+          "from": "Transparent BSDF.001.BSDF",
+          "to": "Mix Shader.001.Shader"
+        }
+      ]
+    },
+    "Material.005": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Principled BSDF",
+          "type": "BSDF_PRINCIPLED",
+          "inputs": {
+            "Base Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ],
+            "Metallic": 0.0,
+            "Roughness": 0.5,
+            "IOR": 1.4500000476837158,
+            "Alpha": 1.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0,
+            "Diffuse Roughness": 0.0,
+            "Subsurface Weight": 0.0,
+            "Subsurface Radius": [
+              1.0,
+              0.20000000298023224,
+              0.10000000149011612
+            ],
+            "Subsurface Scale": 0.05000000074505806,
+            "Subsurface IOR": 1.399999976158142,
+            "Subsurface Anisotropy": 0.0,
+            "Specular IOR Level": 0.5,
+            "Specular Tint": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Anisotropic": 0.0,
+            "Anisotropic Rotation": 0.0,
+            "Tangent": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Transmission Weight": 0.0,
+            "Coat Weight": 0.0,
+            "Coat Roughness": 0.029999999329447746,
+            "Coat IOR": 1.5,
+            "Coat Tint": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Coat Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Sheen Weight": 0.0,
+            "Sheen Roughness": 0.5,
+            "Sheen Tint": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Emission Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Emission Strength": 0.0,
+            "Thin Film Thickness": 0.0,
+            "Thin Film IOR": 1.3300000429153442
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Principled BSDF.BSDF",
+          "to": "Material Output.Surface"
+        }
+      ]
+    },
+    "Material.006": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Emission",
+          "type": "EMISSION",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Strength": 1.0,
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Object Info",
+          "type": "OBJECT_INFO",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "ColorRamp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Object Info.Random",
+          "to": "ColorRamp.Factor"
+        },
+        {
+          "from": "ColorRamp.Color",
+          "to": "Material Output.Surface"
+        }
+      ]
+    },
+    "Material.007": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Emission",
+          "type": "EMISSION",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Strength": 1.0,
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Image Texture",
+          "type": "TEX_IMAGE",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {},
+          "image": "test_1.jpg"
+        }
+      ],
+      "links": [
+        {
+          "from": "Image Texture.Color",
+          "to": "Emission.Color"
+        },
+        {
+          "from": "Emission.Emission",
+          "to": "Material Output.Surface"
+        }
+      ]
+    },
+    "Material.008": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Mapping",
+          "type": "MAPPING",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+            "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "Scale": "<Vector (1.0000, 0.5900, 1.0000)>"
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Texture Coordinate",
+          "type": "TEX_COORD",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Checker Texture",
+          "type": "TEX_CHECKER",
+          "inputs": {
+            "Vector": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Color1": [
+              0.024158034473657608,
+              0.024158034473657608,
+              0.024158034473657608,
+              1.0
+            ],
+            "Color2": [
+              0.036889683455228806,
+              0.036889683455228806,
+              0.036889683455228806,
+              1.0
+            ],
+            "Scale": 540.1099853515625
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output.001",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Light Path",
+          "type": "LIGHT_PATH",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Mapping.Vector",
+          "to": "Checker Texture.Vector"
+        },
+        {
+          "from": "Checker Texture.Color",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Texture Coordinate.UV",
+          "to": "Mapping.Vector"
+        },
+        {
+          "from": "Checker Texture.Color",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Material Output.001.Surface"
+        },
+        {
+          "from": "Light Path.Is Shadow Ray",
+          "to": "Mix Shader.Factor"
+        },
+        {
+          "from": "Transparent BSDF.BSDF",
+          "to": "Mix Shader.Shader"
+        }
+      ]
+    },
+    "OH_Outline_Material": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Layer Weight",
+          "type": "LAYER_WEIGHT",
+          "inputs": {
+            "Blend": 0.5,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "RGB",
+          "type": "RGB",
+          "inputs": {},
+          "outputs": {},
+          "color": [
+            0.6079999804496765,
+            0.6079999804496765,
+            0.6079999804496765
+          ]
+        },
+        {
+          "name": "Color Ramp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix Shader",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MULTIPLY"
+        },
+        {
+          "name": "Mix Shader.001",
+          "type": "MIX_SHADER",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Light Path",
+          "type": "LIGHT_PATH",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Transparent BSDF.001",
+          "type": "BSDF_TRANSPARENT",
+          "inputs": {
+            "Color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        }
+      ],
+      "links": [
+        {
+          "from": "Layer Weight.Fresnel",
+          "to": "Color Ramp.Factor"
+        },
+        {
+          "from": "RGB.Color",
+          "to": "Mix.A"
+        },
+        {
+          "from": "Color Ramp.Color",
+          "to": "Mix.B"
+        },
+        {
+          "from": "Color Ramp.Color",
+          "to": "Mix Shader.Factor"
+        },
+        {
+          "from": "Transparent BSDF.BSDF",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Mix.Result",
+          "to": "Mix Shader.Shader"
+        },
+        {
+          "from": "Mix Shader.Shader",
+          "to": "Mix Shader.001.Shader"
+        },
+        {
+          "from": "Mix Shader.001.Shader",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Light Path.Is Shadow Ray",
+          "to": "Mix Shader.001.Factor"
+        },
+        {
+          "from": "Transparent BSDF.001.BSDF",
+          "to": "Mix Shader.001.Shader"
+        }
+      ]
+    },
+    "Rocky ground": {
+      "use_nodes": true,
+      "nodes": [
+        {
+          "name": "Material Output",
+          "type": "OUTPUT_MATERIAL",
+          "inputs": {
+            "Displacement": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Thickness": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Normal Map",
+          "type": "NORMAL_MAP",
+          "inputs": {
+            "Strength": 1.0,
+            "Color": [
+              0.5,
+              0.5,
+              1.0,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MULTIPLY"
+        },
+        {
+          "name": "Diffuse BSDF",
+          "type": "BSDF_DIFFUSE",
+          "inputs": {
+            "Color": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929,
+              1.0
+            ],
+            "Roughness": 0.0,
+            "Normal": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "Weight": 0.0
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Shader to RGB",
+          "type": "SHADERTORGB",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.001",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.002",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Mix.001",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "ADD"
+        },
+        {
+          "name": "Color Ramp.003",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Color Ramp.004",
+          "type": "VALTORGB",
+          "inputs": {
+            "Factor": 0.5
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Reroute",
+          "type": "REROUTE",
+          "inputs": {
+            "Input": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "outputs": {}
+        },
+        {
+          "name": "Group",
+          "type": "GROUP",
+          "inputs": {},
+          "outputs": {}
+        },
+        {
+          "name": "Mix.002",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        },
+        {
+          "name": "Mix.003",
+          "type": "MIX",
+          "inputs": {
+            "Factor": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+            "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+          },
+          "outputs": {},
+          "blend_type": "MIX"
+        }
+      ],
+      "links": [
+        {
+          "from": "Reroute.Output",
+          "to": "Color Ramp.Factor"
+        },
+        {
+          "from": "Diffuse BSDF.BSDF",
+          "to": "Shader to RGB.Shader"
+        },
+        {
+          "from": "Shader to RGB.Color",
+          "to": "Color Ramp.001.Factor"
+        },
+        {
+          "from": "Group.N",
+          "to": "Normal Map.Color"
+        },
+        {
+          "from": "Normal Map.Normal",
+          "to": "Diffuse BSDF.Normal"
+        },
+        {
+          "from": "Mix.002.Result",
+          "to": "Mix.A"
+        },
+        {
+          "from": "Color Ramp.001.Color",
+          "to": "Mix.B"
+        },
+        {
+          "from": "Shader to RGB.Color",
+          "to": "Color Ramp.002.Factor"
+        },
+        {
+          "from": "Mix.Result",
+          "to": "Mix.001.A"
+        },
+        {
+          "from": "Color Ramp.002.Color",
+          "to": "Mix.001.B"
+        },
+        {
+          "from": "Group.H",
+          "to": "Color Ramp.003.Factor"
+        },
+        {
+          "from": "Color Ramp.003.Color",
+          "to": "Mix.002.Factor"
+        },
+        {
+          "from": "Mix.003.Result",
+          "to": "Mix.002.B"
+        },
+        {
+          "from": "Mix.001.Result",
+          "to": "Material Output.Surface"
+        },
+        {
+          "from": "Reroute.Output",
+          "to": "Color Ramp.004.Factor"
+        },
+        {
+          "from": "Group.Color",
+          "to": "Reroute.Input"
+        },
+        {
+          "from": "Color Ramp.Color",
+          "to": "Mix.003.A"
+        },
+        {
+          "from": "Color Ramp.004.Color",
+          "to": "Mix.003.B"
+        }
+      ]
+    }
+  },
+  "collections": [
+    "Collection",
+    "Collection 2",
+    "Collection 3",
+    "Collection 4",
+    "Collection 5",
+    "Emit"
+  ],
+  "scene": {
+    "name": "Scene",
+    "frame_current": 1,
+    "render_engine": "BLENDER_EEVEE"
+  },
+  "world_nodes": [
+    {
+      "name": "World Output",
+      "type": "OUTPUT_WORLD",
+      "inputs": {},
+      "outputs": {}
+    },
+    {
+      "name": "Background",
+      "type": "BACKGROUND",
+      "inputs": {
+        "Color": [
+          0.05087608844041824,
+          0.05087608844041824,
+          0.05087608844041824,
+          1.0
+        ],
+        "Strength": 1.0,
+        "Weight": 0.0
+      },
+      "outputs": {}
+    }
+  ]
+}

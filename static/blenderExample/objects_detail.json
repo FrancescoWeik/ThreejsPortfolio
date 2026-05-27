@@ -1,0 +1,184 @@
+[
+  {
+    "name": "Empty",
+    "type": "EMPTY",
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.3855502605438232,
+      1.3855502605438232,
+      1.3855502605438232
+    ],
+    "dimensions": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "materials": [],
+    "has_geometry_nodes": false,
+    "modifiers": []
+  },
+  {
+    "name": "Empty.001",
+    "type": "EMPTY",
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "materials": [],
+    "has_geometry_nodes": false,
+    "modifiers": []
+  },
+  {
+    "name": "Plane",
+    "type": "MESH",
+    "location": [
+      -3.3051905632019043,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "materials": [
+      "Green Leaves 01"
+    ],
+    "has_geometry_nodes": false,
+    "modifiers": []
+  },
+  {
+    "name": "Sphere",
+    "type": "MESH",
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": [
+      1.1218013763427734,
+      1.8710722923278809,
+      1.8702704906463623
+    ],
+    "materials": [
+      "Material",
+      "OH_Outline_Material"
+    ],
+    "has_geometry_nodes": true,
+    "modifiers": [
+      "DISPLACE",
+      "NODES",
+      "SOLIDIFY"
+    ],
+    "geometry_nodes_group": "Geometry Nodes.001"
+  },
+  {
+    "name": "Sphere.001",
+    "type": "MESH",
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": [
+      2.0,
+      1.632568597793579,
+      1.632568597793579
+    ],
+    "materials": [
+      "Ground",
+      "Material.007"
+    ],
+    "has_geometry_nodes": false,
+    "modifiers": [
+      "PARTICLE_SYSTEM",
+      "PARTICLE_SYSTEM",
+      "PARTICLE_SYSTEM"
+    ]
+  },
+  {
+    "name": "Sphere.002",
+    "type": "MESH",
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": [
+      1.1152119636535645,
+      1.903275966644287,
+      1.8856635093688965
+    ],
+    "materials": [
+      "Rocky ground"
+    ],
+    "has_geometry_nodes": true,
+    "modifiers": [
+      "SUBSURF",
+      "DISPLACE",
+      "NODES"
+    ],
+    "geometry_nodes_group": "Geometry Nodes"
+  },
+  {
+    "name": "Sphere.003",
+    "type": "MESH",
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": [
+      0.8729070425033569,
+      1.887751817703247,
+      1.8975869417190552
+    ],
+    "materials": [
+      "Material.005"
+    ],
+    "has_geometry_nodes": false,
+    "modifiers": [
+      "PARTICLE_SYSTEM"
+    ]
+  }
+]

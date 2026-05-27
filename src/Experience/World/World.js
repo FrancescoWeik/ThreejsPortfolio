@@ -3,6 +3,7 @@ import Environment from './Environment.js'
 //import Floor from './Floor.js'
 //import Fox from './Fox.js'
 import Pond from "./Pond.js"
+import Bush from './Bush.js'
 import RoomSpider from './RoomSpider.js'
 import Spider from './Spider.js'
 import ProjectModel from './ProjectModel.js'
@@ -23,7 +24,8 @@ export default class World{
         //Wait for resources
         this.resources.on('ready', () => {
             //Setup
-            this.room = new Pond(this.scene);
+            this.room = new Pond(this.scene)
+            this.bush = new Bush()
             /*this.room = new RoomSpider();
             this.television = new Television();
 
@@ -54,6 +56,9 @@ export default class World{
         //}
         if(this.room){
             this.room.update();
+        }
+        if(this.bush){
+            this.bush.update()
         }
     }
 }

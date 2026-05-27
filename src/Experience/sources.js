@@ -204,6 +204,26 @@ export default [
         path: 'textures/pond/OuterLake.png'
     },
     {
+        name: 'leafBaseColor',
+        type: 'texture',
+        path: 'textures/leaves/baseColor.png'
+    },
+    {
+        name: 'leafOpacity',
+        type: 'texture',
+        path: 'textures/leaves/opacity.jpg'
+    },
+    {
+        name: 'groundAlbedo',
+        type: 'texture',
+        path: 'textures/ground/albedo.jpg'
+    },
+    {
+        name: 'groundRocky',
+        type: 'texture',
+        path: 'textures/ground/rocky.jpg'
+    },
+    {
         name: 'duckModel',
         type: 'gltfModel',
         path: 'models/Duck/DUCK.glb'

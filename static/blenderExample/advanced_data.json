@@ -1,0 +1,1444 @@
+{
+  "particle_systems": {
+    "Sphere.001_ParticleSettings": {
+      "object": "Sphere.001",
+      "ps_name": "ParticleSettings",
+      "count": 5000,
+      "render_type": "COLLECTION",
+      "instance_object": null,
+      "instance_collection": "Emit",
+      "size": 0.6800003051757812,
+      "size_random": 0.8367347121238708,
+      "emit_from": "FACE"
+    },
+    "Sphere.001_ParticleSystem": {
+      "object": "Sphere.001",
+      "ps_name": "ParticleSystem",
+      "count": 10000,
+      "render_type": "PATH",
+      "instance_object": null,
+      "instance_collection": null,
+      "size": 0.05000000074505806,
+      "size_random": 0.0,
+      "emit_from": "FACE"
+    },
+    "Sphere.001_ParticleSystem.001": {
+      "object": "Sphere.001",
+      "ps_name": "ParticleSystem.001",
+      "count": 229,
+      "render_type": "OBJECT",
+      "instance_object": "Leaves Instance.060",
+      "instance_collection": null,
+      "size": 0.10999999940395355,
+      "size_random": 0.0,
+      "emit_from": "FACE"
+    },
+    "Sphere.003_ParticleSystem": {
+      "object": "Sphere.003",
+      "ps_name": "ParticleSystem",
+      "count": 11,
+      "render_type": "OBJECT",
+      "instance_object": "Plane.020",
+      "instance_collection": null,
+      "size": 1.71999990940094,
+      "size_random": 0.0,
+      "emit_from": "FACE"
+    }
+  },
+  "collections": {
+    "Collection": [
+      "Sphere",
+      "Sphere.001",
+      "Sun",
+      "Sphere.002",
+      "Empty",
+      "Empty.001",
+      "Plane",
+      "Sphere.003"
+    ],
+    "Collection 2": [
+      "Plane.001",
+      "Plane.002",
+      "Plane.003",
+      "Plane.004",
+      "Plane.005",
+      "Plane.006",
+      "Plane.007",
+      "Plane.008",
+      "Plane.009",
+      "Plane.010",
+      "Plane.011",
+      "Plane.012",
+      "Plane.014",
+      "Plane.015",
+      "Plane.016",
+      "Plane.017",
+      "Plane.018",
+      "Plane.019",
+      "Plane.013"
+    ],
+    "Collection 3": [
+      "rock.001",
+      "rock.002",
+      "rock.003"
+    ],
+    "Collection 4": [
+      "Plane.020"
+    ],
+    "Collection 5": [
+      "Leaves Instance.060"
+    ],
+    "Emit": [
+      "Plane.023",
+      "Plane.022",
+      "Plane.021",
+      "flower"
+    ]
+  },
+  "node_groups": {
+    "Auto Smooth": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT"
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Group Input.001",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Set Shade Smooth",
+        "type": "SET_SHADE_SMOOTH",
+        "inputs": {
+          "Selection": "True",
+          "Shade Smooth": "True"
+        }
+      },
+      {
+        "name": "Set Shade Smooth.001",
+        "type": "SET_SHADE_SMOOTH",
+        "inputs": {
+          "Selection": "True",
+          "Shade Smooth": "True"
+        }
+      },
+      {
+        "name": "Edge Angle",
+        "type": "MESH_EDGE_ANGLE"
+      },
+      {
+        "name": "Is Edge Smooth",
+        "type": "INPUT_EDGE_SMOOTH"
+      },
+      {
+        "name": "Is Face Smooth",
+        "type": "INPUT_SHADE_SMOOTH"
+      },
+      {
+        "name": "Boolean Math",
+        "type": "BOOLEAN_MATH",
+        "inputs": {
+          "Boolean": "False"
+        }
+      },
+      {
+        "name": "Compare",
+        "type": "COMPARE",
+        "inputs": {
+          "A": "",
+          "B": "",
+          "C": "0.8999999761581421",
+          "Angle": "0.08726649731397629",
+          "Epsilon": "0.0010000000474974513"
+        }
+      }
+    ],
+    "circle group": [
+      {
+        "name": "Mapping.003",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Wave Texture",
+        "type": "TEX_WAVE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Scale": "2.06000018119812",
+          "Distortion": "0.0",
+          "Detail": "2.0",
+          "Detail Scale": "1.0",
+          "Detail Roughness": "0.5",
+          "Phase Offset": "0.0"
+        }
+      },
+      {
+        "name": "Mix.002",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Texture Coordinate.003",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Noise Texture.003",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.0",
+          "Scale": "12.179999351501465",
+          "Detail": "0.0",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Mapping.004",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (4.2200, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Texture Coordinate.004",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Color Ramp.002",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Noise Texture.004",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.019999999552965164",
+          "Scale": "1.2300002574920654",
+          "Detail": "2.0",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Color Ramp.003",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Mix.003",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Color Ramp.004",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Mix.006",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Mix.004",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Group.004",
+        "type": "GROUP",
+        "inputs": {
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Scale": "<Vector (2.5500, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Group.006",
+        "type": "GROUP",
+        "inputs": {
+          "Location": "<Vector (0.0700, 0.0000, 0.0000)>",
+          "Scale": "<Vector (2.5500, 1.2700, 1.0000)>"
+        }
+      },
+      {
+        "name": "Mix.005",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Mix.007",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Group.007",
+        "type": "GROUP",
+        "inputs": {
+          "Location": "<Vector (0.2100, 0.2900, 0.0000)>",
+          "Scale": "<Vector (2.5500, 1.2700, 1.0000)>"
+        }
+      },
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Result": "[0.0, 0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Hue/Saturation/Value",
+        "type": "HUE_SAT",
+        "inputs": {
+          "Hue": "0.5",
+          "Saturation": "1.0",
+          "Value": "1.0",
+          "Factor": "1.0",
+          "Color": "[0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0]"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Group.002",
+        "type": "GROUP",
+        "inputs": {
+          "Factor": "0.0",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>"
+        }
+      }
+    ],
+    "Geometry Nodes": [
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Distribute Points on Faces.001",
+        "type": "DISTRIBUTE_POINTS_ON_FACES",
+        "inputs": {
+          "Selection": "True",
+          "Distance Min": "0.9199999570846558",
+          "Density Max": "48.05999755859375",
+          "Density": "30.299999237060547",
+          "Density Factor": "1.0",
+          "Seed": "0"
+        }
+      },
+      {
+        "name": "Collection Info",
+        "type": "COLLECTION_INFO",
+        "inputs": {
+          "Collection": "<bpy_struct, Collection(\"Collection 3\") at 0x000001BDE6B886A0>",
+          "Separate Children": "True",
+          "Reset Children": "True"
+        }
+      },
+      {
+        "name": "Scale Elements",
+        "type": "SCALE_ELEMENTS",
+        "inputs": {
+          "Selection": "True",
+          "Scale": "0.6800000071525574",
+          "Center": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Scale Mode": "Single Axis",
+          "Axis": "[1.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Instance on Points",
+        "type": "INSTANCE_ON_POINTS",
+        "inputs": {
+          "Selection": "True",
+          "Pick Instance": "True",
+          "Instance Index": "0",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (0.3100, 0.3100, 0.2200)>"
+        }
+      },
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT"
+      },
+      {
+        "name": "Join Geometry",
+        "type": "JOIN_GEOMETRY"
+      },
+      {
+        "name": "Rotate Instances",
+        "type": "ROTATE_INSTANCES",
+        "inputs": {
+          "Selection": "True",
+          "Rotation": "<Euler (x=0.0200, y=0.0000, z=0.0000), order='XYZ'>",
+          "Pivot Point": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Local Space": "False"
+        }
+      },
+      {
+        "name": "Combine XYZ",
+        "type": "COMBXYZ",
+        "inputs": {
+          "X": "0.019999999552965164",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      },
+      {
+        "name": "Vector Math",
+        "type": "VECT_MATH",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Scale": "1.0"
+        }
+      },
+      {
+        "name": "Set Position",
+        "type": "SET_POSITION",
+        "inputs": {
+          "Selection": "True",
+          "Position": "[0.0, 0.0, 0.0]",
+          "Offset": "<Vector (0.0000, 0.0000, 0.4000)>"
+        }
+      },
+      {
+        "name": "Realize Instances.001",
+        "type": "REALIZE_INSTANCES",
+        "inputs": {
+          "Selection": "True",
+          "Realize All": "True",
+          "Depth": "0"
+        }
+      }
+    ],
+    "Geometry Nodes.001": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT"
+      },
+      {
+        "name": "Join Geometry",
+        "type": "JOIN_GEOMETRY"
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Distribute Points on Faces.001",
+        "type": "DISTRIBUTE_POINTS_ON_FACES",
+        "inputs": {
+          "Selection": "True",
+          "Distance Min": "0.5099999904632568",
+          "Density Max": "48.05999755859375",
+          "Density": "30.299999237060547",
+          "Density Factor": "1.0",
+          "Seed": "0"
+        }
+      },
+      {
+        "name": "Scale Elements",
+        "type": "SCALE_ELEMENTS",
+        "inputs": {
+          "Selection": "True",
+          "Scale": "1.0099999904632568",
+          "Center": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Scale Mode": "Uniform",
+          "Axis": "[1.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Instance on Points",
+        "type": "INSTANCE_ON_POINTS",
+        "inputs": {
+          "Selection": "True",
+          "Pick Instance": "True",
+          "Instance Index": "0",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (0.3100, 0.3100, 0.2200)>"
+        }
+      },
+      {
+        "name": "Combine XYZ",
+        "type": "COMBXYZ",
+        "inputs": {
+          "X": "0.019999999552965164",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      },
+      {
+        "name": "Vector Math",
+        "type": "VECT_MATH",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Scale": "1.0"
+        }
+      },
+      {
+        "name": "Collection Info",
+        "type": "COLLECTION_INFO",
+        "inputs": {
+          "Collection": "<bpy_struct, Collection(\"Collection 2\") at 0x000001BDE6B88920>",
+          "Separate Children": "True",
+          "Reset Children": "True"
+        }
+      },
+      {
+        "name": "Rotate Instances",
+        "type": "ROTATE_INSTANCES",
+        "inputs": {
+          "Selection": "True",
+          "Rotation": "<Euler (x=0.0200, y=0.0000, z=0.0000), order='XYZ'>",
+          "Pivot Point": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Local Space": "False"
+        }
+      }
+    ],
+    "Graidnet": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Color": "[0.0, 0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Gradient Texture",
+        "type": "TEX_GRADIENT",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Color Ramp.005",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Texture Coordinate.005",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Noise Texture",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.009999999776482582",
+          "Scale": "6.819999694824219",
+          "Detail": "0.7000000476837158",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Reroute",
+        "type": "REROUTE",
+        "inputs": {
+          "Input": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Mapping.005",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.5100, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Mix",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Mapping.006",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      }
+    ],
+    "Location": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Output": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Vector Math.001",
+        "type": "VECT_MATH",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Scale": "1.0"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Combine XYZ",
+        "type": "COMBXYZ",
+        "inputs": {
+          "X": "0.0",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      },
+      {
+        "name": "Switch",
+        "type": "SWITCH",
+        "inputs": {
+          "Switch": "False",
+          "False": "[0.0, 0.0, 0.0]",
+          "True": "[0.0, 0.0, 0.0]"
+        }
+      }
+    ],
+    "Mapping": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Output": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Group",
+        "type": "GROUP",
+        "inputs": {
+          "Switch": "False",
+          "False": "[0.0, 0.0, 0.0]",
+          "X": "0.0",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      },
+      {
+        "name": "Group.002",
+        "type": "GROUP",
+        "inputs": {
+          "Switch": "False",
+          "False": "[0.0, 0.0, 0.0]",
+          "X": "0.0",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      },
+      {
+        "name": "Group.001",
+        "type": "GROUP",
+        "inputs": {
+          "Switch": "False",
+          "False": "[0.0, 0.0, 0.0]",
+          "X": "0.0",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      }
+    ],
+    "NodeGroup": [
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Mapping",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Texture Coordinate",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Image Texture",
+        "type": "TEX_IMAGE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Image Texture.001",
+        "type": "TEX_IMAGE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Image Texture.002",
+        "type": "TEX_IMAGE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Image Texture.003",
+        "type": "TEX_IMAGE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Color": "[0.0, 0.0, 0.0, 0.0]",
+          "R": "[0.0, 0.0, 0.0, 0.0]",
+          "N": "[0.0, 0.0, 0.0, 0.0]",
+          "H": "[0.0, 0.0, 0.0, 0.0]"
+        }
+      }
+    ],
+    "NodeGroup.002": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Color": "[0.0, 0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Mapping.003",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Texture Coordinate.003",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Noise Texture.003",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.0",
+          "Scale": "1.0900001525878906",
+          "Detail": "2.0",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Bump",
+        "type": "BUMP",
+        "inputs": {
+          "Strength": "1.0",
+          "Distance": "1.0",
+          "Filter Width": "1.0",
+          "Height": "1.0",
+          "Normal": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Glossy BSDF",
+        "type": "BSDF_GLOSSY",
+        "inputs": {
+          "Color": "[0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0]",
+          "Roughness": "0.06923077255487442",
+          "Anisotropy": "0.0",
+          "Rotation": "0.0",
+          "Normal": "[0.0, 0.0, 0.0]",
+          "Tangent": "[0.0, 0.0, 0.0]",
+          "Weight": "0.0"
+        }
+      },
+      {
+        "name": "Shader to RGB",
+        "type": "SHADERTORGB"
+      },
+      {
+        "name": "Hue/Saturation/Value.001",
+        "type": "HUE_SAT",
+        "inputs": {
+          "Hue": "0.5",
+          "Saturation": "1.0",
+          "Value": "1.0",
+          "Factor": "1.0",
+          "Color": "[0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0]"
+        }
+      }
+    ],
+    "NodeGroup.004": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Color": "[0.0, 0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Voronoi Texture",
+        "type": "TEX_VORONOI",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.0",
+          "Scale": "12.549999237060547",
+          "Detail": "0.17000000178813934",
+          "Roughness": "0.6166666746139526",
+          "Lacunarity": "2.0",
+          "Smoothness": "1.0",
+          "Exponent": "0.5",
+          "Randomness": "1.0"
+        }
+      },
+      {
+        "name": "Color Ramp.005",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Texture Coordinate.005",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Mapping.005",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (2.5500, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Mapping.006",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0050, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      }
+    ],
+    "Roation": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Output": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Vector Rotate",
+        "type": "VECTOR_ROTATE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Center": "[0.0, 0.0, 0.0]",
+          "Axis": "[0.0, 0.0, 1.0]",
+          "Angle": "0.0",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Vector Rotate.001",
+        "type": "VECTOR_ROTATE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Center": "[0.0, 0.0, 0.0]",
+          "Axis": "[0.0, 0.0, 1.0]",
+          "Angle": "0.0",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Vector Rotate.002",
+        "type": "VECTOR_ROTATE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Center": "[0.0, 0.0, 0.0]",
+          "Axis": "[0.0, 0.0, 1.0]",
+          "Angle": "0.0",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Switch",
+        "type": "SWITCH",
+        "inputs": {
+          "Switch": "False",
+          "False": "[0.0, 0.0, 0.0]",
+          "True": "[0.0, 0.0, 0.0]"
+        }
+      }
+    ],
+    "Scale": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Output": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Vector Math.001",
+        "type": "VECT_MATH",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Scale": "1.0"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Combine XYZ",
+        "type": "COMBXYZ",
+        "inputs": {
+          "X": "0.0",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      },
+      {
+        "name": "Switch",
+        "type": "SWITCH",
+        "inputs": {
+          "Switch": "False",
+          "False": "[0.0, 0.0, 0.0]",
+          "True": "[0.0, 0.0, 0.0]"
+        }
+      }
+    ],
+    "White circle": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Result": "[0.0, 0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Mapping.003",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=-0.0033, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Texture Coordinate.003",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Noise Texture.003",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.0",
+          "Scale": "2.580000162124634",
+          "Detail": "2.0",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Voronoi Texture",
+        "type": "TEX_VORONOI",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.0",
+          "Scale": "12.549999237060547",
+          "Detail": "0.17000000178813934",
+          "Roughness": "0.6166666746139526",
+          "Lacunarity": "2.0",
+          "Smoothness": "1.0",
+          "Exponent": "0.5",
+          "Randomness": "1.0"
+        }
+      },
+      {
+        "name": "Color Ramp.003",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Color Ramp.002",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Mix.002",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Mix.003",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      }
+    ],
+    "white likne": [
+      {
+        "name": "Mapping.003",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (1.0000, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Wave Texture",
+        "type": "TEX_WAVE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Scale": "2.06000018119812",
+          "Distortion": "0.0",
+          "Detail": "2.0",
+          "Detail Scale": "1.0",
+          "Detail Roughness": "0.5",
+          "Phase Offset": "0.0"
+        }
+      },
+      {
+        "name": "Mix.002",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Texture Coordinate.003",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Noise Texture.003",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.0",
+          "Scale": "12.179999351501465",
+          "Detail": "0.0",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Mapping.004",
+        "type": "MAPPING",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "Scale": "<Vector (4.2200, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Texture Coordinate.004",
+        "type": "TEX_COORD"
+      },
+      {
+        "name": "Color Ramp.002",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Noise Texture.004",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.019999999552965164",
+          "Scale": "1.2300002574920654",
+          "Detail": "2.0",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Color Ramp.003",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Mix.003",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Group.002",
+        "type": "GROUP",
+        "inputs": {
+          "Factor": "0.0",
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>"
+        }
+      },
+      {
+        "name": "Color Ramp.004",
+        "type": "VALTORGB",
+        "inputs": {
+          "Factor": "0.5"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Mix.004",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Group",
+        "type": "GROUP",
+        "inputs": {
+          "Location": "<Vector (0.0000, 0.0000, 0.0000)>",
+          "Scale": "<Vector (2.5500, 1.0000, 1.0000)>"
+        }
+      },
+      {
+        "name": "Group.001",
+        "type": "GROUP",
+        "inputs": {
+          "Location": "<Vector (0.0700, 0.0000, 0.0000)>",
+          "Scale": "<Vector (2.5500, 1.2700, 1.0000)>"
+        }
+      },
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT",
+        "inputs": {
+          "Result": "[0.0, 0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Mix.001",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Mix",
+        "type": "MIX",
+        "inputs": {
+          "Factor": "[0.5, 0.5, 0.5]",
+          "A": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>",
+          "B": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      }
+    ],
+    "Wind animation": [
+      {
+        "name": "Group Output",
+        "type": "GROUP_OUTPUT"
+      },
+      {
+        "name": "Math",
+        "type": "MATH",
+        "inputs": {
+          "Value": "0.5"
+        }
+      },
+      {
+        "name": "Map Range",
+        "type": "MAP_RANGE",
+        "inputs": {
+          "Value": "1.0",
+          "From Min": "[0.0, 0.0, 0.0]",
+          "From Max": "[1.0, 1.0, 1.0]",
+          "To Min": "[0.0, 0.0, 0.0]",
+          "To Max": "[1.0, 1.0, 1.0]",
+          "Steps": "[4.0, 4.0, 4.0]",
+          "Vector": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Vector Math",
+        "type": "VECT_MATH",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Scale": "1.0"
+        }
+      },
+      {
+        "name": "Position.001",
+        "type": "POSITION"
+      },
+      {
+        "name": "Set Position",
+        "type": "SET_POSITION",
+        "inputs": {
+          "Selection": "True",
+          "Position": "[0.0, 0.0, 0.0]",
+          "Offset": "<Vector (0.0000, 0.0000, 0.0000)>"
+        }
+      },
+      {
+        "name": "Value",
+        "type": "VALUE"
+      },
+      {
+        "name": "Noise Texture",
+        "type": "TEX_NOISE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "W": "0.0",
+          "Scale": "0.7799999117851257",
+          "Detail": "2.0",
+          "Roughness": "0.5",
+          "Lacunarity": "2.0",
+          "Offset": "0.0",
+          "Gain": "1.0",
+          "Distortion": "0.0"
+        }
+      },
+      {
+        "name": "Combine XYZ",
+        "type": "COMBXYZ",
+        "inputs": {
+          "X": "0.0",
+          "Y": "0.0",
+          "Z": "0.0"
+        }
+      },
+      {
+        "name": "Scene Time",
+        "type": "INPUT_SCENE_TIME"
+      },
+      {
+        "name": "Sample Nearest Surface",
+        "type": "SAMPLE_NEAREST_SURFACE",
+        "inputs": {
+          "Value": "[0.0, 0.0, 0.0]",
+          "Group ID": "0",
+          "Sample Position": "[0.0, 0.0, 0.0]",
+          "Sample Group ID": "0"
+        }
+      },
+      {
+        "name": "Group Input",
+        "type": "GROUP_INPUT"
+      },
+      {
+        "name": "Normal",
+        "type": "INPUT_NORMAL"
+      },
+      {
+        "name": "Position",
+        "type": "POSITION"
+      },
+      {
+        "name": "Store Named Attribute.001",
+        "type": "STORE_NAMED_ATTRIBUTE",
+        "inputs": {
+          "Selection": "True",
+          "Name": "UVMap",
+          "Value": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Ico Sphere",
+        "type": "MESH_PRIMITIVE_ICO_SPHERE",
+        "inputs": {
+          "Radius": "1.9600000381469727",
+          "Subdivisions": "2"
+        }
+      },
+      {
+        "name": "Self Object",
+        "type": "SELF_OBJECT"
+      },
+      {
+        "name": "Object Info.001",
+        "type": "OBJECT_INFO",
+        "inputs": {
+          "Object": "None",
+          "As Instance": "False"
+        }
+      },
+      {
+        "name": "Store Named Attribute.002",
+        "type": "STORE_NAMED_ATTRIBUTE",
+        "inputs": {
+          "Selection": "True",
+          "Name": "sun_rot",
+          "Value": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Store Named Attribute",
+        "type": "STORE_NAMED_ATTRIBUTE",
+        "inputs": {
+          "Selection": "True",
+          "Name": "shading",
+          "Value": "[0.0, 0.0, 0.0]"
+        }
+      },
+      {
+        "name": "Object Info.002",
+        "type": "OBJECT_INFO",
+        "inputs": {
+          "Object": "<bpy_struct, Object(\"Sun.001\") at 0x000001BDE68C0820>",
+          "As Instance": "False"
+        }
+      },
+      {
+        "name": "Vector Rotate.001",
+        "type": "VECTOR_ROTATE",
+        "inputs": {
+          "Vector": "[0.0, 0.0, 0.0]",
+          "Center": "[0.0, 0.0, 0.0]",
+          "Axis": "[0.0, 0.0, 1.0]",
+          "Angle": "0.0",
+          "Rotation": "<Euler (x=0.0000, y=0.0000, z=0.0000), order='XYZ'>"
+        }
+      },
+      {
+        "name": "Math.001",
+        "type": "MATH",
+        "inputs": {
+          "Value": "0.5"
+        }
+      }
+    ]
+  }
+}

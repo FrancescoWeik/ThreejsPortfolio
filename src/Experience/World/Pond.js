@@ -69,73 +69,55 @@ void main() {
 `
 
 const bottomFragment = /* glsl */`
-uniform vec3  uCrackColor;
-uniform vec3  uStoneA;
-uniform vec3  uStoneB;
-uniform float uPebbleScale;
+uniform sampler2D uGroundMap;
+uniform sampler2D uRockyMap;
+uniform float uTexScale;
+uniform float uRockyBlend;
+uniform vec3  uDarkColor;
+uniform vec3  uMidColor;
+uniform vec3  uLightColor;
+uniform float uBand1;
+uniform float uBand2;
+uniform float uBrightness;
 
 varying vec3 vPos;
 varying vec3 vNorm;
 
-vec3 h3b(vec3 p) {
-    p = vec3(dot(p, vec3(127.1, 311.7,  74.7)),
-             dot(p, vec3(269.5, 183.3, 246.1)),
-             dot(p, vec3(113.5, 271.9, 124.6)));
-    return fract(sin(p) * 43758.5453);
-}
-vec2 pebVoronoi(vec3 p) {
-    vec3  i = floor(p), f = fract(p);
-    float d1 = 8.0, d2 = 8.0, ch = 0.0;
-    for (int z=-1;z<=1;z++) for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
-        vec3  n = vec3(float(x), float(y), float(z));
-        vec3  h = h3b(i + n);
-        float d = length(n + 0.5 + 0.45 * sin(6.2831 * h) - f);
-        if (d < d1) { d2 = d1; d1 = d; ch = fract(dot(h, vec3(0.31, 0.47, 0.22))); }
-        else if (d < d2) { d2 = d; }
-    }
-    return vec2(d2 - d1, ch);
-}
-float n2b(vec2 p) {
-    vec2  i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
-    float a = fract(sin(dot(i,            vec2(127.1, 311.7))) * 43758.5453);
-    float b = fract(sin(dot(i+vec2(1,0),  vec2(127.1, 311.7))) * 43758.5453);
-    float c = fract(sin(dot(i+vec2(0,1),  vec2(127.1, 311.7))) * 43758.5453);
-    float d = fract(sin(dot(i+vec2(1,1),  vec2(127.1, 311.7))) * 43758.5453);
-    return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+vec3 triplanar(sampler2D tex, vec3 pos, vec3 norm, float scale) {
+    vec3 w = pow(abs(norm), vec3(4.0));
+    w /= w.x + w.y + w.z;
+    vec3 cx = texture2D(tex, pos.yz * scale).rgb;
+    vec3 cy = texture2D(tex, pos.xz * scale).rgb;
+    vec3 cz = texture2D(tex, pos.xy * scale).rgb;
+    return cx * w.x + cy * w.y + cz * w.z;
 }
 
 void main() {
-    vec3  p3   = vPos * uPebbleScale;
-    vec2  vr   = pebVoronoi(p3);
-    float edge = vr.x;
-    float ch   = vr.y;
+    vec3 norm = normalize(vNorm);
 
-    float surf = n2b(vNorm.xz * uPebbleScale * 5.0) * 0.12 - 0.06;
+    // Sample texture only as a pattern/variation source
+    vec3 raw = mix(
+        triplanar(uGroundMap, vPos, norm, uTexScale),
+        triplanar(uRockyMap,  vPos, norm, uTexScale * 1.3),
+        uRockyBlend
+    );
 
-    // Pietre: tono caldo/neutro — chiaramente diverso dall'acqua teal
-    vec3 grayStone  = mix(vec3(0.76, 0.74, 0.72), vec3(0.88, 0.86, 0.83), ch * 4.0);
-    vec3 warmStone  = mix(uStoneA,                 uStoneB,                 (ch - 0.25) * 2.5);
-    vec3 darkStone  = uStoneA * mix(0.60, 0.85, (ch - 0.65) * 5.0);
-    vec3 algaeStone = mix(vec3(0.66, 0.66, 0.64), vec3(0.76, 0.74, 0.72), (ch - 0.85) * 6.7);
+    // Posterize luminance → 3 discrete toon bands (Blender ColorRamp style)
+    float luma = dot(raw, vec3(0.299, 0.587, 0.114));
+    float b1 = smoothstep(uBand1 - 0.025, uBand1 + 0.025, luma);
+    float b2 = smoothstep(uBand2 - 0.025, uBand2 + 0.025, luma);
+    vec3 col = mix(uDarkColor, uMidColor, b1);
+    col      = mix(col, uLightColor, b2);
 
-    vec3 pebCol = grayStone  * (1.0 - step(0.25, ch))
-                + warmStone  * step(0.25, ch) * (1.0 - step(0.65, ch))
-                + darkStone  * step(0.65, ch) * (1.0 - step(0.85, ch))
-                + algaeStone * step(0.85, ch);
-    pebCol = clamp(pebCol + surf, 0.0, 1.0);
-
-    float crack = 1.0 - smoothstep(0.03, 0.10, edge);
-    vec3  col   = mix(pebCol, uCrackColor, crack);
-
-    // Anime cel-shading: 2 discrete light bands (brighter overall for submerged look)
+    // Cel-shading lighting: 3 bands matching water sphere style
     vec3  ld     = normalize(vec3(5.0, 8.0, 4.0));
-    float diff   = dot(vNorm, ld);
+    float diff   = dot(norm, ld);
     float shadow = smoothstep(-0.05, 0.10, diff);
     float light  = smoothstep( 0.35, 0.50, diff);
     float hilite = smoothstep( 0.72, 0.82, diff);
     float lum    = 0.45 + shadow * 0.20 + light * 0.25 + hilite * 0.10;
 
-    gl_FragColor = vec4(col * lum, 1.0);
+    gl_FragColor = vec4(col * lum * uBrightness, 1.0);
 }
 `
 
@@ -378,12 +360,12 @@ export default class Pond {
             deepColor:   '#0e4060',
             midColor:    '#1ab0d0',
             highColor:   '#b8f3ff',
-            noiseScale:  2.65,
-            flowSpeed:   0.295,
+            noiseScale:  4.0,
+            flowSpeed:   0.5,
             flowAngle:   4.35,
             causticThresh: 0.72,
             causticSharp:  0.13,
-            waveAmp:     0.10,
+            waveAmp:     0.06,
             waveFreq:    2.1,
             waveSpeed:   0.65,
             specStr:     3.0,
@@ -396,12 +378,16 @@ export default class Pond {
             rippleWidth:     0.06,
             rippleIntensity: 0.9,
             bobSpeed:        1.9,
-            bobAmp:          0.055,
+            bobAmp:          0.0,
             // bottom
-            crackColor:  '#2a3038',
-            stoneA:      '#a8b0b4',
-            stoneB:      '#d4d8d8',
-            pebbleScale: 3.5,
+            groundTexScale:   0.82,
+            groundRockyBlend: 1.0,
+            groundDarkColor:  '#040e53',
+            groundMidColor:   '#0a2b76',
+            groundLightColor: '#4867f7',
+            groundBand1:      0.4,
+            groundBand2:      0.62,
+            groundBrightness: 1.0,
             // background
             bgBot:       '#050d1a',
             bgTop:       '#0d2035',
@@ -413,7 +399,7 @@ export default class Pond {
             glowSize:    1.0,    // scala mesh alone (1.0 = normale)
             glowFalloff: 2.5,   // esponente Fresnel: basso = alone largo, alto = alone stretto
             // ball
-            ballSpeed:   0.0045,
+            ballSpeed:   0.002,
         }
 
         this.addLights()
@@ -455,11 +441,23 @@ export default class Pond {
 
     createBottom() {
         const p = this.params
+
+        const groundTex = this.resources.items.groundAlbedo
+        const rockyTex  = this.resources.items.groundRocky
+        groundTex.wrapS = groundTex.wrapT = THREE.RepeatWrapping
+        rockyTex.wrapS  = rockyTex.wrapT  = THREE.RepeatWrapping
+
         this.bottomUniforms = {
-            uCrackColor:  { value: new THREE.Color(p.crackColor) },
-            uStoneA:      { value: new THREE.Color(p.stoneA) },
-            uStoneB:      { value: new THREE.Color(p.stoneB) },
-            uPebbleScale: { value: p.pebbleScale },
+            uGroundMap:   { value: groundTex },
+            uRockyMap:    { value: rockyTex },
+            uTexScale:    { value: p.groundTexScale },
+            uRockyBlend:  { value: p.groundRockyBlend },
+            uDarkColor:   { value: new THREE.Color(p.groundDarkColor) },
+            uMidColor:    { value: new THREE.Color(p.groundMidColor) },
+            uLightColor:  { value: new THREE.Color(p.groundLightColor) },
+            uBand1:       { value: p.groundBand1 },
+            uBand2:       { value: p.groundBand2 },
+            uBrightness:  { value: p.groundBrightness },
         }
         const geo = new THREE.SphereGeometry(WATER_R * 0.80, 128, 64)
         const mat = new THREE.ShaderMaterial({
@@ -598,10 +596,14 @@ export default class Pond {
         // ── Fondo ─────────────────────────────────────────────────────────────
         const fondo = gui.addFolder('Fondo')
         const bu = this.bottomUniforms
-        fondo.addColor(p, 'crackColor') .name('Crepe')        .onChange(v => { bu.uCrackColor.value.set(v) })
-        fondo.addColor(p, 'stoneA')     .name('Pietra scura') .onChange(v => { bu.uStoneA.value.set(v) })
-        fondo.addColor(p, 'stoneB')     .name('Pietra chiara').onChange(v => { bu.uStoneB.value.set(v) })
-        fondo.add(p, 'pebbleScale', 0.5, 8.0, 0.1).name('Scala sassi').onChange(v => { bu.uPebbleScale.value = v })
+        fondo.add(p, 'groundTexScale',   0.10, 1.5,  0.01).name('Scala texture')    .onChange(v => { bu.uTexScale.value  = v })
+        fondo.add(p, 'groundRockyBlend', 0.0,  1.0,  0.01).name('Roccia/Terra')     .onChange(v => { bu.uRockyBlend.value = v })
+        fondo.addColor(p, 'groundDarkColor') .name('Colore scuro') .onChange(v => { bu.uDarkColor.value.set(v)  })
+        fondo.addColor(p, 'groundMidColor')  .name('Colore medio') .onChange(v => { bu.uMidColor.value.set(v)   })
+        fondo.addColor(p, 'groundLightColor').name('Colore chiaro').onChange(v => { bu.uLightColor.value.set(v) })
+        fondo.add(p, 'groundBand1',      0.10, 0.60, 0.01).name('Soglia 1 (scuro→medio)') .onChange(v => { bu.uBand1.value = v })
+        fondo.add(p, 'groundBand2',      0.40, 0.90, 0.01).name('Soglia 2 (medio→chiaro)').onChange(v => { bu.uBand2.value = v })
+        fondo.add(p, 'groundBrightness', 0.30, 2.0,  0.05).name('Luminosità')              .onChange(v => { bu.uBrightness.value = v })
 
 
         // ── Sfondo ────────────────────────────────────────────────────────────
@@ -631,7 +633,7 @@ export default class Pond {
         const nz = Math.sin(theta) * Math.sin(this.phi)
 
         const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
-        const ballDist = WATER_R - BALL_R * 0.3 + bob
+        const ballDist = WATER_R + BALL_R * 0.5 + bob
         this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
         this.ball.rotation.y += 0.015
 
