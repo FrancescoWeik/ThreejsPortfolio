@@ -525,7 +525,7 @@ export default class Pond {
             transparent:    true,
             side:           THREE.DoubleSide,   // funziona sia da dentro che da fuori la sfera
             depthWrite:     false,
-            depthTest:      false,              // non bloccare per problemi depth-buffer
+            depthTest:      true,
         })
         this.waterSphere = new THREE.Mesh(geo, mat)
         this.waterSphere.renderOrder = 1        // render dopo tutti gli opaque
@@ -625,15 +625,16 @@ export default class Pond {
         const t = this.time.elapsed * 0.001
         this.waterUniforms.uTime.value = t
 
+        // Full orbit — depth testing handles occlusion naturally
         this.phi += this.params.ballSpeed
-        const theta = Math.PI * 0.45 + Math.sin(t * 0.28) * 0.38
+        const theta = Math.PI * 0.35 + Math.sin(t * 0.25) * 0.15
 
         const nx = Math.sin(theta) * Math.cos(this.phi)
         const ny = Math.cos(theta)
         const nz = Math.sin(theta) * Math.sin(this.phi)
 
         const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
-        const ballDist = WATER_R + BALL_R * 0.5 + bob
+        const ballDist = WATER_R + BALL_R + bob
         this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
         this.ball.rotation.y += 0.015
 
