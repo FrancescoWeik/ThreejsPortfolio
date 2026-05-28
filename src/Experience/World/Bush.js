@@ -148,8 +148,8 @@ export default class Bush {
         }
 
         this.params = {
-            count:      config.count      || 100,
-            leafSize:   config.leafSize   || 0.45,
+            count:      config.count != null ? config.count : 100,
+            leafSize:   config.leafSize   || 0.2,
             tint:       config.tint       || '#c8ff50',
             brightness: config.brightness !== undefined ? config.brightness : 0.6,
             windSpeed:  1.3,
@@ -160,7 +160,7 @@ export default class Bush {
         }
 
         this._build()
-        this._createGUI()
+        if (config.gui !== false) this._createGUI()
     }
 
     // ── Build / rebuild all meshes ────────────────────────────────────────────

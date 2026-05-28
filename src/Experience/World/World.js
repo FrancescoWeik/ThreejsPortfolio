@@ -36,6 +36,7 @@ export default class World{
                 leafSize:   0.25,
                 tint:       '#7ec824',
                 guiTitle:   '🌿 Cespuglio Sx',
+                gui:        false,
             })
             this.bushR = new Bush({
                 position:   new THREE.Vector3(1, 0, 0),
@@ -46,6 +47,7 @@ export default class World{
                 leafSize:   0.25,
                 tint:       '#7ec824',
                 guiTitle:   '🌿 Cespuglio Dx',
+                gui:        false,
             })
             /*this.room = new RoomSpider();
             this.television = new Television();

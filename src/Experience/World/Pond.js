@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import Experience from '../Experience.js'
 import ducks from '../ducks.js'
 import Ship from './Ship.js'
+import ProjectCard from './ProjectCard.js'
 
 const WATER_R = 2.5
 const BALL_R  = 0.18
@@ -420,6 +421,7 @@ export default class Pond {
         this.createGlow()
         this.createBall()
         this.ship = new Ship()
+        this.projectCard = new ProjectCard(() => this._zoomOut())
         this.createRippleRings()
         this.createGUI()
 
@@ -700,7 +702,9 @@ export default class Pond {
     }
 
     _zoomToTarget(targetBall) {
-        this._zoomedBall = targetBall   // only this ball will be frozen
+        this._zoomedBall = targetBall
+        // Record pause time so we can accumulate offset on resume
+        targetBall.userData._tPause = this.time.elapsed * 0.001
         const controls = this.camera.controls
         const cam      = this.camera.instance
 
@@ -748,7 +752,14 @@ export default class Pond {
     }
 
     _zoomOut() {
-        this._zoomedBall = null   // release freeze — all balls resume
+        // Accumulate how long this ball was paused so oscillations resume seamlessly
+        if (this._zoomedBall) {
+            const ud = this._zoomedBall.userData
+            const tNow = this.time.elapsed * 0.001
+            ud._tOffset = (ud._tOffset || 0) + (tNow - (ud._tPause || tNow))
+            ud._tPause  = null
+        }
+        this._zoomedBall = null
         this._hidePopup()
         const controls = this.camera.controls
         const cam      = this.camera.instance
@@ -898,6 +909,11 @@ export default class Pond {
     }
 
     _showPopup(duck, ball) {
+        // Ship has no duck → open the project carousel instead
+        if (ball === this.ship.mesh) {
+            this.projectCard.show()
+            return
+        }
         if (!duck || !this._popupEl) return
 
         // Fill content
@@ -939,6 +955,7 @@ export default class Pond {
 
     _hidePopup() {
         if (this._popupEl) this._popupEl.classList.remove('visible')
+        if (this.projectCard) this.projectCard.hide()
     }
 
     _updateCameraZoom() {
@@ -1042,12 +1059,13 @@ export default class Pond {
 
         // Main ball — skip update if it's the one being zoomed
         if (this._zoomedBall !== this.ball) {
-            this.phi += p.ballSpeed
-            const theta    = Math.PI * 0.35 + Math.sin(t * 0.25) * 0.15
+            const bt    = t - (this.ball.userData._tOffset || 0)  // time adjusted for pauses
+            this.phi   += p.ballSpeed
+            const theta    = Math.PI * 0.35 + Math.sin(bt * 0.25) * 0.15
             const nx       = Math.sin(theta) * Math.cos(this.phi)
             const ny       = Math.cos(theta)
             const nz       = Math.sin(theta) * Math.sin(this.phi)
-            const bob      = Math.sin(t * p.bobSpeed) * p.bobAmp
+            const bob      = Math.sin(bt * p.bobSpeed) * p.bobAmp
             const ballDist = WATER_R * p.waterScale - BALL_R * 0.3 + bob
             this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
             this.ball.rotation.y += 0.015
@@ -1057,11 +1075,12 @@ export default class Pond {
         // Extra balls — skip update only for the zoomed one
         for (const extra of this._extraBalls) {
             if (this._zoomedBall === extra) continue
-            const d = extra.userData
+            const d   = extra.userData
+            const et  = t - (d._tOffset || 0)   // time adjusted for pauses
             d.phiBase += p.ballSpeed * d.phiDrift
-            const ePhi   = d.phiBase + Math.sin(t * d.phiWanderFreq + d.phiWanderPhase) * d.phiWanderAmp
-            const eTheta = d.thetaBase + Math.sin(t * d.thetaFreq + d.thetaPhase) * d.thetaAmp
-            const eBob   = Math.sin(t * p.bobSpeed + d.bobPhase) * p.bobAmp
+            const ePhi   = d.phiBase + Math.sin(et * d.phiWanderFreq + d.phiWanderPhase) * d.phiWanderAmp
+            const eTheta = d.thetaBase + Math.sin(et * d.thetaFreq + d.thetaPhase) * d.thetaAmp
+            const eBob   = Math.sin(et * p.bobSpeed + d.bobPhase) * p.bobAmp
             const eDist  = WATER_R * p.waterScale - BALL_R * 0.3 + eBob
             extra.position.set(
                 Math.sin(eTheta) * Math.cos(ePhi) * eDist,
@@ -1071,9 +1090,10 @@ export default class Pond {
             extra.rotation.y += 0.015
         }
 
-        // Ship — moves like extra balls, freezes only when it's the zoomed target
+        // Ship — freezes only when it's the zoomed target
         if (this._zoomedBall !== this.ship.mesh) {
-            this.ship.update(t, p.ballSpeed, p.waterScale, p.bobSpeed, p.bobAmp)
+            const st = t - (this.ship.mesh.userData._tOffset || 0)  // time adjusted for pauses
+            this.ship.update(st, p.ballSpeed, p.waterScale, p.bobSpeed, p.bobAmp)
         }
 
         this.updateRippleRings()
