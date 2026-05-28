@@ -26,6 +26,27 @@ export default class World{
             //Setup
             this.room = new Pond(this.scene)
             this.bush = new Bush()
+
+            this.bushL = new Bush({
+                position:   new THREE.Vector3(-1, 0, 0),
+                sphereCap:  true,
+                capAngle:   1.0,
+                bushHeight: 0.15,
+                count:      680,
+                leafSize:   0.25,
+                tint:       '#7ec824',
+                guiTitle:   '🌿 Cespuglio Sx',
+            })
+            this.bushR = new Bush({
+                position:   new THREE.Vector3(1, 0, 0),
+                sphereCap:  true,
+                capAngle:   1.0,
+                bushHeight: 0.15,
+                count:      680,
+                leafSize:   0.25,
+                tint:       '#7ec824',
+                guiTitle:   '🌿 Cespuglio Dx',
+            })
             /*this.room = new RoomSpider();
             this.television = new Television();
 
@@ -57,8 +78,8 @@ export default class World{
         if(this.room){
             this.room.update();
         }
-        if(this.bush){
-            this.bush.update()
-        }
+        if(this.bush)  this.bush.update()
+        if(this.bushL) this.bushL.update()
+        if(this.bushR) this.bushR.update()
     }
 }

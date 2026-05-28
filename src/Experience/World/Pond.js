@@ -398,8 +398,16 @@ export default class Pond {
             glowStr:     0.29,
             glowSize:    1.0,    // scala mesh alone (1.0 = normale)
             glowFalloff: 2.5,   // esponente Fresnel: basso = alone largo, alto = alone stretto
+            // sphere size
+            waterScale:  0.83,
             // ball
             ballSpeed:   0.002,
+            // ripple rings
+            ringCount:     3,
+            ringSpeed:     0.22,
+            ringMaxRadius: 0.4,
+            ringOpacity:   0.39,
+            ringColor:     '#ffffff',
         }
 
         this.addLights()
@@ -408,7 +416,13 @@ export default class Pond {
         this.createWaterSphere()
         this.createGlow()
         this.createBall()
+        this.createRippleRings()
         this.createGUI()
+
+        // Apply default waterScale
+        const s = this.params.waterScale
+        this.waterSphere.scale.setScalar(s)
+        this.glowMesh.scale.setScalar(s * this.params.glowSize)
     }
 
     addLights() {
@@ -545,6 +559,72 @@ export default class Pond {
         this.scene.add(this.ball)
     }
 
+    createRippleRings() {
+        const p = this.params
+
+        this._ringsColor = new THREE.Color(p.ringColor)
+        this._ringQuat   = new THREE.Quaternion()
+        this._ringNorm   = new THREE.Vector3()
+        this._ringZAxis  = new THREE.Vector3(0, 0, 1)
+        this._lastRingT  = 0
+        this._ringPool   = []
+
+        // Unit circle in XY plane, shared across all ring lines
+        const N = 80
+        const pos = new Float32Array((N + 1) * 3)
+        for (let i = 0; i <= N; i++) {
+            const a = (i / N) * Math.PI * 2
+            pos[i * 3]     = Math.cos(a)
+            pos[i * 3 + 1] = Math.sin(a)
+            pos[i * 3 + 2] = 0
+        }
+        const geo = new THREE.BufferGeometry()
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+
+        for (let i = 0; i < 5; i++) {
+            const mat = new THREE.LineBasicMaterial({
+                color:       new THREE.Color(p.ringColor),
+                transparent: true,
+                opacity:     0,
+                depthWrite:  false,
+                blending:    THREE.AdditiveBlending,
+            })
+            const line = new THREE.LineLoop(geo, mat)
+            line.renderOrder = 3
+            this.scene.add(line)
+            this._ringPool.push({
+                mesh:  line,
+                phase: i / Math.max(1, p.ringCount),
+            })
+        }
+    }
+
+    updateRippleRings() {
+        const p = this.params
+        const t  = this.time.elapsed
+        const dt = Math.min((t - this._lastRingT) * 0.001, 0.05)
+        this._lastRingT = t
+
+        this._ringNorm.copy(this.ball.position).normalize()
+        this._ringQuat.setFromUnitVectors(this._ringZAxis, this._ringNorm)
+
+        for (let i = 0; i < this._ringPool.length; i++) {
+            const ring = this._ringPool[i]
+            if (i >= p.ringCount) {
+                ring.mesh.visible = false
+                continue
+            }
+            ring.mesh.visible = true
+            ring.phase = (ring.phase + dt * p.ringSpeed) % 1.0
+
+            const r = Math.max(0.001, ring.phase * p.ringMaxRadius)
+            ring.mesh.scale.setScalar(r)
+            ring.mesh.material.opacity = (1.0 - ring.phase) * p.ringOpacity
+            ring.mesh.position.copy(this.ball.position)
+            ring.mesh.quaternion.copy(this._ringQuat)
+        }
+    }
+
     createGUI() {
         const gui = new GUI({ title: '💧 Acqua Anime' })
         gui.domElement.style.maxHeight = (window.innerHeight - 20) + 'px'
@@ -572,12 +652,6 @@ export default class Pond {
         onde.add(p, 'waveAmp',   0.0, 0.5,  0.01).name('Altezza onde')   .onChange(v => { u.uWaveAmp.value   = v })
         onde.add(p, 'waveFreq',  0.3, 8.0,  0.1) .name('Frequenza onde') .onChange(v => { u.uWaveFreq.value  = v })
         onde.add(p, 'waveSpeed', 0.0, 3.0,  0.05).name('Velocità onde')  .onChange(v => { u.uWaveSpeed.value = v })
-
-        // ── Riflessi ─────────────────────────────────────────────────────────
-        const riflessi = gui.addFolder('Riflessi & Sparkle')
-        riflessi.add(p, 'specStr',    0.0, 4.0, 0.05).name('Speculare')   .onChange(v => { u.uSpecStr.value    = v })
-        riflessi.add(p, 'shininess',  10,  300,  5)  .name('Lucentezza')  .onChange(v => { u.uShininess.value  = v })
-        riflessi.add(p, 'sparkleStr', 0.0, 5.0, 0.1) .name('Sparkle')     .onChange(v => { u.uSparkleStr.value = v })
 
         // ── Trasparenza ───────────────────────────────────────────────────────
         const alpha = gui.addFolder('Trasparenza')
@@ -613,12 +687,32 @@ export default class Pond {
         sfondo.addColor(p, 'bgGlowColor').name('Bagliore centro') .onChange(v => { this.bgUniforms.uGlowColor.value.set(v) })
         sfondo.add(p, 'bgGlowRad', 1.0, 20.0, 0.5).name('Raggio bagliore').onChange(v => { this.bgUniforms.uGlowRadius.value = v })
 
+        // ── Cerchi acqua ─────────────────────────────────────────────────────
+        const cerchi = gui.addFolder('Cerchi acqua')
+        cerchi.add(p, 'ringCount',     1,   5,    1)   .name('Numero cerchi').onChange(v => {
+            for (let i = 0; i < this._ringPool.length; i++)
+                this._ringPool[i].phase = i / Math.max(1, v)
+        })
+        cerchi.add(p, 'ringSpeed',     0.05, 1.5, 0.01).name('Velocità espansione')
+        cerchi.add(p, 'ringMaxRadius', 0.1,  2.0, 0.05).name('Raggio massimo')
+        cerchi.add(p, 'ringOpacity',   0.0,  1.0, 0.01).name('Opacità')
+        cerchi.addColor(p, 'ringColor').name('Colore cerchi').onChange(v => {
+            this._ringPool.forEach(r => r.mesh.material.color.set(v))
+        })
+
         // ── Alone ─────────────────────────────────────────────────────────────
         const halo = gui.addFolder('Alone sfera')
         halo.addColor(p, 'glowColor').name('Colore alone').onChange(v => { this.glowUniforms.uGlowColor.value.set(v) })
         halo.add(p, 'glowStr',     0.0, 2.0,  0.01).name('Intensità alone') .onChange(v => { this.glowUniforms.uGlowStr.value     = v })
-        halo.add(p, 'glowSize',    0.5, 3.0,  0.01).name('Dimensione alone').onChange(v => { this.glowMesh.scale.setScalar(v) })
+        halo.add(p, 'glowSize',    0.5, 3.0,  0.01).name('Dimensione alone').onChange(v => { this.glowMesh.scale.setScalar(v * p.waterScale) })
         halo.add(p, 'glowFalloff', 0.5, 8.0,  0.1) .name('Diffusione alone').onChange(v => { this.glowUniforms.uGlowFalloff.value = v })
+
+        // ── Dimensione sfera ─────────────────────────────────────────────────
+        const sfera = gui.addFolder('Dimensione sfera')
+        sfera.add(p, 'waterScale', 0.3, 2.5, 0.01).name('Raggio acqua').onChange(v => {
+            this.waterSphere.scale.setScalar(v)
+            this.glowMesh.scale.setScalar(v * p.glowSize)
+        })
     }
 
     update() {
@@ -634,10 +728,11 @@ export default class Pond {
         const nz = Math.sin(theta) * Math.sin(this.phi)
 
         const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
-        const ballDist = WATER_R - BALL_R * 0.3 + bob
+        const ballDist = WATER_R * this.params.waterScale - BALL_R * 0.3 + bob
         this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
         this.ball.rotation.y += 0.015
 
         this.waterUniforms.uBallDir.value.set(nx, ny, nz)
+        this.updateRippleRings()
     }
 }
