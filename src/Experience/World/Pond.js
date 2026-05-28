@@ -435,6 +435,8 @@ export default class Pond {
         this._origTarget = new THREE.Vector3()
         this._origCamPos = new THREE.Vector3()
         this._origZoom   = 1
+        this._arcState   = null   // GSAP tween target for spherical-arc camera moves
+        this._arcSph     = null   // THREE.Spherical used by arc tween
         this._raycaster  = new THREE.Raycaster()
         this._mouse      = new THREE.Vector2()
         this._createPopup()
@@ -708,41 +710,59 @@ export default class Pond {
         const controls = this.camera.controls
         const cam      = this.camera.instance
 
-        // Save originals (only on fresh zoom, not when switching balls)
+        // Save originals
         this._origTarget.copy(controls.target)
         this._origCamPos.copy(cam.position)
         this._origZoom = cam.zoom
 
-        // Camera position: start from ball, step back along the ball's outward
-        // horizontal direction by the camera's current total distance from origin.
-        // This guarantees the camera is always OUTSIDE the sphere looking in at the ball,
-        // regardless of where the ball is in its orbit.
-        const bx     = targetBall.position.x
-        const bz     = targetBall.position.z
-        const hMag   = Math.sqrt(bx * bx + bz * bz)
-        const camDist = cam.position.length()
-        const outX   = hMag > 0.001 ? bx / hMag : 1
-        const outZ   = hMag > 0.001 ? bz / hMag : 0
-        const zoomCamPos = new THREE.Vector3(
-            targetBall.position.x + outX * camDist,
-            cam.position.y,
-            targetBall.position.z + outZ * camDist,
-        )
+        // ── Arc the camera to sit behind the ball — avoid the 180° gimbal flip ──
+        // Straight-line position tweens (Cartesian lerp) pass through a
+        // "look-direction = straight down" singularity when the camera and ball
+        // are on opposite sides of the sphere.  At that point OrbitControls'
+        // spherical.theta flips by π and the camera snaps 180°.
+        //
+        // Fix: animate ONLY the azimuthal angle θ in spherical coordinates,
+        // keeping radius and polar elevation (φ) fixed, always taking the
+        // SHORTER arc (≤ 180°).  The offset vector (cam − target) stays large
+        // horizontally the entire time — it never approaches the polar axis,
+        // so the singularity is never triggered.
+        const curSph  = new THREE.Spherical().setFromVector3(cam.position)
+        const ballSph = new THREE.Spherical().setFromVector3(targetBall.position)
+
+        let dTheta = ballSph.theta - curSph.theta
+        // Normalise to shortest arc  [−π, π]
+        while (dTheta >  Math.PI) dTheta -= Math.PI * 2
+        while (dTheta < -Math.PI) dTheta += Math.PI * 2
+
+        this._arcState = { theta: curSph.theta }
+        this._arcSph   = new THREE.Spherical(curSph.radius, curSph.phi, curSph.theta)
 
         this.camera.stopCameraMovement()
 
         gsap.killTweensOf(controls.target)
         gsap.killTweensOf(cam.position)
         gsap.killTweensOf(cam)
+        if (this._arcState) gsap.killTweensOf(this._arcState)
+
+        // Horizontal arc — OrbitControls reads this each frame and simply
+        // writes it back (no user input + no damping = no-op), then calls
+        // lookAt(target), so the camera always faces the ball correctly.
+        gsap.to(this._arcState, {
+            theta: curSph.theta + dTheta,
+            duration: 1.0, ease: 'power2.inOut',
+            onUpdate: () => {
+                this._arcSph.theta = this._arcState.theta
+                cam.position.setFromSpherical(this._arcSph)
+            },
+        })
 
         gsap.to(controls.target, {
-            x: targetBall.position.x, y: targetBall.position.y, z: targetBall.position.z,
+            x: targetBall.position.x,
+            y: targetBall.position.y,
+            z: targetBall.position.z,
             duration: 1.0, ease: 'power2.inOut',
         })
-        gsap.to(cam.position, {
-            x: zoomCamPos.x, y: zoomCamPos.y, z: zoomCamPos.z,
-            duration: 1.0, ease: 'power2.inOut',
-        })
+
         gsap.to(cam, {
             zoom: this._origZoom * 2.5,
             duration: 1.0, ease: 'power2.inOut',
@@ -764,18 +784,39 @@ export default class Pond {
         const controls = this.camera.controls
         const cam      = this.camera.instance
 
+        // Arc back to the original camera position using the same spherical approach
+        const curSph  = new THREE.Spherical().setFromVector3(cam.position)
+        const origSph = new THREE.Spherical().setFromVector3(this._origCamPos)
+
+        let dTheta = origSph.theta - curSph.theta
+        while (dTheta >  Math.PI) dTheta -= Math.PI * 2
+        while (dTheta < -Math.PI) dTheta += Math.PI * 2
+
+        this._arcState = { theta: curSph.theta }
+        // Use original radius + phi so the camera returns to its exact saved height/distance
+        this._arcSph = new THREE.Spherical(origSph.radius, origSph.phi, curSph.theta)
+
         gsap.killTweensOf(controls.target)
         gsap.killTweensOf(cam.position)
         gsap.killTweensOf(cam)
+        if (this._arcState) gsap.killTweensOf(this._arcState)
+
+        gsap.to(this._arcState, {
+            theta: curSph.theta + dTheta,
+            duration: 1.0, ease: 'power2.inOut',
+            onUpdate: () => {
+                this._arcSph.theta = this._arcState.theta
+                cam.position.setFromSpherical(this._arcSph)
+            },
+        })
 
         gsap.to(controls.target, {
-            x: this._origTarget.x, y: this._origTarget.y, z: this._origTarget.z,
+            x: this._origTarget.x,
+            y: this._origTarget.y,
+            z: this._origTarget.z,
             duration: 1.0, ease: 'power2.inOut',
         })
-        gsap.to(cam.position, {
-            x: this._origCamPos.x, y: this._origCamPos.y, z: this._origCamPos.z,
-            duration: 1.0, ease: 'power2.inOut',
-        })
+
         gsap.to(cam, {
             zoom: this._origZoom,
             duration: 1.0, ease: 'power2.inOut',
