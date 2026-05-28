@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import GUI from 'lil-gui'
 import gsap from 'gsap'
 import Experience from '../Experience.js'
+import ducks from '../ducks.js'
 
 const WATER_R = 2.5
 const BALL_R  = 0.18
@@ -365,7 +366,7 @@ export default class Pond {
             flowSpeed:   0.5,
             flowAngle:   4.35,
             causticThresh: 0.72,
-            causticSharp:  0.13,
+            causticSharp:  0.06,
             waveAmp:     0.06,
             waveFreq:    2.1,
             waveSpeed:   0.65,
@@ -432,6 +433,7 @@ export default class Pond {
         this._origZoom   = 1
         this._raycaster  = new THREE.Raycaster()
         this._mouse      = new THREE.Vector2()
+        this._createPopup()
         this._setupBallClick()
     }
 
@@ -566,8 +568,9 @@ export default class Pond {
         const geo = new THREE.SphereGeometry(BALL_R, 32, 32)
         const mat = new THREE.MeshToonMaterial({ color: 0xff6633, gradientMap: gradMap })
 
-        // Main (clickable) ball
+        // Main ball → first duck
         this.ball = new THREE.Mesh(geo, mat)
+        this.ball.userData.duck = ducks[0]
         this.scene.add(this.ball)
 
         // 6 extra balls — wander-based orbit so they drift in different directions
@@ -575,6 +578,7 @@ export default class Pond {
         for (let i = 0; i < 6; i++) {
             const extra = new THREE.Mesh(geo, mat)
             extra.userData = {
+                duck:           ducks[i + 1],
                 phiBase:        (i / 6) * Math.PI * 2,         // evenly pre-spread
                 phiDrift:       (Math.random() - 0.5) * 0.6,   // slow drift, can be + or − (clockwise/counter)
                 phiWanderAmp:   0.3 + Math.random() * 0.5,     // oscillation amplitude in radians
@@ -732,11 +736,13 @@ export default class Pond {
             zoom: this._origZoom * 2.5,
             duration: 1.0, ease: 'power2.inOut',
             onUpdate: () => cam.updateProjectionMatrix(),
+            onComplete: () => this._showPopup(targetBall.userData.duck, targetBall),
         })
     }
 
     _zoomOut() {
         this._ballPaused = false
+        this._hidePopup()
         const controls = this.camera.controls
         const cam      = this.camera.instance
 
@@ -758,6 +764,169 @@ export default class Pond {
             onUpdate:   () => cam.updateProjectionMatrix(),
             onComplete: () => this.camera.enableCameraMovement(),
         })
+    }
+
+    _createPopup() {
+        if (!document.getElementById('duck-popup-style')) {
+            const style = document.createElement('style')
+            style.id = 'duck-popup-style'
+            style.textContent = `
+                #duck-popup {
+                    position: fixed;
+                    z-index: 200;
+                    pointer-events: none;
+                    opacity: 0;
+                    transform: scale(0.86);
+                    transition: opacity 0.32s cubic-bezier(.4,0,.2,1),
+                                transform 0.32s cubic-bezier(.4,0,.2,1);
+                }
+                #duck-popup.visible {
+                    opacity: 1;
+                    transform: scale(1);
+                    pointer-events: auto;
+                }
+                #duck-popup .dp-card {
+                    position: relative;
+                    background: rgba(6, 18, 38, 0.88);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(80, 160, 255, 0.25);
+                    border-radius: 18px;
+                    padding: 1.4rem 1.6rem 1.2rem;
+                    width: 240px;
+                    box-shadow: 0 16px 48px rgba(0,0,80,0.6),
+                                inset 0 1px 0 rgba(120,200,255,0.1);
+                    color: #e8f4ff;
+                    font-family: system-ui, sans-serif;
+                }
+                /* small dot connector toward the ball */
+                #duck-popup .dp-dot {
+                    position: absolute;
+                    width: 8px;
+                    height: 8px;
+                    background: #ff8c55;
+                    border-radius: 50%;
+                    box-shadow: 0 0 6px #ff8c55;
+                }
+                #duck-popup .dp-avatar {
+                    font-size: 2rem;
+                    margin-bottom: 0.5rem;
+                    line-height: 1;
+                }
+                #duck-popup .dp-title {
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    color: #ff8c55;
+                    margin: 0 0 0.12rem;
+                    letter-spacing: 0.01em;
+                }
+                #duck-popup .dp-name {
+                    font-size: 0.68rem;
+                    color: rgba(120,190,255,0.65);
+                    margin: 0 0 0.7rem;
+                    letter-spacing: 0.07em;
+                    text-transform: uppercase;
+                }
+                #duck-popup .dp-desc {
+                    font-size: 0.85rem;
+                    color: rgba(220,238,255,0.82);
+                    line-height: 1.55;
+                    margin: 0 0 1rem;
+                }
+                #duck-popup .dp-link {
+                    display: inline-block;
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    color: #60b8ff;
+                    text-decoration: none;
+                    border: 1px solid rgba(80,160,255,0.35);
+                    border-radius: 8px;
+                    padding: 0.32rem 0.8rem;
+                    transition: background 0.2s, color 0.2s;
+                }
+                #duck-popup .dp-link:hover {
+                    background: rgba(80,160,255,0.15);
+                    color: #a8d8ff;
+                }
+                #duck-popup .dp-hint {
+                    margin-top: 0.75rem;
+                    font-size: 0.64rem;
+                    color: rgba(150,200,255,0.3);
+                    text-align: center;
+                    letter-spacing: 0.04em;
+                }
+            `
+            document.head.appendChild(style)
+        }
+
+        const el = document.createElement('div')
+        el.id = 'duck-popup'
+        el.innerHTML = `
+            <div class="dp-card">
+                <div class="dp-dot" id="dp-dot"></div>
+                <div class="dp-avatar">🦆</div>
+                <p class="dp-title" id="dp-title"></p>
+                <p class="dp-name"  id="dp-name"></p>
+                <p class="dp-desc"  id="dp-desc"></p>
+                <a class="dp-link"  id="dp-link" href="#" target="_blank">Profilo →</a>
+                <p class="dp-hint">clicca fuori per chiudere</p>
+            </div>
+        `
+        document.body.appendChild(el)
+        this._popupEl = el
+    }
+
+    // Project a THREE.Vector3 world position → { x, y } screen pixels
+    _worldToScreen(worldPos) {
+        const v   = worldPos.clone().project(this.camera.instance)
+        const el  = this.experience.renderer.instance.domElement
+        return {
+            x: ( v.x * 0.5 + 0.5) * el.clientWidth,
+            y: (-v.y * 0.5 + 0.5) * el.clientHeight,
+        }
+    }
+
+    _showPopup(duck, ball) {
+        if (!duck || !this._popupEl) return
+
+        // Fill content
+        this._popupEl.querySelector('#dp-title').textContent = duck.title || duck.name
+        this._popupEl.querySelector('#dp-name').textContent  = duck.name
+        this._popupEl.querySelector('#dp-desc').textContent  = duck.description
+        const link = this._popupEl.querySelector('#dp-link')
+        link.href = duck.profileLink || '#'
+
+        // Position next to the ball on screen
+        const POPUP_W = 240, POPUP_H = 210, GAP = 22
+        const sc = this._worldToScreen(ball.position)
+        const vw = window.innerWidth, vh = window.innerHeight
+
+        // Prefer right side; flip left if near right edge
+        const onRight = sc.x + GAP + POPUP_W < vw - 10
+        let left = onRight ? sc.x + GAP : sc.x - GAP - POPUP_W
+        let top  = sc.y - POPUP_H / 2
+        top = Math.max(10, Math.min(top, vh - POPUP_H - 10))
+
+        this._popupEl.style.left = left + 'px'
+        this._popupEl.style.top  = top  + 'px'
+
+        // Position the connector dot on the edge facing the ball
+        const dot = this._popupEl.querySelector('#dp-dot')
+        if (onRight) {
+            dot.style.left = '-5px'
+            dot.style.top  = (sc.y - top - 4) + 'px'
+        } else {
+            dot.style.left = (POPUP_W - 3) + 'px'
+            dot.style.top  = (sc.y - top - 4) + 'px'
+        }
+
+        // Grow from the ball side
+        this._popupEl.style.transformOrigin = onRight ? 'left center' : 'right center'
+        this._popupEl.classList.add('visible')
+    }
+
+    _hidePopup() {
+        if (this._popupEl) this._popupEl.classList.remove('visible')
     }
 
     _updateCameraZoom() {
