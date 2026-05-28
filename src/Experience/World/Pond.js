@@ -3,6 +3,7 @@ import GUI from 'lil-gui'
 import gsap from 'gsap'
 import Experience from '../Experience.js'
 import ducks from '../ducks.js'
+import Ship from './Ship.js'
 
 const WATER_R = 2.5
 const BALL_R  = 0.18
@@ -418,6 +419,7 @@ export default class Pond {
         this.createWaterSphere()
         this.createGlow()
         this.createBall()
+        this.ship = new Ship()
         this.createRippleRings()
         this.createGUI()
 
@@ -663,7 +665,7 @@ export default class Pond {
 
     _setupBallClick() {
         const canvas   = this.experience.renderer.instance.domElement
-        const allBalls = () => [this.ball, ...this._extraBalls]
+        const allBalls = () => [this.ball, ...this._extraBalls, this.ship.mesh]
 
         canvas.addEventListener('mousemove', (e) => {
             const r = canvas.getBoundingClientRect()
@@ -1034,18 +1036,19 @@ export default class Pond {
     }
 
     update() {
-        const t  = this.time.elapsed * 0.001
+        const t = this.time.elapsed * 0.001
+        const p = this.params
         this.waterUniforms.uTime.value = t
 
         // Main ball — skip update if it's the one being zoomed
         if (this._zoomedBall !== this.ball) {
-            this.phi += this.params.ballSpeed
+            this.phi += p.ballSpeed
             const theta    = Math.PI * 0.35 + Math.sin(t * 0.25) * 0.15
             const nx       = Math.sin(theta) * Math.cos(this.phi)
             const ny       = Math.cos(theta)
             const nz       = Math.sin(theta) * Math.sin(this.phi)
-            const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
-            const ballDist = WATER_R * this.params.waterScale - BALL_R * 0.3 + bob
+            const bob      = Math.sin(t * p.bobSpeed) * p.bobAmp
+            const ballDist = WATER_R * p.waterScale - BALL_R * 0.3 + bob
             this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
             this.ball.rotation.y += 0.015
             this.waterUniforms.uBallDir.value.set(nx, ny, nz)
@@ -1055,17 +1058,22 @@ export default class Pond {
         for (const extra of this._extraBalls) {
             if (this._zoomedBall === extra) continue
             const d = extra.userData
-            d.phiBase += this.params.ballSpeed * d.phiDrift
+            d.phiBase += p.ballSpeed * d.phiDrift
             const ePhi   = d.phiBase + Math.sin(t * d.phiWanderFreq + d.phiWanderPhase) * d.phiWanderAmp
             const eTheta = d.thetaBase + Math.sin(t * d.thetaFreq + d.thetaPhase) * d.thetaAmp
-            const eBob   = Math.sin(t * this.params.bobSpeed + d.bobPhase) * this.params.bobAmp
-            const eDist  = WATER_R * this.params.waterScale - BALL_R * 0.3 + eBob
+            const eBob   = Math.sin(t * p.bobSpeed + d.bobPhase) * p.bobAmp
+            const eDist  = WATER_R * p.waterScale - BALL_R * 0.3 + eBob
             extra.position.set(
                 Math.sin(eTheta) * Math.cos(ePhi) * eDist,
                 Math.cos(eTheta)                  * eDist,
                 Math.sin(eTheta) * Math.sin(ePhi) * eDist,
             )
             extra.rotation.y += 0.015
+        }
+
+        // Ship — moves like extra balls, freezes only when it's the zoomed target
+        if (this._zoomedBall !== this.ship.mesh) {
+            this.ship.update(t, p.ballSpeed, p.waterScale, p.bobSpeed, p.bobAmp)
         }
 
         this.updateRippleRings()

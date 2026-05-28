@@ -12,7 +12,7 @@ export default [
         type: 'texture',
         path: 'textures/pond/Duck.png',
         title: "Lucas",
-        description: "questa è un'anatra",
+        description: "Programmatore sgravato, sicurezza certa, kangaskhan, qua qua",
         profileLink: "https://francesco-portfolio.vercel.app/",
     },
     {
@@ -20,7 +20,7 @@ export default [
         type: 'texture',
         path: 'textures/pond/Duck.png',
         title: "Arrigo",
-        description: "questa è un'anatra",
+        description: "Designer madonnale, probabilmente l'unico che non mangia colla, qua qua",
         profileLink: "https://francesco-portfolio.vercel.app/",
     },
     {
@@ -28,7 +28,7 @@ export default [
         type: 'texture',
         path: 'textures/pond/Duck.png',
         title: "Enrico",
-        description: "questa è un'anatra",
+        description: "Conosci un'artista? Se non conosci Enrico ancora non sai cosa è veramente un'artista, qua qua",
         profileLink: "https://francesco-portfolio.vercel.app/",
     },
     {
@@ -36,7 +36,7 @@ export default [
         type: 'texture',
         path: 'textures/pond/Duck.png',
         title: "Davide",
-        description: "questa è un'anatra",
+        description: "Hai bisogno di arte? Di freschezza? Di sicurezza? Guarda qua qua qua qua",
         profileLink: "https://francesco-portfolio.vercel.app/",
     },
     {
@@ -44,7 +44,7 @@ export default [
         type: 'texture',
         path: 'textures/pond/Duck.png',
         title: "Matteo",
-        description: "questa è un'anatra",
+        description: "La parola programmatore impersonificata. Anzi, meglio. IL DRAGONE, qua qua",
         profileLink: "https://francesco-portfolio.vercel.app/",
     },
     {
@@ -52,7 +52,7 @@ export default [
         type: 'texture',
         path: 'textures/pond/Duck.png',
         title: "Federico",
-        description: "questa è un'anatra",
+        description: "orecchio assoluto, musicista e composer troppo forte. Forte come skill, non come rumore, qua qua musicale",
         profileLink: "https://francesco-portfolio.vercel.app/",
     },
     {
@@ -60,7 +60,7 @@ export default [
         type: 'texture',
         path: 'textures/pond/Duck.png',
         title: "Lorenzo",
-        description: "questa è un'anatra",
+        description: "Hai bisogno di un character? Bisogno di sentire un pò di novità scorrerti dentro? Scegli Lore qua qua",
         profileLink: "https://francesco-portfolio.vercel.app/",
     },
 ]
