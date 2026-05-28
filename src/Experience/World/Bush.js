@@ -149,11 +149,12 @@ export default class Bush {
 
         this.params = {
             count:      config.count      || 100,
-            leafSize:   config.leafSize   || 0.4,
+            leafSize:   config.leafSize   || 0.45,
             tint:       config.tint       || '#c8ff50',
-            brightness: 0.85,
+            brightness: config.brightness !== undefined ? config.brightness : 0.6,
             windSpeed:  1.3,
             windStr:    0.05,
+            radius:     config.radius     || 2.0,
             capAngle:   config.capAngle   || 1.0,
             bushHeight: config.bushHeight || 1.5,
         }
@@ -184,9 +185,9 @@ export default class Bush {
             allPts = sphericalCapVolume(p.count, centerDir, WATER_R * 0.80, p.capAngle, p.bushHeight)
             cx = 0; cy = 0; cz = 0  // leaves face sphere center (origin)
         } else if (cfg.hemisphere) {
-            allPts = randomHemiVolume(p.count, cfg.radius, cx, cy, cz)
+            allPts = randomHemiVolume(p.count, p.radius, cx, cy, cz)
         } else {
-            allPts = fibonacciSphere(p.count, cfg.radius, cx, cy, cz)
+            allPts = fibonacciSphere(p.count, p.radius, cx, cy, cz)
         }
 
         const perType = Math.ceil(p.count / LEAF_CELLS.length)
@@ -248,6 +249,10 @@ export default class Bush {
         const nuvola = gui.addFolder('Nuvola foglie')
         nuvola.add(p, 'count', 0, 1500, 10).name('Numero foglie')
         nuvola.add(p, 'leafSize', 0.2, 1.2, 0.05).name('Dimensione')
+        if (!this._cfg.sphereCap) {
+            nuvola.add(p, 'radius', 0.5, 5.0, 0.05).name('Raggio distribuzione')
+                .onChange(() => this._build())
+        }
         nuvola.addColor(p, 'tint').name('Colore tinta')
             .onChange(v => su.uTint.value.set(v))
         nuvola.add(p, 'brightness', 0.3, 2.0, 0.05).name('Luminosità')

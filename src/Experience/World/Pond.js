@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import GUI from 'lil-gui'
+import gsap from 'gsap'
 import Experience from '../Experience.js'
 
 const WATER_R = 2.5
@@ -423,6 +424,15 @@ export default class Pond {
         const s = this.params.waterScale
         this.waterSphere.scale.setScalar(s)
         this.glowMesh.scale.setScalar(s * this.params.glowSize)
+
+        // Ball click / zoom state
+        this._ballPaused = false
+        this._origTarget = new THREE.Vector3()
+        this._origCamPos = new THREE.Vector3()
+        this._origZoom   = 1
+        this._raycaster  = new THREE.Raycaster()
+        this._mouse      = new THREE.Vector2()
+        this._setupBallClick()
     }
 
     addLights() {
@@ -555,8 +565,30 @@ export default class Pond {
 
         const geo = new THREE.SphereGeometry(BALL_R, 32, 32)
         const mat = new THREE.MeshToonMaterial({ color: 0xff6633, gradientMap: gradMap })
+
+        // Main (clickable) ball
         this.ball = new THREE.Mesh(geo, mat)
         this.scene.add(this.ball)
+
+        // 6 extra balls — wander-based orbit so they drift in different directions
+        this._extraBalls = []
+        for (let i = 0; i < 6; i++) {
+            const extra = new THREE.Mesh(geo, mat)
+            extra.userData = {
+                phiBase:        (i / 6) * Math.PI * 2,         // evenly pre-spread
+                phiDrift:       (Math.random() - 0.5) * 0.6,   // slow drift, can be + or − (clockwise/counter)
+                phiWanderAmp:   0.3 + Math.random() * 0.5,     // oscillation amplitude in radians
+                phiWanderFreq:  0.07 + Math.random() * 0.13,   // oscillation frequency
+                phiWanderPhase: Math.random() * Math.PI * 2,
+                thetaBase:      Math.PI * (0.25 + Math.random() * 0.25),
+                thetaAmp:       0.08 + Math.random() * 0.15,
+                thetaFreq:      0.15 + Math.random() * 0.25,
+                thetaPhase:     Math.random() * Math.PI * 2,
+                bobPhase:       Math.random() * Math.PI * 2,
+            }
+            this.scene.add(extra)
+            this._extraBalls.push(extra)
+        }
     }
 
     createRippleRings() {
@@ -623,6 +655,113 @@ export default class Pond {
             ring.mesh.position.copy(this.ball.position)
             ring.mesh.quaternion.copy(this._ringQuat)
         }
+    }
+
+    _setupBallClick() {
+        const canvas   = this.experience.renderer.instance.domElement
+        const allBalls = () => [this.ball, ...this._extraBalls]
+
+        canvas.addEventListener('mousemove', (e) => {
+            const r = canvas.getBoundingClientRect()
+            this._mouse.set(
+                ((e.clientX - r.left) / r.width)  *  2 - 1,
+               -((e.clientY - r.top)  / r.height) *  2 + 1
+            )
+            this._raycaster.setFromCamera(this._mouse, this.camera.instance)
+            canvas.style.cursor = this._raycaster.intersectObjects(allBalls()).length > 0
+                ? 'pointer' : ''
+        })
+
+        canvas.addEventListener('click', (e) => {
+            const r = canvas.getBoundingClientRect()
+            this._mouse.set(
+                ((e.clientX - r.left) / r.width)  *  2 - 1,
+               -((e.clientY - r.top)  / r.height) *  2 + 1
+            )
+            this._raycaster.setFromCamera(this._mouse, this.camera.instance)
+            const hits = this._raycaster.intersectObjects(allBalls())
+
+            if (!this._ballPaused) {
+                // Not zoomed: click a ball to zoom in on it
+                if (hits.length === 0) return
+                this._zoomToTarget(hits[0].object)
+            } else {
+                // Zoomed: click anywhere outside any ball to zoom out
+                if (hits.length > 0) return
+                this._zoomOut()
+            }
+        })
+    }
+
+    _zoomToTarget(targetBall) {
+        this._ballPaused = true
+        const controls = this.camera.controls
+        const cam      = this.camera.instance
+
+        // Save originals (only on fresh zoom, not when switching balls)
+        this._origTarget.copy(controls.target)
+        this._origCamPos.copy(cam.position)
+        this._origZoom = cam.zoom
+
+        // Camera swings horizontally to face the clicked ball, keeps Y elevation
+        const bx = targetBall.position.x
+        const bz = targetBall.position.z
+        const horizMag     = Math.sqrt(bx * bx + bz * bz)
+        const camHorizDist = Math.sqrt(cam.position.x ** 2 + cam.position.z ** 2)
+        const zoomCamPos   = new THREE.Vector3(
+            horizMag > 0.001 ? (bx / horizMag) * camHorizDist : cam.position.x,
+            cam.position.y,
+            horizMag > 0.001 ? (bz / horizMag) * camHorizDist : cam.position.z,
+        )
+
+        this.camera.stopCameraMovement()
+
+        gsap.killTweensOf(controls.target)
+        gsap.killTweensOf(cam.position)
+        gsap.killTweensOf(cam)
+
+        gsap.to(controls.target, {
+            x: targetBall.position.x, y: targetBall.position.y, z: targetBall.position.z,
+            duration: 1.0, ease: 'power2.inOut',
+        })
+        gsap.to(cam.position, {
+            x: zoomCamPos.x, y: zoomCamPos.y, z: zoomCamPos.z,
+            duration: 1.0, ease: 'power2.inOut',
+        })
+        gsap.to(cam, {
+            zoom: this._origZoom * 2.5,
+            duration: 1.0, ease: 'power2.inOut',
+            onUpdate: () => cam.updateProjectionMatrix(),
+        })
+    }
+
+    _zoomOut() {
+        this._ballPaused = false
+        const controls = this.camera.controls
+        const cam      = this.camera.instance
+
+        gsap.killTweensOf(controls.target)
+        gsap.killTweensOf(cam.position)
+        gsap.killTweensOf(cam)
+
+        gsap.to(controls.target, {
+            x: this._origTarget.x, y: this._origTarget.y, z: this._origTarget.z,
+            duration: 1.0, ease: 'power2.inOut',
+        })
+        gsap.to(cam.position, {
+            x: this._origCamPos.x, y: this._origCamPos.y, z: this._origCamPos.z,
+            duration: 1.0, ease: 'power2.inOut',
+        })
+        gsap.to(cam, {
+            zoom: this._origZoom,
+            duration: 1.0, ease: 'power2.inOut',
+            onUpdate:   () => cam.updateProjectionMatrix(),
+            onComplete: () => this.camera.enableCameraMovement(),
+        })
+    }
+
+    _updateCameraZoom() {
+        // Zoom is handled by GSAP in _setupBallClick — nothing to do here
     }
 
     createGUI() {
@@ -719,8 +858,8 @@ export default class Pond {
         const t = this.time.elapsed * 0.001
         this.waterUniforms.uTime.value = t
 
-        // Full orbit — depth testing handles occlusion naturally
-        this.phi += this.params.ballSpeed
+        // Full orbit — pauses on ball click
+        if (!this._ballPaused) this.phi += this.params.ballSpeed
         const theta = Math.PI * 0.35 + Math.sin(t * 0.25) * 0.15
 
         const nx = Math.sin(theta) * Math.cos(this.phi)
@@ -730,9 +869,26 @@ export default class Pond {
         const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
         const ballDist = WATER_R * this.params.waterScale - BALL_R * 0.3 + bob
         this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
-        this.ball.rotation.y += 0.015
+        if (!this._ballPaused) this.ball.rotation.y += 0.015
+
+        // Extra balls — wander: slow drift (±direction) + sinusoidal oscillation
+        for (const extra of this._extraBalls) {
+            const d = extra.userData
+            if (!this._ballPaused) d.phiBase += this.params.ballSpeed * d.phiDrift
+            const ePhi   = d.phiBase + Math.sin(t * d.phiWanderFreq + d.phiWanderPhase) * d.phiWanderAmp
+            const eTheta = d.thetaBase + Math.sin(t * d.thetaFreq + d.thetaPhase) * d.thetaAmp
+            const eBob   = Math.sin(t * this.params.bobSpeed + d.bobPhase) * this.params.bobAmp
+            const eDist  = WATER_R * this.params.waterScale - BALL_R * 0.3 + eBob
+            extra.position.set(
+                Math.sin(eTheta) * Math.cos(ePhi) * eDist,
+                Math.cos(eTheta)                  * eDist,
+                Math.sin(eTheta) * Math.sin(ePhi) * eDist,
+            )
+            if (!this._ballPaused) extra.rotation.y += 0.015
+        }
 
         this.waterUniforms.uBallDir.value.set(nx, ny, nz)
         this.updateRippleRings()
+        this._updateCameraZoom()
     }
 }
