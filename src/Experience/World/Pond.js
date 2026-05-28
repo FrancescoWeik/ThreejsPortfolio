@@ -634,7 +634,7 @@ export default class Pond {
         const nz = Math.sin(theta) * Math.sin(this.phi)
 
         const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
-        const ballDist = WATER_R + BALL_R + bob
+        const ballDist = WATER_R - BALL_R * 0.3 + bob
         this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
         this.ball.rotation.y += 0.015
 
