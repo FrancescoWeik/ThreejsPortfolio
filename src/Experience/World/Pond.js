@@ -427,7 +427,7 @@ export default class Pond {
         this.glowMesh.scale.setScalar(s * this.params.glowSize)
 
         // Ball click / zoom state
-        this._ballPaused = false
+        this._zoomedBall = null   // reference to the currently zoomed ball, null = free
         this._origTarget = new THREE.Vector3()
         this._origCamPos = new THREE.Vector3()
         this._origZoom   = 1
@@ -573,13 +573,13 @@ export default class Pond {
         this.ball.userData.duck = ducks[0]
         this.scene.add(this.ball)
 
-        // 6 extra balls — wander-based orbit so they drift in different directions
+        // One extra ball per remaining duck — add ducks to ducks.js to get more balls
         this._extraBalls = []
-        for (let i = 0; i < 6; i++) {
+        for (let i = 1; i < ducks.length; i++) {
             const extra = new THREE.Mesh(geo, mat)
             extra.userData = {
-                duck:           ducks[i + 1],
-                phiBase:        (i / 6) * Math.PI * 2,         // evenly pre-spread
+                duck:           ducks[i],
+                phiBase:        (i / ducks.length) * Math.PI * 2, // evenly pre-spread
                 phiDrift:       (Math.random() - 0.5) * 0.6,   // slow drift, can be + or − (clockwise/counter)
                 phiWanderAmp:   0.3 + Math.random() * 0.5,     // oscillation amplitude in radians
                 phiWanderFreq:  0.07 + Math.random() * 0.13,   // oscillation frequency
@@ -685,7 +685,7 @@ export default class Pond {
             this._raycaster.setFromCamera(this._mouse, this.camera.instance)
             const hits = this._raycaster.intersectObjects(allBalls())
 
-            if (!this._ballPaused) {
+            if (this._zoomedBall === null) {
                 // Not zoomed: click a ball to zoom in on it
                 if (hits.length === 0) return
                 this._zoomToTarget(hits[0].object)
@@ -698,7 +698,7 @@ export default class Pond {
     }
 
     _zoomToTarget(targetBall) {
-        this._ballPaused = true
+        this._zoomedBall = targetBall   // only this ball will be frozen
         const controls = this.camera.controls
         const cam      = this.camera.instance
 
@@ -707,15 +707,20 @@ export default class Pond {
         this._origCamPos.copy(cam.position)
         this._origZoom = cam.zoom
 
-        // Camera swings horizontally to face the clicked ball, keeps Y elevation
-        const bx = targetBall.position.x
-        const bz = targetBall.position.z
-        const horizMag     = Math.sqrt(bx * bx + bz * bz)
-        const camHorizDist = Math.sqrt(cam.position.x ** 2 + cam.position.z ** 2)
-        const zoomCamPos   = new THREE.Vector3(
-            horizMag > 0.001 ? (bx / horizMag) * camHorizDist : cam.position.x,
+        // Camera position: start from ball, step back along the ball's outward
+        // horizontal direction by the camera's current total distance from origin.
+        // This guarantees the camera is always OUTSIDE the sphere looking in at the ball,
+        // regardless of where the ball is in its orbit.
+        const bx     = targetBall.position.x
+        const bz     = targetBall.position.z
+        const hMag   = Math.sqrt(bx * bx + bz * bz)
+        const camDist = cam.position.length()
+        const outX   = hMag > 0.001 ? bx / hMag : 1
+        const outZ   = hMag > 0.001 ? bz / hMag : 0
+        const zoomCamPos = new THREE.Vector3(
+            targetBall.position.x + outX * camDist,
             cam.position.y,
-            horizMag > 0.001 ? (bz / horizMag) * camHorizDist : cam.position.z,
+            targetBall.position.z + outZ * camDist,
         )
 
         this.camera.stopCameraMovement()
@@ -741,7 +746,7 @@ export default class Pond {
     }
 
     _zoomOut() {
-        this._ballPaused = false
+        this._zoomedBall = null   // release freeze — all balls resume
         this._hidePopup()
         const controls = this.camera.controls
         const cam      = this.camera.instance
@@ -809,9 +814,13 @@ export default class Pond {
                     box-shadow: 0 0 6px #ff8c55;
                 }
                 #duck-popup .dp-avatar {
-                    font-size: 2rem;
-                    margin-bottom: 0.5rem;
-                    line-height: 1;
+                    width: 64px;
+                    height: 64px;
+                    object-fit: contain;
+                    border-radius: 12px;
+                    margin-bottom: 0.6rem;
+                    display: block;
+                    image-rendering: auto;
                 }
                 #duck-popup .dp-title {
                     font-size: 1.1rem;
@@ -864,7 +873,7 @@ export default class Pond {
         el.innerHTML = `
             <div class="dp-card">
                 <div class="dp-dot" id="dp-dot"></div>
-                <div class="dp-avatar">🦆</div>
+                <img class="dp-avatar" id="dp-avatar" src="" alt="duck">
                 <p class="dp-title" id="dp-title"></p>
                 <p class="dp-name"  id="dp-name"></p>
                 <p class="dp-desc"  id="dp-desc"></p>
@@ -890,6 +899,7 @@ export default class Pond {
         if (!duck || !this._popupEl) return
 
         // Fill content
+        this._popupEl.querySelector('#dp-avatar').src        = duck.path || ''
         this._popupEl.querySelector('#dp-title').textContent = duck.title || duck.name
         this._popupEl.querySelector('#dp-name').textContent  = duck.name
         this._popupEl.querySelector('#dp-desc').textContent  = duck.description
@@ -1024,26 +1034,28 @@ export default class Pond {
     }
 
     update() {
-        const t = this.time.elapsed * 0.001
+        const t  = this.time.elapsed * 0.001
         this.waterUniforms.uTime.value = t
 
-        // Full orbit — pauses on ball click
-        if (!this._ballPaused) this.phi += this.params.ballSpeed
-        const theta = Math.PI * 0.35 + Math.sin(t * 0.25) * 0.15
+        // Main ball — skip update if it's the one being zoomed
+        if (this._zoomedBall !== this.ball) {
+            this.phi += this.params.ballSpeed
+            const theta    = Math.PI * 0.35 + Math.sin(t * 0.25) * 0.15
+            const nx       = Math.sin(theta) * Math.cos(this.phi)
+            const ny       = Math.cos(theta)
+            const nz       = Math.sin(theta) * Math.sin(this.phi)
+            const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
+            const ballDist = WATER_R * this.params.waterScale - BALL_R * 0.3 + bob
+            this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
+            this.ball.rotation.y += 0.015
+            this.waterUniforms.uBallDir.value.set(nx, ny, nz)
+        }
 
-        const nx = Math.sin(theta) * Math.cos(this.phi)
-        const ny = Math.cos(theta)
-        const nz = Math.sin(theta) * Math.sin(this.phi)
-
-        const bob      = Math.sin(t * this.params.bobSpeed) * this.params.bobAmp
-        const ballDist = WATER_R * this.params.waterScale - BALL_R * 0.3 + bob
-        this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
-        if (!this._ballPaused) this.ball.rotation.y += 0.015
-
-        // Extra balls — wander: slow drift (±direction) + sinusoidal oscillation
+        // Extra balls — skip update only for the zoomed one
         for (const extra of this._extraBalls) {
+            if (this._zoomedBall === extra) continue
             const d = extra.userData
-            if (!this._ballPaused) d.phiBase += this.params.ballSpeed * d.phiDrift
+            d.phiBase += this.params.ballSpeed * d.phiDrift
             const ePhi   = d.phiBase + Math.sin(t * d.phiWanderFreq + d.phiWanderPhase) * d.phiWanderAmp
             const eTheta = d.thetaBase + Math.sin(t * d.thetaFreq + d.thetaPhase) * d.thetaAmp
             const eBob   = Math.sin(t * this.params.bobSpeed + d.bobPhase) * this.params.bobAmp
@@ -1053,10 +1065,9 @@ export default class Pond {
                 Math.cos(eTheta)                  * eDist,
                 Math.sin(eTheta) * Math.sin(ePhi) * eDist,
             )
-            if (!this._ballPaused) extra.rotation.y += 0.015
+            extra.rotation.y += 0.015
         }
 
-        this.waterUniforms.uBallDir.value.set(nx, ny, nz)
         this.updateRippleRings()
         this._updateCameraZoom()
     }
