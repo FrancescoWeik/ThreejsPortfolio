@@ -366,9 +366,9 @@ export default class Pond {
             highColor:   '#b8f3ff',
             noiseScale:  4.0,
             flowSpeed:   0.5,
-            flowAngle:   4.35,
+            flowAngle:   5.85,
             causticThresh: 0.72,
-            causticSharp:  0.06,
+            causticSharp:  0.01,
             waveAmp:     0.06,
             waveFreq:    2.1,
             waveSpeed:   0.65,
@@ -377,7 +377,7 @@ export default class Pond {
             baseOpacity: 0.23,
             causticStr:  1.48,
             sparkleStr:  5.0,
-            blobStr:     1.35,
+            blobStr:     0.4,
             rippleSpeed:     0.22,
             rippleWidth:     0.06,
             rippleIntensity: 0.9,
@@ -393,15 +393,15 @@ export default class Pond {
             groundBand2:      0.62,
             groundBrightness: 1.0,
             // background
-            bgBot:       '#050d1a',
-            bgTop:       '#0d2035',
+            bgBot:       '#183f7e',
+            bgTop:       '#23568f',
             bgGlowColor: '#1a4a7a',
             bgGlowRad:   8.0,
             // halo
             glowColor:   '#3399ff',
-            glowStr:     0.29,
-            glowSize:    1.0,    // scala mesh alone (1.0 = normale)
-            glowFalloff: 2.5,   // esponente Fresnel: basso = alone largo, alto = alone stretto
+            glowStr:     0.83,
+            glowSize:    0.89,   // scala mesh alone (1.0 = normale)
+            glowFalloff: 1.9,    // esponente Fresnel: basso = alone largo, alto = alone stretto
             // sphere size
             waterScale:  0.83,
             // ball
