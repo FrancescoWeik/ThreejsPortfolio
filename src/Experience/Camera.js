@@ -82,7 +82,6 @@ export default class Camera{
 
         const currentPolarAngle = this.controls.getPolarAngle();
 
-        // 4. Lock it
         // Rotazione completa attorno alla sfera
         this.controls.minPolarAngle = 0.0;
         this.controls.maxPolarAngle = Math.PI;

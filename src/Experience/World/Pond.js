@@ -405,7 +405,8 @@ export default class Pond {
             // sphere size
             waterScale:  0.83,
             // ball
-            ballSpeed:   0.002,
+            ballSpeed:          0.002,
+            duckFormationSpeed: 0.005,
             // ripple rings
             ringCount:     3,
             ringSpeed:     0.22,
@@ -429,6 +430,22 @@ export default class Pond {
         const s = this.params.waterScale
         this.waterSphere.scale.setScalar(s)
         this.glowMesh.scale.setScalar(s * this.params.glowSize)
+
+        // Formation (RTS-style group move)
+        this._formationActive = false
+
+        // Reusable scratch objects for duck orientation (avoids per-frame allocation)
+        this._duckFwd  = new THREE.Vector3()
+        this._duckUp   = new THREE.Vector3()
+        this._duckRgt  = new THREE.Vector3()
+        this._duckMtx  = new THREE.Matrix4()
+        this._duckQuat = new THREE.Quaternion()   // scratch for slerp
+
+        // Wake / ripple pool (duck trails + click feedback)
+        this._wakeZAxis   = new THREE.Vector3(0, 0, 1)
+        this._wakePool    = []
+        this._wakePoolIdx = 0
+        this._createWakePool()
 
         // Ball click / zoom state
         this._zoomedBall = null   // reference to the currently zoomed ball, null = free
@@ -591,7 +608,7 @@ export default class Pond {
             const extra = makeDuck()
             extra.userData.duck           = ducks[i]
             extra.userData.phiBase        = (i / ducks.length) * Math.PI * 2 // evenly spread
-            extra.userData.phiDrift       = (Math.random() - 0.5) * 0.6      // can be + or −
+            extra.userData.phiDrift       = (Math.random() - 0.5) * 0.6,      // can be + or − (clockwise / counter-clockwise)
             extra.userData.phiWanderAmp   = 0.3 + Math.random() * 0.5
             extra.userData.phiWanderFreq  = 0.07 + Math.random() * 0.13
             extra.userData.phiWanderPhase = Math.random() * Math.PI * 2
@@ -701,16 +718,131 @@ export default class Pond {
             const hits     = this._raycaster.intersectObjects(allBalls(), true)
             const hitGroup = hits.length > 0 ? resolveHit(hits[0]) : null
 
-            if (this._zoomedBall === null) {
-                // Not zoomed: click a duck/ship to zoom in on it
-                if (!hitGroup) return
+            // ── Zoomed mode ────────────────────────────────────────────────────
+            if (this._zoomedBall !== null) {
+                if (!hitGroup) this._zoomOut()
+                return
+            }
+
+            // ── Click on duck / ship → zoom in ─────────────────────────────────
+            if (hitGroup) {
                 this._zoomToTarget(hitGroup)
-            } else {
-                // Zoomed: click anywhere outside to zoom out
-                if (hitGroup) return
-                this._zoomOut()
+                return
+            }
+
+            // ── Click on water sphere → RTS formation ──────────────────────────
+            const sphereHits = this._raycaster.intersectObject(this.waterSphere)
+            if (sphereHits.length > 0) {
+                this._triggerFormation(sphereHits[0].point)
             }
         })
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RTS Formation
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Called when the user clicks the water sphere.  Distributes all ducks
+     *  in a ring around the hit point and sends them there. */
+    _triggerFormation(hitPoint) {
+        this._formationActive = true
+        const allDucks    = [this.ball, ...this._extraBalls]
+        const N           = allDucks.length
+        const sphereR     = WATER_R * this.params.waterScale - BALL_R * 0.3
+        const targetDir   = hitPoint.clone().normalize()
+
+        // Build an orthonormal tangent frame at the hit point
+        const worldUp = new THREE.Vector3(0, 1, 0)
+        let t1 = new THREE.Vector3().crossVectors(worldUp, targetDir)
+        if (t1.lengthSq() < 0.0001) t1.set(1, 0, 0)
+        t1.normalize()
+        const t2 = new THREE.Vector3().crossVectors(targetDir, t1).normalize()
+
+        const RING_R = 0.22  // angular radius of the ring in radians
+
+        allDucks.forEach((duck, i) => {
+            let formDir
+            if (i === 0) {
+                // Leader (main ball) goes to the exact click point
+                formDir = targetDir.clone()
+            } else {
+                // Rest fan out in an evenly-spaced ring
+                const angle  = (i / N) * Math.PI * 2
+                const offset = t1.clone().multiplyScalar(Math.cos(angle) * RING_R)
+                    .addScaledVector(t2, Math.sin(angle) * RING_R)
+                formDir = targetDir.clone().add(offset).normalize()
+            }
+            duck.userData._formationDest = formDir.multiplyScalar(sphereR)
+            duck.userData._inFormation   = false
+        })
+
+        // ── Click ripple feedback — 3 concentric expanding rings ──────────────
+        this._spawnWake(hitPoint, 0.30, 0.60, 0x80d0ff, 0.80)
+        setTimeout(() => this._spawnWake(hitPoint, 0.50, 0.90, 0x50a8e8, 0.60), 110)
+        setTimeout(() => this._spawnWake(hitPoint, 0.75, 1.25, 0x3080c0, 0.40), 220)
+    }
+
+    /** Cancels the formation and resumes each duck's orbit from its
+     *  current position (no teleport). */
+    _cancelFormation() {
+        this._formationActive = false
+
+        // Sync main ball's orbit angle to its current XZ position
+        this.phi = Math.atan2(this.ball.position.z, this.ball.position.x)
+        this.ball.userData._formationDest = null
+        this.ball.userData._inFormation   = false
+
+        for (const extra of this._extraBalls) {
+            const d = extra.userData
+            const r = extra.position.length() || 1
+            d.thetaBase      = Math.acos(Math.max(-1, Math.min(1, extra.position.y / r)))
+            d.phiBase        = Math.atan2(extra.position.z, extra.position.x)
+            d._prevEPhi      = d.phiBase
+            d._smoothPhiRate = null
+            d._formationDest = null
+            d._inFormation   = false
+        }
+    }
+
+    /** Advances a duck one step toward its _formationDest along the sphere
+     *  surface and updates its orientation to face the direction of travel. */
+    _moveDuckToFormation(duck) {
+        const dest       = duck.userData._formationDest
+        const sphereR    = WATER_R * this.params.waterScale - BALL_R * 0.3
+        const MOVE_SPEED = this.params.duckFormationSpeed   // radians per frame
+
+        const curDir  = duck.position.clone().normalize()
+        const destDir = dest.clone().normalize()
+        const angle   = curDir.angleTo(destDir)
+
+        if (angle <= MOVE_SPEED) {
+            duck.position.copy(dest)
+            duck.userData._inFormation = true
+            return
+        }
+
+        // Move one step along the great-circle arc
+        const alpha  = MOVE_SPEED / angle
+        const newDir = curDir.lerp(destDir, alpha).normalize()
+        duck.position.copy(newDir).multiplyScalar(sphereR)
+
+        // Orient: face the tangential direction toward dest
+        const tangent = new THREE.Vector3().subVectors(destDir, newDir)
+        tangent.addScaledVector(newDir, -tangent.dot(newDir))   // project out radial
+        if (tangent.lengthSq() > 0.0001) {
+            tangent.normalize()
+            this._duckRgt.crossVectors(newDir, tangent)
+            this._duckMtx.makeBasis(this._duckRgt, newDir, tangent)
+            this._duckQuat.setFromRotationMatrix(this._duckMtx)
+            duck.quaternion.slerp(this._duckQuat, 0.12)
+        }
+
+        // ── Wake trail — small expanding ring every 8 frames ──────────────────
+        duck.userData._wakeTimer = (duck.userData._wakeTimer || 0) + 1
+        if (duck.userData._wakeTimer >= 8) {
+            duck.userData._wakeTimer = 0
+            this._spawnWake(duck.position, 0.10, 0.70, 0x60b8ff, 0.42)
+        }
     }
 
     _zoomToTarget(targetBall) {
@@ -1013,6 +1145,81 @@ export default class Pond {
         // Zoom is handled by GSAP in _setupBallClick — nothing to do here
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Wake / ripple pool
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Build a pool of reusable LineLoop rings (unit circle in XY plane).
+     *  All rings share one geometry; each has its own material for per-ring opacity. */
+    _createWakePool() {
+        const SEG = 64
+        const pts = new Float32Array((SEG + 1) * 3)
+        for (let i = 0; i <= SEG; i++) {
+            const a = (i / SEG) * Math.PI * 2
+            pts[i * 3]     = Math.cos(a)
+            pts[i * 3 + 1] = Math.sin(a)
+            pts[i * 3 + 2] = 0
+        }
+        const geo = new THREE.BufferGeometry()
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
+
+        for (let i = 0; i < 48; i++) {
+            const mat  = new THREE.LineBasicMaterial({
+                transparent: true, opacity: 0,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+            })
+            const line = new THREE.LineLoop(geo, mat)
+            line.visible     = false
+            line.renderOrder = 4
+            this.scene.add(line)
+            this._wakePool.push({
+                mesh: line, active: false,
+                phase: 0, speed: 0, maxR: 0.2, startOpacity: 0.5,
+            })
+        }
+    }
+
+    /** Activate a pool slot: place and orient a ring at `worldPos` on the
+     *  sphere surface, then let it expand and fade over `duration` seconds. */
+    _spawnWake(worldPos, maxR = 0.2, duration = 1.0, hexColor = 0x80c8ff, startOpacity = 0.5) {
+        // Find an inactive slot; if none, steal the oldest active one
+        let slot
+        for (let k = 0; k < this._wakePool.length; k++) {
+            const s = this._wakePool[(this._wakePoolIdx + k) % this._wakePool.length]
+            if (!s.active) { slot = s; break }
+        }
+        if (!slot) slot = this._wakePool[this._wakePoolIdx % this._wakePool.length]
+        this._wakePoolIdx = (this._wakePoolIdx + 1) % this._wakePool.length
+
+        const dir    = worldPos.clone().normalize()
+        const placeR = worldPos.length() + 0.018   // sit just above sphere surface
+
+        slot.mesh.position.copy(dir).multiplyScalar(placeR)
+        slot.mesh.quaternion.setFromUnitVectors(this._wakeZAxis, dir)
+        slot.mesh.scale.setScalar(0.001)
+        slot.mesh.material.color.setHex(hexColor)
+        slot.mesh.material.opacity = startOpacity
+        slot.mesh.visible = true
+
+        slot.active       = true
+        slot.phase        = 0
+        slot.speed        = 1 / Math.max(duration * 60, 1)
+        slot.maxR         = maxR
+        slot.startOpacity = startOpacity
+    }
+
+    /** Advance every active wake ring by one frame. */
+    _updateWakePool() {
+        for (const s of this._wakePool) {
+            if (!s.active) continue
+            s.phase += s.speed
+            if (s.phase >= 1) { s.mesh.visible = false; s.active = false; continue }
+            s.mesh.scale.setScalar(s.phase * s.maxR)
+            s.mesh.material.opacity = (1 - s.phase) * s.startOpacity
+        }
+    }
+
     createGUI() {
         const gui = new GUI({ title: '💧 Acqua Anime' })
         gui.domElement.style.maxHeight = (window.innerHeight - 20) + 'px'
@@ -1048,7 +1255,8 @@ export default class Pond {
 
         // ── Pallina ───────────────────────────────────────────────────────────
         const palla = gui.addFolder('Pallina')
-        palla.add(p, 'ballSpeed',       0.0,  0.03,  0.0005).name('Velocità rotazione')
+        palla.add(p, 'ballSpeed',          0.0,  0.03,  0.0005).name('Velocità orbita papere')
+        palla.add(p, 'duckFormationSpeed', 0.005, 0.08, 0.005) .name('Velocità nuoto formazione')
         palla.add(p, 'rippleSpeed',     0.05, 1.0,   0.01)  .name('Velocità cerchi')   .onChange(v => { u.uRippleSpeed.value     = v })
         palla.add(p, 'rippleWidth',     0.005,0.08,  0.001) .name('Spessore cerchi')   .onChange(v => { u.uRippleWidth.value     = v })
         palla.add(p, 'rippleIntensity', 0.0,  1.0,   0.01)  .name('Intensità cerchi')  .onChange(v => { u.uRippleIntensity.value = v })
@@ -1110,54 +1318,72 @@ export default class Pond {
 
         // Main ball — skip update if it's the one being zoomed
         if (this._zoomedBall !== this.ball) {
-            const bt    = t - (this.ball.userData._tOffset || 0)  // time adjusted for pauses
-            this.phi   += p.ballSpeed
-            const theta    = Math.PI * 0.35 + Math.sin(bt * 0.25) * 0.15
-            const nx       = Math.sin(theta) * Math.cos(this.phi)
-            const ny       = Math.cos(theta)
-            const nz       = Math.sin(theta) * Math.sin(this.phi)
-            const bob      = Math.sin(bt * p.bobSpeed) * p.bobAmp
-            const ballDist = WATER_R * p.waterScale - BALL_R * 0.3 + bob
-            this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
-            this.waterUniforms.uBallDir.value.set(nx, ny, nz)
-
-            // Face the direction of travel: tangent to orbit in the phi direction.
-            // lookAt points the group's -Z toward the target; add π if the model
-            // faces +Z instead (beak points wrong way → flip sign of tanX/tanZ).
-            const tanX = -Math.sin(this.phi)   // d(pos)/dphi, normalised, X component
-            const tanZ =  Math.cos(this.phi)   // d(pos)/dphi, normalised, Z component
-            this.ball.lookAt(
-                this.ball.position.x + tanX,
-                this.ball.position.y,
-                this.ball.position.z + tanZ,
-            )
+            if (this.ball.userData._formationDest && !this.ball.userData._inFormation) {
+                // ── Formation movement ──────────────────────────────────────────
+                this._moveDuckToFormation(this.ball)
+            } else if (!this.ball.userData._formationDest) {
+                // ── Normal orbit ────────────────────────────────────────────────
+                const bt    = t - (this.ball.userData._tOffset || 0)
+                this.phi   += p.ballSpeed
+                const theta    = Math.PI * 0.35 + Math.sin(bt * 0.25) * 0.15
+                const nx       = Math.sin(theta) * Math.cos(this.phi)
+                const ny       = Math.cos(theta)
+                const nz       = Math.sin(theta) * Math.sin(this.phi)
+                const bob      = Math.sin(bt * p.bobSpeed) * p.bobAmp
+                const ballDist = WATER_R * p.waterScale - BALL_R * 0.3 + bob
+                this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
+                this.waterUniforms.uBallDir.value.set(nx, ny, nz)
+                const tanX = -Math.sin(this.phi)
+                const tanZ =  Math.cos(this.phi)
+                this._duckFwd.set(tanX, 0, tanZ)
+                this._duckUp.set(nx, ny, nz)
+                this._duckRgt.crossVectors(this._duckUp, this._duckFwd)
+                this._duckMtx.makeBasis(this._duckRgt, this._duckUp, this._duckFwd)
+                this._duckQuat.setFromRotationMatrix(this._duckMtx)
+                this.ball.quaternion.slerp(this._duckQuat, 0.12)
+            }
+            // else: _inFormation=true → duck rests at destination
         }
 
         // Extra balls — skip update only for the zoomed one
         for (const extra of this._extraBalls) {
             if (this._zoomedBall === extra) continue
-            const d   = extra.userData
-            const et  = t - (d._tOffset || 0)   // time adjusted for pauses
-            d.phiBase += p.ballSpeed * d.phiDrift
-            const ePhi   = d.phiBase + Math.sin(et * d.phiWanderFreq + d.phiWanderPhase) * d.phiWanderAmp
-            const eTheta = d.thetaBase + Math.sin(et * d.thetaFreq + d.thetaPhase) * d.thetaAmp
-            const eBob   = Math.sin(et * p.bobSpeed + d.bobPhase) * p.bobAmp
-            const eDist  = WATER_R * p.waterScale - BALL_R * 0.3 + eBob
-            extra.position.set(
-                Math.sin(eTheta) * Math.cos(ePhi) * eDist,
-                Math.cos(eTheta)                  * eDist,
-                Math.sin(eTheta) * Math.sin(ePhi) * eDist,
-            )
-
-            // Face direction of travel — phiDrift sign tells us clockwise vs counter-clockwise
-            const ps   = d.phiDrift >= 0 ? 1 : -1
-            const eTanX = -ps * Math.sin(ePhi)
-            const eTanZ =  ps * Math.cos(ePhi)
-            extra.lookAt(
-                extra.position.x + eTanX,
-                extra.position.y,
-                extra.position.z + eTanZ,
-            )
+            const d = extra.userData
+            if (d._formationDest && !d._inFormation) {
+                // ── Formation movement ──────────────────────────────────────────
+                this._moveDuckToFormation(extra)
+            } else if (!d._formationDest) {
+                // ── Normal orbit ────────────────────────────────────────────────
+                const et  = t - (d._tOffset || 0)
+                d.phiBase += p.ballSpeed * d.phiDrift
+                const ePhi   = d.phiBase + Math.sin(et * d.phiWanderFreq + d.phiWanderPhase) * d.phiWanderAmp
+                const eTheta = d.thetaBase + Math.sin(et * d.thetaFreq + d.thetaPhase) * d.thetaAmp
+                const eBob   = Math.sin(et * p.bobSpeed + d.bobPhase) * p.bobAmp
+                const eDist  = WATER_R * p.waterScale - BALL_R * 0.3 + eBob
+                extra.position.set(
+                    Math.sin(eTheta) * Math.cos(ePhi) * eDist,
+                    Math.cos(eTheta)                  * eDist,
+                    Math.sin(eTheta) * Math.sin(ePhi) * eDist,
+                )
+                const prevEPhi     = d._prevEPhi ?? ePhi
+                d._prevEPhi        = ePhi
+                const rawPhiRate   = ePhi - prevEPhi
+                d._smoothPhiRate   = (d._smoothPhiRate ?? rawPhiRate) * 0.90 + rawPhiRate * 0.10
+                const ps           = d._smoothPhiRate >= 0 ? 1 : -1
+                const eTanX        = -ps * Math.sin(ePhi)
+                const eTanZ        =  ps * Math.cos(ePhi)
+                this._duckFwd.set(eTanX, 0, eTanZ)
+                this._duckUp.set(
+                    Math.sin(eTheta) * Math.cos(ePhi),
+                    Math.cos(eTheta),
+                    Math.sin(eTheta) * Math.sin(ePhi),
+                )
+                this._duckRgt.crossVectors(this._duckUp, this._duckFwd)
+                this._duckMtx.makeBasis(this._duckRgt, this._duckUp, this._duckFwd)
+                this._duckQuat.setFromRotationMatrix(this._duckMtx)
+                extra.quaternion.slerp(this._duckQuat, 0.12)
+            }
+            // else: _inFormation=true → duck rests at destination
         }
 
         // Ship — freezes only when it's the zoomed target
@@ -1167,6 +1393,7 @@ export default class Pond {
         }
 
         this.updateRippleRings()
+        this._updateWakePool()
         this._updateCameraZoom()
     }
 }
