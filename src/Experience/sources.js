@@ -226,6 +226,6 @@ export default [
     {
         name: 'duckModel',
         type: 'gltfModel',
-        path: 'models/Duck/DUCK.glb'
+        path: 'models/Duck/Duck.glb'
     },
 ]

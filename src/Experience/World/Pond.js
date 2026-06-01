@@ -565,38 +565,41 @@ export default class Pond {
     }
 
     createBall() {
-        const gradData = new Uint8Array([40, 120, 190, 255])
-        const gradMap  = new THREE.DataTexture(gradData, 4, 1, THREE.RedFormat)
-        gradMap.magFilter = THREE.NearestFilter
-        gradMap.minFilter = THREE.NearestFilter
-        gradMap.needsUpdate = true
+        const gltf       = this.resources.items.duckModel
+        const DUCK_SCALE = 0.20   // adjust if the model appears too big or too small
 
-        const geo = new THREE.SphereGeometry(BALL_R, 32, 32)
-        const mat = new THREE.MeshToonMaterial({ color: 0xff6633, gradientMap: gradMap })
+        // Helper — clone the GLTF scene for one duck.
+        // Every child Mesh gets a back-reference to its root Group so that
+        // the raycaster (which hits Meshes, not Groups) can resolve the owner.
+        const makeDuck = () => {
+            const group = gltf.scene.clone()
+            group.scale.setScalar(DUCK_SCALE)
+            group.traverse(child => {
+                if (child.isMesh) child.userData.rootGroup = group
+            })
+            this.scene.add(group)
+            return group
+        }
 
         // Main ball → first duck
-        this.ball = new THREE.Mesh(geo, mat)
+        this.ball = makeDuck()
         this.ball.userData.duck = ducks[0]
-        this.scene.add(this.ball)
 
-        // One extra ball per remaining duck — add ducks to ducks.js to get more balls
+        // One extra group per remaining duck — add entries to ducks.js to get more
         this._extraBalls = []
         for (let i = 1; i < ducks.length; i++) {
-            const extra = new THREE.Mesh(geo, mat)
-            extra.userData = {
-                duck:           ducks[i],
-                phiBase:        (i / ducks.length) * Math.PI * 2, // evenly pre-spread
-                phiDrift:       (Math.random() - 0.5) * 0.6,   // slow drift, can be + or − (clockwise/counter)
-                phiWanderAmp:   0.3 + Math.random() * 0.5,     // oscillation amplitude in radians
-                phiWanderFreq:  0.07 + Math.random() * 0.13,   // oscillation frequency
-                phiWanderPhase: Math.random() * Math.PI * 2,
-                thetaBase:      Math.PI * (0.25 + Math.random() * 0.25),
-                thetaAmp:       0.08 + Math.random() * 0.15,
-                thetaFreq:      0.15 + Math.random() * 0.25,
-                thetaPhase:     Math.random() * Math.PI * 2,
-                bobPhase:       Math.random() * Math.PI * 2,
-            }
-            this.scene.add(extra)
+            const extra = makeDuck()
+            extra.userData.duck           = ducks[i]
+            extra.userData.phiBase        = (i / ducks.length) * Math.PI * 2 // evenly spread
+            extra.userData.phiDrift       = (Math.random() - 0.5) * 0.6      // can be + or −
+            extra.userData.phiWanderAmp   = 0.3 + Math.random() * 0.5
+            extra.userData.phiWanderFreq  = 0.07 + Math.random() * 0.13
+            extra.userData.phiWanderPhase = Math.random() * Math.PI * 2
+            extra.userData.thetaBase      = Math.PI * (0.25 + Math.random() * 0.25)
+            extra.userData.thetaAmp       = 0.08 + Math.random() * 0.15
+            extra.userData.thetaFreq      = 0.15 + Math.random() * 0.25
+            extra.userData.thetaPhase     = Math.random() * Math.PI * 2
+            extra.userData.bobPhase       = Math.random() * Math.PI * 2
             this._extraBalls.push(extra)
         }
     }
@@ -669,7 +672,13 @@ export default class Pond {
 
     _setupBallClick() {
         const canvas   = this.experience.renderer.instance.domElement
-        const allBalls = () => [this.ball, ...this._extraBalls, this.ship.mesh]
+        // allBalls returns Groups (ducks) + the ship Mesh.
+        // intersectObjects is called with recursive=true so it hits child meshes
+        // inside each group.  We then resolve back to the root object via
+        // child.userData.rootGroup (set in createBall) or hits[0].object itself
+        // for the ship, which is a plain Mesh with no rootGroup.
+        const allBalls  = () => [this.ball, ...this._extraBalls, this.ship.mesh]
+        const resolveHit = (hit) => hit.object.userData.rootGroup ?? hit.object
 
         canvas.addEventListener('mousemove', (e) => {
             const r = canvas.getBoundingClientRect()
@@ -678,7 +687,7 @@ export default class Pond {
                -((e.clientY - r.top)  / r.height) *  2 + 1
             )
             this._raycaster.setFromCamera(this._mouse, this.camera.instance)
-            canvas.style.cursor = this._raycaster.intersectObjects(allBalls()).length > 0
+            canvas.style.cursor = this._raycaster.intersectObjects(allBalls(), true).length > 0
                 ? 'pointer' : ''
         })
 
@@ -689,15 +698,16 @@ export default class Pond {
                -((e.clientY - r.top)  / r.height) *  2 + 1
             )
             this._raycaster.setFromCamera(this._mouse, this.camera.instance)
-            const hits = this._raycaster.intersectObjects(allBalls())
+            const hits     = this._raycaster.intersectObjects(allBalls(), true)
+            const hitGroup = hits.length > 0 ? resolveHit(hits[0]) : null
 
             if (this._zoomedBall === null) {
-                // Not zoomed: click a ball to zoom in on it
-                if (hits.length === 0) return
-                this._zoomToTarget(hits[0].object)
+                // Not zoomed: click a duck/ship to zoom in on it
+                if (!hitGroup) return
+                this._zoomToTarget(hitGroup)
             } else {
-                // Zoomed: click anywhere outside any ball to zoom out
-                if (hits.length > 0) return
+                // Zoomed: click anywhere outside to zoom out
+                if (hitGroup) return
                 this._zoomOut()
             }
         })
@@ -1109,8 +1119,18 @@ export default class Pond {
             const bob      = Math.sin(bt * p.bobSpeed) * p.bobAmp
             const ballDist = WATER_R * p.waterScale - BALL_R * 0.3 + bob
             this.ball.position.set(nx * ballDist, ny * ballDist, nz * ballDist)
-            this.ball.rotation.y += 0.015
             this.waterUniforms.uBallDir.value.set(nx, ny, nz)
+
+            // Face the direction of travel: tangent to orbit in the phi direction.
+            // lookAt points the group's -Z toward the target; add π if the model
+            // faces +Z instead (beak points wrong way → flip sign of tanX/tanZ).
+            const tanX = -Math.sin(this.phi)   // d(pos)/dphi, normalised, X component
+            const tanZ =  Math.cos(this.phi)   // d(pos)/dphi, normalised, Z component
+            this.ball.lookAt(
+                this.ball.position.x + tanX,
+                this.ball.position.y,
+                this.ball.position.z + tanZ,
+            )
         }
 
         // Extra balls — skip update only for the zoomed one
@@ -1128,7 +1148,16 @@ export default class Pond {
                 Math.cos(eTheta)                  * eDist,
                 Math.sin(eTheta) * Math.sin(ePhi) * eDist,
             )
-            extra.rotation.y += 0.015
+
+            // Face direction of travel — phiDrift sign tells us clockwise vs counter-clockwise
+            const ps   = d.phiDrift >= 0 ? 1 : -1
+            const eTanX = -ps * Math.sin(ePhi)
+            const eTanZ =  ps * Math.cos(ePhi)
+            extra.lookAt(
+                extra.position.x + eTanX,
+                extra.position.y,
+                extra.position.z + eTanZ,
+            )
         }
 
         // Ship — freezes only when it's the zoomed target
