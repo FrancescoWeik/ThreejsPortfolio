@@ -7,7 +7,6 @@ import World from "./World/World.js"
 import Resources from "./Utils/Resources.js"
 import sources from './sources.js'
 import Debug from './Utils/Debug.js'
-import Controls from './Utils/Controls.js'
 import PreLoader from "./Preloader.js"
 
 let instance = null
@@ -36,8 +35,6 @@ export default class Experience{
         this.camera = new Camera();
         this.renderer = new Renderer();
         this.world = new World();
-        this.controls = new Controls();
-        this.projectNumber = 0;
 
         //Sizes resize event
         this.sizes.on('resize', () =>{
@@ -58,33 +55,7 @@ export default class Experience{
     update(){
         this.camera.update();
         this.world.update();
-        this.controls.update();
         this.renderer.update();
-    }
-
-    moveSpider(){
-        this.world.spider.moveToCenter();
-        this.world.room.removeArrow();
-    }
-
-    activateBell(){
-        this.controls.alreadyMoving = false;
-    }
-
-    changePictureProject(position){
-        this.world.room.changeProjectPicture(position);
-    }
-
-    createProjectFromControls(){
-        this.world.spider.createProjectFromControls();
-    }
-
-    changeAboutToCurriculum(){
-        this.world.room.changeAboutToCurriculum();
-    }
-    
-    changeCurriculumToAbout(){
-        this.world.room.changeCurriculumToAbout();
     }
 
     destroy(){
@@ -107,7 +78,7 @@ export default class Experience{
 
         this.camera.controls.dispose();
         this.renderer.instance.dispose();
-        
+
         if(this.debug.active){
             this.debug.ui.destroy();
         }
