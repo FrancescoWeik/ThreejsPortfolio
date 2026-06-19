@@ -47,11 +47,16 @@ export default class IronDuckCard{
             Papera: { title: 'Papera', text: 'Una papera misteriosa!' }
         }
 
+        //How much bigger than the duck its (invisible) click/hover collider should be
+        this.duckColliderPadding = 1.2;
+
         this.setModel();
         this.setDucks();
+        this.setDuckColliders();
         this.setAnimation();
         this.setScrollControl();
         this.setDragControl();
+        this.setHoverControl();
         this.setPopup();
         this.setDebug();
     }
@@ -75,8 +80,57 @@ export default class IronDuckCard{
             const duck = this.model.getObjectByName(name);
             if(duck){
                 duck.traverse((child) => { child.userData.duckName = name; });
+                //Remember the original scale so we can shrink to 0 on hover and restore it
+                duck.userData.originalScale = duck.scale.clone();
+                duck.userData.hoverFactor = 1;       //current scale multiplier (1 = full, 0 = gone)
+                duck.userData.hoverTarget = 1;       //where hoverFactor is heading
                 this.ducks.push(duck);
             }
+        }
+    }
+
+    setDuckColliders(){
+        //Build one invisible box per duck that wraps the WHOLE duck, so the raycast hits
+        //the full shape instead of just the base mesh. The box is parented to the duck and
+        //tagged with the duck name; we raycast against these boxes for hover and click.
+        this.duckColliders = [];
+        const colliderMaterial = new THREE.MeshBasicMaterial();
+
+        for(const duck of this.ducks){
+            //Make sure matrices are current before measuring
+            duck.updateWorldMatrix(true, true);
+            const invDuck = new THREE.Matrix4().copy(duck.matrixWorld).invert();
+
+            //Union of every child mesh's bounding box, expressed in the duck's LOCAL space
+            const box = new THREE.Box3();
+            duck.traverse((child) => {
+                if(child.isMesh && child.geometry){
+                    child.geometry.computeBoundingBox();
+                    const childBox = child.geometry.boundingBox.clone();
+                    const toLocal = new THREE.Matrix4().multiplyMatrices(invDuck, child.matrixWorld);
+                    childBox.applyMatrix4(toLocal);
+                    box.union(childBox);
+                }
+            });
+            if(box.isEmpty()) continue;
+
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+
+            const geometry = new THREE.BoxGeometry(
+                size.x * this.duckColliderPadding,
+                size.y * this.duckColliderPadding,
+                size.z * this.duckColliderPadding
+            );
+            const collider = new THREE.Mesh(geometry, colliderMaterial);
+            collider.visible = false; //invisible, but still hit by the raycaster
+            collider.userData.duckName = duck.userData.duckName;
+            collider.userData.localCenter = center.clone();
+            collider.position.copy(center);
+
+            duck.add(collider);
+            duck.userData.collider = collider;
+            this.duckColliders.push(collider);
         }
     }
 
@@ -201,13 +255,37 @@ export default class IronDuckCard{
         });
     }
 
+    setHoverControl(){
+        //Hover smoothing speed (0 = slow, 1 = instant)
+        this.hoverSmoothing = 0.15;
+        this.hoveredDuckName = null;
+
+        //Track the pointer and figure out which duck (if any) it is over
+        window.addEventListener('pointermove', (event) => {
+            //Hover only makes sense when the card is out and the ducks are interactive
+            if(this.isDragging || !this.canInteract() || !this.camera.freeRotate || this.isPopupOpen()){
+                this.hoveredDuckName = null;
+                return;
+            }
+
+            this.pointer.x = (event.clientX / this.sizes.width) * 2 - 1;
+            this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
+            this.raycaster.setFromCamera(this.pointer, this.camera.instance);
+
+            const intersects = this.raycaster.intersectObjects(this.duckColliders, true);
+            this.hoveredDuckName = intersects.length > 0
+                ? this.getDuckName(intersects[0].object)
+                : null;
+        });
+    }
+
     checkDuckClick(event){
         //Raycast only against the ducks; show a popup if one is hit
         this.pointer.x = (event.clientX / this.sizes.width) * 2 - 1;
         this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
         this.raycaster.setFromCamera(this.pointer, this.camera.instance);
 
-        const intersects = this.raycaster.intersectObjects(this.ducks, true);
+        const intersects = this.raycaster.intersectObjects(this.duckColliders, true);
         if(intersects.length > 0){
             const name = this.getDuckName(intersects[0].object);
             if(name){
@@ -273,6 +351,49 @@ export default class IronDuckCard{
             .add(this, 'smoothing')
             .min(0.01).max(1).step(0.01)
             .name('smoothing')
+        this.debugFolder
+            .add(this, 'duckColliderPadding')
+            .min(1).max(3).step(0.05)
+            .name('duck collider size')
+            .onChange(() => this.rebuildDuckColliders())
+    }
+
+    rebuildDuckColliders(){
+        //Remove existing colliders, then rebuild them at the new padding
+        for(const collider of this.duckColliders){
+            if(collider.parent) collider.parent.remove(collider);
+            collider.geometry.dispose();
+        }
+        //Reset hover bookkeeping so freshly built colliders aren't pre-scaled
+        for(const duck of this.ducks){
+            duck.userData.hoverFactor = 1;
+            duck.userData.hoverTarget = 1;
+            duck.scale.copy(duck.userData.originalScale);
+            duck.userData.collider = null;
+        }
+        this.setDuckColliders();
+    }
+
+    updateDuckHover(){
+        //Shrink the hovered duck to 0, let the others grow back to their original scale
+        for(const duck of this.ducks){
+            duck.userData.hoverTarget = (duck.userData.duckName === this.hoveredDuckName) ? 0 : 1;
+
+            const factor = duck.userData.hoverFactor
+                + (duck.userData.hoverTarget - duck.userData.hoverFactor) * this.hoverSmoothing;
+            duck.userData.hoverFactor = factor;
+
+            duck.scale.copy(duck.userData.originalScale).multiplyScalar(factor);
+
+            //Keep the invisible collider at a constant world size/position by undoing the
+            //hover shrink, so the hover ray still hits even when the duck is nearly gone
+            const collider = duck.userData.collider;
+            if(collider){
+                const inv = 1 / Math.max(factor, 1e-3);
+                collider.scale.setScalar(inv);
+                collider.position.copy(collider.userData.localCenter).multiplyScalar(inv);
+            }
+        }
     }
 
     update(){
@@ -284,5 +405,7 @@ export default class IronDuckCard{
         //Map the scroll progress to a position in time inside the clip and apply it
         this.animation.action.time = this.scrollCurrent * this.animation.duration;
         this.animation.mixer.update(0);
+
+        this.updateDuckHover();
     }
 }
