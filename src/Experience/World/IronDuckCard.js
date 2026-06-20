@@ -1,6 +1,7 @@
 import Experience from '../Experience.js'
 import * as THREE from 'three'
 import Duck from './Duck.js'
+import ducksMembers from './ducksMembers.js'
 
 export default class IronDuckCard{
     constructor(){
@@ -32,29 +33,16 @@ export default class IronDuckCard{
         this.pointerDownX = 0;
         this.pointerDownY = 0;
 
-        //Ducks — the nodes named after each person in the model
-        this.duckNames = ['Arri', 'Davide', 'Fede', 'Fra', 'Henry', 'Lore', 'Lucas', 'Teo', 'Papera'];
-        this.ducks = [];            //Duck instances
-        this.duckColliders = [];    //their invisible colliders, for raycasting
-        this.hoveredDuck = null;    //the Duck currently under the pointer (or null)
-
-        //Popup content per duck (edit titles/texts here)
-        this.duckInfo = {
-            Arri:   { title: 'Arri',   text: 'Questa è la papera di Arri!' },
-            Davide: { title: 'Davide', text: 'Questa è la papera di Davide!' },
-            Fede:   { title: 'Fede',   text: 'Questa è la papera di Fede!' },
-            Fra:    { title: 'Fra',    text: 'Questa è la papera di Fra!' },
-            Henry:  { title: 'Henry',  text: 'Questa è la papera di Henry!' },
-            Lore:   { title: 'Lore',   text: 'Questa è la papera di Lore!' },
-            Lucas:  { title: 'Lucas',  text: 'Questa è la papera di Lucas!' },
-            Teo:    { title: 'Teo',    text: 'Questa è la papera di Teo!' },
-            Papera: { title: 'Papera', text: 'Una papera misteriosa!' }
-        }
+        //Ducks
+        this.members = ducksMembers;   //per-duck data (name, description, link, imagePath)
+        this.ducks = [];               //Duck instances
+        this.duckColliders = [];       //their invisible colliders, for raycasting
+        this.hoveredDuck = null;       //the Duck currently under the pointer (or null)
 
         //How much bigger than the duck its (invisible) collider should be
         this.duckColliderPadding = 1.2;
 
-        //Ducks that must NOT react to hover (e.g. the giant duck). They stay full size.
+        //Ducks that must NOT react to hover (e.g. the giant duck). They show no bubble.
         this.hoverExcluded = ['Papera'];
 
         this.setModel();
@@ -80,13 +68,13 @@ export default class IronDuckCard{
     }
 
     setDucks(){
-        //Wrap each duck node in a Duck instance (which builds its collider, emissive look, etc.)
-        for(const name of this.duckNames){
-            const node = this.model.getObjectByName(name);
+        //Build a Duck per member (it wires its collider, emissive look and hover bubble)
+        for(const member of this.members){
+            const node = this.model.getObjectByName(member.node);
             if(!node) continue;
             const duck = new Duck(node, {
-                info: this.duckInfo[name],
-                hoverable: !this.hoverExcluded.includes(name),
+                member,
+                hoverable: !this.hoverExcluded.includes(member.node),
                 colliderPadding: this.duckColliderPadding
             });
             this.ducks.push(duck);
@@ -134,9 +122,11 @@ export default class IronDuckCard{
     }
 
     setScrollControl(){
-        //Mouse wheel: the more you scroll down, the further the animation advances
+        //Mouse wheel: the more you scroll down, the further the animation advances.
+        //Once the card is out, the wheel becomes a zoom (handled by OrbitControls).
         window.addEventListener('wheel', (event) => {
             if(!this.canInteract()) return;
+            if(this.camera.freeRotate) return;
             this.scrollTarget = THREE.MathUtils.clamp(
                 this.scrollTarget + event.deltaY * this.wheelSensitivity,
                 0,
@@ -152,6 +142,7 @@ export default class IronDuckCard{
 
         window.addEventListener('touchmove', (event) => {
             if(!this.canInteract()) return;
+            if(this.camera.freeRotate) return; //card out: gestures rotate/zoom the camera instead
             if(this.lastTouchY === null) return;
             const currentY = event.touches[0].clientY;
             const deltaY = this.lastTouchY - currentY; //swipe up -> positive -> advances
@@ -220,9 +211,6 @@ export default class IronDuckCard{
     }
 
     setHoverControl(){
-        //Hover smoothing speed (0 = slow, 1 = instant)
-        this.hoverSmoothing = 0.15;
-
         //Track the pointer and figure out which duck (if any) it is over
         window.addEventListener('pointermove', (event) => {
             //Hover only makes sense when the card is out and the ducks are interactive
@@ -237,7 +225,7 @@ export default class IronDuckCard{
 
             const intersects = this.raycaster.intersectObjects(this.duckColliders, true);
             const duck = intersects.length > 0 ? this.getDuckFromObject(intersects[0].object) : null;
-            //Only hoverable ducks trigger the effect (the giant duck does nothing)
+            //Only hoverable ducks trigger the bubble (the giant duck does nothing)
             this.hoveredDuck = (duck && duck.hoverable) ? duck : null;
         });
     }
@@ -283,9 +271,9 @@ export default class IronDuckCard{
 
     showDuckPopup(duck){
         if(!this.popup || !this.popup.element) return;
-        const info = duck.info || {};
-        this.popup.title.textContent = info.title || duck.name;
-        this.popup.text.textContent = info.text || '';
+        const member = duck.member || {};
+        this.popup.title.textContent = member.name || duck.name;
+        this.popup.text.textContent = member.description || '';
         this.popup.element.classList.add('visible');
     }
 
@@ -329,16 +317,13 @@ export default class IronDuckCard{
         this.refreshColliderList();
     }
 
-    updateDuckHover(){
-        //The hovered duck shrinks to 0, every other duck stays at full size.
-        //With nothing hovered, they all sit at 1. Excluded ducks never change.
+    updateDucks(){
+        //Show the hovered duck's bubble, hide the others, run each duck's hover wobble,
+        //and keep each bubble positioned above its duck.
+        const delta = this.time.delta * 0.001; //ms -> seconds
         for(const duck of this.ducks){
-            if(!duck.hoverable){
-                duck.hoverTarget = 1;
-            } else {
-                duck.hoverTarget = (duck === this.hoveredDuck) ? 0 : 1;
-            }
-            duck.update(this.hoverSmoothing);
+            duck.setHovered(duck === this.hoveredDuck);
+            duck.update(this.camera.instance, this.sizes, delta);
         }
     }
 
@@ -352,6 +337,6 @@ export default class IronDuckCard{
         this.animation.action.time = this.scrollCurrent * this.animation.duration;
         this.animation.mixer.update(0);
 
-        this.updateDuckHover();
+        this.updateDucks();
     }
 }

@@ -155,3 +155,56 @@ body
 @media (hover: hover) and (pointer: fine) {
     .start:hover { color: #e2a65d; }
   }
+
+/* Duck hover bubble (speech-bubble tooltip above a duck) */
+.duck-bubble {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, -100%) scale(0);
+    transform-origin: 50% 100%;
+    transition: transform 0.2s ease;
+    pointer-events: none;
+    z-index: 5;
+
+    min-width: 90px;
+    max-width: 220px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #11131c;
+    color: #ffffff;
+    text-align: center;
+    font-family: sans-serif;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.duck-bubble.visible {
+    transform: translate(-50%, -100%) scale(1);
+}
+
+.duck-bubble__name {
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.duck-bubble__description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+.duck-bubble__description:empty {
+    display: none;
+}
+
+/* little arrow pointing down to the duck */
+.duck-bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -7px;
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #11131c;
+}
