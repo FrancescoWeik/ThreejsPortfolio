@@ -1,5 +1,6 @@
 import Experience from '../Experience.js'
 import * as THREE from 'three'
+import Duck from './Duck.js'
 
 export default class IronDuckCard{
     constructor(){
@@ -23,7 +24,7 @@ export default class IronDuckCard{
         this.smoothing = 0.01;    //how fast the clip follows the scroll (0 = slow, 1 = instant)
         this.lastTouchY = null;
 
-        //Drag-on-card state
+        //Drag / raycast state
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2();
         this.isDragging = false;
@@ -31,9 +32,12 @@ export default class IronDuckCard{
         this.pointerDownX = 0;
         this.pointerDownY = 0;
 
-        //Ducks (clickable) — the nodes named after each person in the model
+        //Ducks — the nodes named after each person in the model
         this.duckNames = ['Arri', 'Davide', 'Fede', 'Fra', 'Henry', 'Lore', 'Lucas', 'Teo', 'Papera'];
-        this.ducks = [];
+        this.ducks = [];            //Duck instances
+        this.duckColliders = [];    //their invisible colliders, for raycasting
+        this.hoveredDuck = null;    //the Duck currently under the pointer (or null)
+
         //Popup content per duck (edit titles/texts here)
         this.duckInfo = {
             Arri:   { title: 'Arri',   text: 'Questa è la papera di Arri!' },
@@ -47,7 +51,7 @@ export default class IronDuckCard{
             Papera: { title: 'Papera', text: 'Una papera misteriosa!' }
         }
 
-        //How much bigger than the duck its (invisible) click/hover collider should be
+        //How much bigger than the duck its (invisible) collider should be
         this.duckColliderPadding = 1.2;
 
         //Ducks that must NOT react to hover (e.g. the giant duck). They stay full size.
@@ -55,8 +59,6 @@ export default class IronDuckCard{
 
         this.setModel();
         this.setDucks();
-        this.setDuckMaterials();
-        this.setDuckColliders();
         this.setAnimation();
         this.setScrollControl();
         this.setDragControl();
@@ -78,95 +80,30 @@ export default class IronDuckCard{
     }
 
     setDucks(){
-        //Find each duck node by name and tag it (and its children) so a raycast hit
-        //can be mapped back to the duck name
+        //Wrap each duck node in a Duck instance (which builds its collider, emissive look, etc.)
         for(const name of this.duckNames){
-            const duck = this.model.getObjectByName(name);
-            if(duck){
-                duck.traverse((child) => { child.userData.duckName = name; });
-                //Remember the original scale so we can shrink to 0 on hover and restore it
-                duck.userData.originalScale = duck.scale.clone();
-                duck.userData.hoverFactor = 1;       //current scale multiplier (1 = full, 0 = gone)
-                duck.userData.hoverTarget = 1;       //where hoverFactor is heading
-                this.ducks.push(duck);
-            }
-        }
-    }
-
-    setDuckMaterials(){
-        //Make the ducks respect the emissive coming from Blender: a glTF mesh still lets its
-        //base color (albedo) react to scene lights, so an "emission" material looks washed
-        //instead of self-lit. We zero the base color on ducks that actually have an emissive,
-        //leaving only the emissive to glow (the Blender look). Only the ducks are affected.
-        for(const duck of this.ducks){
-            duck.traverse((child) => {
-                if(child.isMesh && child.material && child.material.emissive){
-                    //Only the materials that actually emit (non-black emissive)
-                    if(child.material.emissive.getHex() !== 0x000000){
-                        //Clone so we never touch a material shared with the rest of the card
-                        child.material = child.material.clone();
-                        child.material.color.set(0x000000); //black base -> no light response
-                        child.material.needsUpdate = true;
-
-                        child.castShadow = true;     //still casts shadows, like in Blender
-                        child.receiveShadow = false; //the emissive would mask received shadows
-                    }
-                }
+            const node = this.model.getObjectByName(name);
+            if(!node) continue;
+            const duck = new Duck(node, {
+                info: this.duckInfo[name],
+                hoverable: !this.hoverExcluded.includes(name),
+                colliderPadding: this.duckColliderPadding
             });
+            this.ducks.push(duck);
         }
+        this.refreshColliderList();
     }
 
-    setDuckColliders(){
-        //Build one invisible box per duck that wraps the WHOLE duck, so the raycast hits
-        //the full shape instead of just the base mesh. The box is parented to the duck and
-        //tagged with the duck name; we raycast against these boxes for hover and click.
-        this.duckColliders = [];
-        const colliderMaterial = new THREE.MeshBasicMaterial();
-
-        for(const duck of this.ducks){
-            //Make sure matrices are current before measuring
-            duck.updateWorldMatrix(true, true);
-            const invDuck = new THREE.Matrix4().copy(duck.matrixWorld).invert();
-
-            //Union of every child mesh's bounding box, expressed in the duck's LOCAL space
-            const box = new THREE.Box3();
-            duck.traverse((child) => {
-                if(child.isMesh && child.geometry){
-                    child.geometry.computeBoundingBox();
-                    const childBox = child.geometry.boundingBox.clone();
-                    const toLocal = new THREE.Matrix4().multiplyMatrices(invDuck, child.matrixWorld);
-                    childBox.applyMatrix4(toLocal);
-                    box.union(childBox);
-                }
-            });
-            if(box.isEmpty()) continue;
-
-            const size = box.getSize(new THREE.Vector3());
-            const center = box.getCenter(new THREE.Vector3());
-
-            const geometry = new THREE.BoxGeometry(
-                size.x * this.duckColliderPadding,
-                size.y * this.duckColliderPadding,
-                size.z * this.duckColliderPadding
-            );
-            const collider = new THREE.Mesh(geometry, colliderMaterial);
-            collider.visible = false; //invisible, but still hit by the raycaster
-            collider.userData.duckName = duck.userData.duckName;
-            collider.userData.localCenter = center.clone();
-            collider.position.copy(center);
-
-            duck.add(collider);
-            duck.userData.collider = collider;
-            this.duckColliders.push(collider);
-        }
+    refreshColliderList(){
+        this.duckColliders = this.ducks.map((duck) => duck.collider).filter(Boolean);
     }
 
-    //Walk up the hierarchy to find which duck (if any) was hit
-    getDuckName(object){
+    //Walk up the hierarchy to find which Duck (if any) was hit
+    getDuckFromObject(object){
         let current = object;
         while(current){
-            if(current.userData && current.userData.duckName){
-                return current.userData.duckName;
+            if(current.userData && current.userData.duck){
+                return current.userData.duck;
             }
             current = current.parent;
         }
@@ -285,13 +222,12 @@ export default class IronDuckCard{
     setHoverControl(){
         //Hover smoothing speed (0 = slow, 1 = instant)
         this.hoverSmoothing = 0.15;
-        this.hoveredDuckName = null;
 
         //Track the pointer and figure out which duck (if any) it is over
         window.addEventListener('pointermove', (event) => {
             //Hover only makes sense when the card is out and the ducks are interactive
             if(this.isDragging || !this.canInteract() || !this.camera.freeRotate || this.isPopupOpen()){
-                this.hoveredDuckName = null;
+                this.hoveredDuck = null;
                 return;
             }
 
@@ -300,9 +236,9 @@ export default class IronDuckCard{
             this.raycaster.setFromCamera(this.pointer, this.camera.instance);
 
             const intersects = this.raycaster.intersectObjects(this.duckColliders, true);
-            this.hoveredDuckName = intersects.length > 0
-                ? this.getDuckName(intersects[0].object)
-                : null;
+            const duck = intersects.length > 0 ? this.getDuckFromObject(intersects[0].object) : null;
+            //Only hoverable ducks trigger the effect (the giant duck does nothing)
+            this.hoveredDuck = (duck && duck.hoverable) ? duck : null;
         });
     }
 
@@ -314,9 +250,9 @@ export default class IronDuckCard{
 
         const intersects = this.raycaster.intersectObjects(this.duckColliders, true);
         if(intersects.length > 0){
-            const name = this.getDuckName(intersects[0].object);
-            if(name){
-                this.showDuckPopup(name);
+            const duck = this.getDuckFromObject(intersects[0].object);
+            if(duck){
+                this.showDuckPopup(duck);
             }
         }
     }
@@ -345,10 +281,10 @@ export default class IronDuckCard{
         return this.popup && this.popup.element && this.popup.element.classList.contains('visible');
     }
 
-    showDuckPopup(name){
+    showDuckPopup(duck){
         if(!this.popup || !this.popup.element) return;
-        const info = this.duckInfo[name] || {};
-        this.popup.title.textContent = info.title || name;
+        const info = duck.info || {};
+        this.popup.title.textContent = info.title || duck.name;
         this.popup.text.textContent = info.text || '';
         this.popup.element.classList.add('visible');
     }
@@ -386,42 +322,23 @@ export default class IronDuckCard{
     }
 
     rebuildDuckColliders(){
-        //Remove existing colliders, then rebuild them at the new padding
-        for(const collider of this.duckColliders){
-            if(collider.parent) collider.parent.remove(collider);
-            collider.geometry.dispose();
-        }
-        //Reset hover bookkeeping so freshly built colliders aren't pre-scaled
+        //Rebuild every duck's collider at the new padding
         for(const duck of this.ducks){
-            duck.userData.hoverFactor = 1;
-            duck.userData.hoverTarget = 1;
-            duck.scale.copy(duck.userData.originalScale);
-            duck.userData.collider = null;
+            duck.rebuildCollider(this.duckColliderPadding);
         }
-        this.setDuckColliders();
+        this.refreshColliderList();
     }
 
     updateDuckHover(){
-        //Shrink the hovered duck to 0, let the others grow back to their original scale.
-        //Excluded ducks (the giant one) ignore hover and always stay full size.
+        //The hovered duck shrinks to 0, every other duck stays at full size.
+        //With nothing hovered, they all sit at 1. Excluded ducks never change.
         for(const duck of this.ducks){
-            const excluded = this.hoverExcluded.includes(duck.userData.duckName);
-            duck.userData.hoverTarget = (!excluded && duck.userData.duckName === this.hoveredDuckName) ? 0 : 1;
-
-            const factor = duck.userData.hoverFactor
-                + (duck.userData.hoverTarget - duck.userData.hoverFactor) * this.hoverSmoothing;
-            duck.userData.hoverFactor = factor;
-
-            duck.scale.copy(duck.userData.originalScale).multiplyScalar(factor);
-
-            //Keep the invisible collider at a constant world size/position by undoing the
-            //hover shrink, so the hover ray still hits even when the duck is nearly gone
-            const collider = duck.userData.collider;
-            if(collider){
-                const inv = 1 / Math.max(factor, 1e-3);
-                collider.scale.setScalar(inv);
-                collider.position.copy(collider.userData.localCenter).multiplyScalar(inv);
+            if(!duck.hoverable){
+                duck.hoverTarget = 1;
+            } else {
+                duck.hoverTarget = (duck === this.hoveredDuck) ? 0 : 1;
             }
+            duck.update(this.hoverSmoothing);
         }
     }
 
