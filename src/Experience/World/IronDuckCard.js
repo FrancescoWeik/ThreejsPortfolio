@@ -16,13 +16,15 @@ export default class IronDuckCard{
         //setup
         this.resource = this.resources.items.ironDuckCardModel;
 
-        //Scroll-driven animation progress (0 = start of clip, 1 = end of clip)
-        this.scrollTarget = 0;    //where the scroll wants the animation to be
-        this.scrollCurrent = 0;   //smoothed value actually applied to the clip
-        this.wheelSensitivity = 0.0008;  //how much one wheel notch advances the clip
-        this.touchSensitivity = 0.003;   //how much a finger swipe advances the clip
-        this.dragSensitivity = 0.004;    //how much dragging the card advances the clip
-        this.smoothing = 0.01;    //how fast the clip follows the scroll (0 = slow, 1 = instant)
+        //Scroll-driven progress. [0 -> 1] plays the card extraction (the camera reaches its
+        //overview here); [1 -> scrollMax] keeps scrolling to bring the camera to its final framing.
+        this.scrollTarget = 0;    //where the scroll wants to be
+        this.scrollCurrent = 0;   //smoothed value actually applied
+        this.scrollMax = 1.5;     //total scroll range (1 = card out, the rest = camera approach)
+        this.wheelSensitivity = 0.0006;  //how much one wheel notch advances the scroll
+        this.touchSensitivity = 0.003;   //how much a finger swipe advances the scroll
+        this.dragSensitivity = 0.004;    //how much dragging the card advances the scroll
+        this.smoothing = 0.01;    //how fast it follows the scroll (0 = slow, 1 = instant)
         this.lastTouchY = null;
 
         //Parallax: the card eases a little toward the mouse (top-right, bottom-left, ...)
@@ -132,15 +134,14 @@ export default class IronDuckCard{
     }
 
     setScrollControl(){
-        //Mouse wheel: the more you scroll down, the further the animation advances.
-        //Once the card is out, the wheel becomes a zoom (handled by OrbitControls).
+        //Mouse wheel drives the whole journey both ways: scroll down advances it, scroll up
+        //(even once arrived) plays it back in reverse.
         window.addEventListener('wheel', (event) => {
             if(!this.canInteract()) return;
-            if(this.camera.freeRotate) return;
             this.scrollTarget = THREE.MathUtils.clamp(
                 this.scrollTarget + event.deltaY * this.wheelSensitivity,
                 0,
-                1
+                this.scrollMax
             );
         }, { passive: true });
 
@@ -160,7 +161,7 @@ export default class IronDuckCard{
             this.scrollTarget = THREE.MathUtils.clamp(
                 this.scrollTarget + deltaY * this.touchSensitivity,
                 0,
-                1
+                this.scrollMax
             );
         }, { passive: true });
 
@@ -199,7 +200,7 @@ export default class IronDuckCard{
             this.scrollTarget = THREE.MathUtils.clamp(
                 this.scrollTarget + deltaX * this.dragSensitivity,
                 0,
-                1
+                this.scrollMax
             );
         });
 
@@ -313,6 +314,10 @@ export default class IronDuckCard{
             .min(0.01).max(1).step(0.01)
             .name('smoothing')
         this.debugFolder
+            .add(this, 'scrollMax')
+            .min(1).max(3).step(0.05)
+            .name('scroll max (phase 2)')
+        this.debugFolder
             .add(this, 'duckColliderPadding')
             .min(1).max(3).step(0.05)
             .name('duck collider size')
@@ -368,8 +373,10 @@ export default class IronDuckCard{
         //Smoothly approach the scroll target for a fluid feel
         this.scrollCurrent += (this.scrollTarget - this.scrollCurrent) * this.smoothing;
 
-        //Map the scroll progress to a position in time inside the clip and apply it
-        this.animation.action.time = this.scrollCurrent * this.animation.duration;
+        //Only the first scroll unit [0 -> 1] drives the clip; beyond that the card stays out
+        //(the extra scroll range carries the camera to its final framing).
+        const clipProgress = Math.min(this.scrollCurrent, 1);
+        this.animation.action.time = clipProgress * this.animation.duration;
         this.animation.mixer.update(0);
 
         this.updateParallax();

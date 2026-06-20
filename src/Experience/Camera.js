@@ -18,17 +18,22 @@ export default class Camera{
         //lerps from its resting pose to this final framing. Enabled after the intro.
         //While followScroll is false, the card scroll/drag input is also blocked.
         this.followScroll = false;
-        this.freeRotate = false; //true once the card is (almost) out: the user can orbit
-        this.freeRotateThreshold = 0.9; //progress at which free orbit unlocks (0..1)
-        this.scrollStartPos = new THREE.Vector3(0, 15, 7);
-        this.scrollEndPos = new THREE.Vector3(-2.45, 5, 11.3);
-        this.scrollStartTarget = new THREE.Vector3(0, 0, 0);
-        this.scrollEndTarget = new THREE.Vector3(-8.35, 0, 0);
+        this.freeRotate = false; //true once the whole scroll journey is done: the user can orbit
+        this.freeRotateThreshold = 0.99; //overall progress at which free orbit unlocks (0..1)
 
-        //Once the card is fully out, the scroll becomes a zoom. The maximum distance is the
-        //one reached at the end of the animation (can't pull further back); the minimum is
-        //up to the user, so they can only zoom IN to explore, never out past the end framing.
-        this.minZoomDistance = 5;
+        //The scroll drives the camera along ONE smooth Catmull-Rom path through 3 waypoints:
+        //  start (resting) -> overview (card just out) -> final framing.
+        //The card finishes extracting exactly at the overview waypoint (scroll = 1); the scroll
+        //then keeps going to the final framing. A single spline blends the two moves seamlessly.
+        this.scrollStartPos    = new THREE.Vector3(0, 15, 7);
+        this.scrollEndPos      = new THREE.Vector3(-2.45, 5, 11.3);   //overview
+        this.scrollFinalPos    = new THREE.Vector3(-6.03, 1.71, 5.68);
+        this.scrollStartTarget = new THREE.Vector3(0, 0, 0);
+        this.scrollEndTarget   = new THREE.Vector3(-8.35, 0, 0);      //overview target
+        this.scrollFinalTarget = new THREE.Vector3(-6, 0, 0);
+
+        this.posCurve = new THREE.CatmullRomCurve3([this.scrollStartPos, this.scrollEndPos, this.scrollFinalPos]);
+        this.targetCurve = new THREE.CatmullRomCurve3([this.scrollStartTarget, this.scrollEndTarget, this.scrollFinalTarget]);
 
         //Temp vectors reused each frame to avoid allocations
         this._desiredPos = new THREE.Vector3();
@@ -86,23 +91,35 @@ export default class Camera{
     }
 
     update(){
-        //While following the scroll, lerp the camera toward its final framing
-        //using the card's (already smoothed) animation progress
+        //The scroll moves the camera along one smooth spline. The card-out point (scroll = 1)
+        //sits at the curve midpoint (t = 0.5), so the overview happens just as the card finishes
+        //coming out; the remaining scroll (1 -> scrollMax) carries on to the final framing.
         if(this.followScroll && this.experience.world && this.experience.world.ironDuckCard){
-            const progress = THREE.MathUtils.clamp(this.experience.world.ironDuckCard.scrollCurrent, 0, 1);
+            const card = this.experience.world.ironDuckCard;
+            const sc = card.scrollCurrent;
+            const scrollMax = card.scrollMax;
 
-            //When the card is (almost) out, hand control over to free orbit + zoom (and back).
-            //A small hysteresis avoids flickering around the threshold.
-            if(!this.freeRotate && progress >= this.freeRotateThreshold){
+            //At the very end, hand control over to free orbit + zoom (with a small hysteresis)
+            const overall = THREE.MathUtils.clamp(sc / scrollMax, 0, 1);
+            if(!this.freeRotate && overall >= this.freeRotateThreshold){
                 this.enableFreeRotate();
-            } else if(this.freeRotate && progress < this.freeRotateThreshold - 0.02){
+            } else if(this.freeRotate && overall < this.freeRotateThreshold - 0.02){
                 this.disableFreeRotate();
             }
 
-            //While not exploring, the camera follows the animation with a smoothed lerp
             if(!this.freeRotate){
-                this._desiredPos.lerpVectors(this.scrollStartPos, this.scrollEndPos, progress);
-                this._desiredTarget.lerpVectors(this.scrollStartTarget, this.scrollEndTarget, progress);
+                //Map scroll to the curve param: [0,1] -> [0,0.5] (start->overview),
+                //[1,scrollMax] -> [0.5,1] (overview->final)
+                let t;
+                if(sc <= 1){
+                    t = sc * 0.5;
+                } else {
+                    t = 0.5 + ((sc - 1) / (scrollMax - 1)) * 0.5;
+                }
+                t = THREE.MathUtils.clamp(t, 0, 1);
+
+                this.posCurve.getPoint(t, this._desiredPos);
+                this.targetCurve.getPoint(t, this._desiredTarget);
                 this.instance.position.lerp(this._desiredPos, 0.1);
                 this.controls.target.lerp(this._desiredTarget, 0.1);
             }
@@ -112,22 +129,15 @@ export default class Camera{
     }
 
     enableFreeRotate(){
-        //Card fully out: let the user rotate the camera AND zoom to explore the scene.
+        //Card fully out: let the user rotate the camera to explore (no zoom).
         this.freeRotate = true;
         this.controls.enableRotate = true;
-
-        //Scroll now zooms. Maximum = the distance reached at the end of the animation (the
-        //user can't pull further back); minimum = user-configurable, so they can only zoom IN.
-        this.controls.maxDistance = this.instance.position.distanceTo(this.controls.target);
-        this.controls.minDistance = this.minZoomDistance;
-        this.controls.enableZoom = true;
     }
 
     disableFreeRotate(){
         //Card going back in: re-take control and resume the scroll-driven framing
         this.freeRotate = false;
         this.controls.enableRotate = false;
-        this.controls.enableZoom = false;
     }
 
     addDebugValues(){
@@ -158,13 +168,6 @@ export default class Camera{
             .add(this, 'freeRotateThreshold')
             .min(0.1).max(1).step(0.01)
             .name('rotate unlock at')
-
-        //Closest zoom-in distance once the card is fully out
-        this.debugFolder
-            .add(this, 'minZoomDistance')
-            .min(1).max(20).step(0.5)
-            .name('min zoom distance')
-            .onChange(() => { this.controls.minDistance = this.minZoomDistance })
 
         //Print the current camera + target values to the console
         const debugObject = {
