@@ -25,6 +25,13 @@ export default class IronDuckCard{
         this.smoothing = 0.01;    //how fast the clip follows the scroll (0 = slow, 1 = instant)
         this.lastTouchY = null;
 
+        //Parallax: the card eases a little toward the mouse (top-right, bottom-left, ...)
+        this.parallaxEnabled = true;
+        this.parallaxAmount = 0.015;  //max tilt in radians
+        this.parallaxEasing = 0.01;   //how fast it follows the mouse (0 = slow, 1 = instant)
+        this.parallaxCurrentX = 0;    //smoothed mouse x actually applied
+        this.parallaxCurrentY = 0;    //smoothed mouse y actually applied
+
         //Drag / raycast state
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2();
@@ -58,6 +65,9 @@ export default class IronDuckCard{
     setModel(){
         this.model = this.resource.scene;
         this.scene.add(this.model);
+
+        //Base rotation we add the parallax tilt on top of (the root isn't animated)
+        this.modelBaseRotation = this.model.rotation.clone();
 
         this.model.traverse((child) => {
             if(child instanceof THREE.Mesh){
@@ -307,6 +317,17 @@ export default class IronDuckCard{
             .min(1).max(3).step(0.05)
             .name('duck collider size')
             .onChange(() => this.rebuildDuckColliders())
+
+        //Parallax
+        this.debugFolder.add(this, 'parallaxEnabled').name('parallax on')
+        this.debugFolder
+            .add(this, 'parallaxAmount')
+            .min(0).max(0.4).step(0.005)
+            .name('parallax amount')
+        this.debugFolder
+            .add(this, 'parallaxEasing')
+            .min(0.01).max(0.3).step(0.005)
+            .name('parallax easing')
     }
 
     rebuildDuckColliders(){
@@ -315,6 +336,20 @@ export default class IronDuckCard{
             duck.rebuildCollider(this.duckColliderPadding);
         }
         this.refreshColliderList();
+    }
+
+    updateParallax(){
+        //Tilt the whole card a little toward the mouse position (eased), for a parallax feel
+        if(!this.parallaxEnabled || !this.model || !this.modelBaseRotation) return;
+        if(!this.canInteract()) return; //only after the intro
+
+        const mouse = this.sizes.mouse; //x,y in [-1, 1], y up
+        this.parallaxCurrentX += (mouse.x - this.parallaxCurrentX) * this.parallaxEasing;
+        this.parallaxCurrentY += (mouse.y - this.parallaxCurrentY) * this.parallaxEasing;
+
+        //mouse x -> tilt around Y, mouse y -> tilt around X
+        this.model.rotation.y = this.modelBaseRotation.y + this.parallaxCurrentX * this.parallaxAmount;
+        this.model.rotation.x = this.modelBaseRotation.x - this.parallaxCurrentY * this.parallaxAmount;
     }
 
     updateDucks(){
@@ -337,6 +372,7 @@ export default class IronDuckCard{
         this.animation.action.time = this.scrollCurrent * this.animation.duration;
         this.animation.mixer.update(0);
 
+        this.updateParallax();
         this.updateDucks();
     }
 }
