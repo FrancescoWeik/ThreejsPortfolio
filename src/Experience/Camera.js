@@ -128,13 +128,16 @@ export default class Camera{
                 this.instance.position.lerp(this._desiredPos, 0.1);
                 this.controls.target.lerp(this._desiredTarget, 0.1);
             } else {
-                //Card out: ease the look target onto the hovered duck, or back to the final
-                //framing target when nothing is hovered. (OrbitControls re-aims at the target.)
+                //Card out: ease the look target onto the hovered duck, AND slide the camera's X
+                //so the duck ends up in front of it. Un-hovering eases both back to the final
+                //framing. (OrbitControls re-aims at the target each frame.)
                 if(card.hoveredDuck){
                     card.hoveredDuck.getFocusPoint(this._focusTmp);
                     this.controls.target.lerp(this._focusTmp, this.focusLerp);
+                    this.instance.position.x = THREE.MathUtils.lerp(this.instance.position.x, this._focusTmp.x, this.focusLerp);
                 } else {
                     this.controls.target.lerp(this.scrollFinalTarget, this.focusLerp);
+                    this.instance.position.x = THREE.MathUtils.lerp(this.instance.position.x, this.scrollFinalPos.x, this.focusLerp);
                 }
             }
         }
