@@ -27,13 +27,18 @@ export default class Camera{
         //then keeps going to the final framing. A single spline blends the two moves seamlessly.
         this.scrollStartPos    = new THREE.Vector3(0, 15, 7);
         this.scrollEndPos      = new THREE.Vector3(-2.45, 5, 11.3);   //overview
-        this.scrollFinalPos    = new THREE.Vector3(-6.03, 1.71, 5.68);
+        this.scrollFinalPos    = new THREE.Vector3(-6.03, 2.4, 5.68);
         this.scrollStartTarget = new THREE.Vector3(0, 0, 0);
         this.scrollEndTarget   = new THREE.Vector3(-8.35, 0, 0);      //overview target
         this.scrollFinalTarget = new THREE.Vector3(-6, 0, 0);
 
         this.posCurve = new THREE.CatmullRomCurve3([this.scrollStartPos, this.scrollEndPos, this.scrollFinalPos]);
         this.targetCurve = new THREE.CatmullRomCurve3([this.scrollStartTarget, this.scrollEndTarget, this.scrollFinalTarget]);
+
+        //When the card is out, hovering a duck eases the camera's look target onto it,
+        //and un-hovering eases it back to the final framing target.
+        this.focusLerp = 0.001;
+        this._focusTmp = new THREE.Vector3();
 
         //Temp vectors reused each frame to avoid allocations
         this._desiredPos = new THREE.Vector3();
@@ -122,6 +127,15 @@ export default class Camera{
                 this.targetCurve.getPoint(t, this._desiredTarget);
                 this.instance.position.lerp(this._desiredPos, 0.1);
                 this.controls.target.lerp(this._desiredTarget, 0.1);
+            } else {
+                //Card out: ease the look target onto the hovered duck, or back to the final
+                //framing target when nothing is hovered. (OrbitControls re-aims at the target.)
+                if(card.hoveredDuck){
+                    card.hoveredDuck.getFocusPoint(this._focusTmp);
+                    this.controls.target.lerp(this._focusTmp, this.focusLerp);
+                } else {
+                    this.controls.target.lerp(this.scrollFinalTarget, this.focusLerp);
+                }
             }
         }
 
@@ -168,6 +182,12 @@ export default class Camera{
             .add(this, 'freeRotateThreshold')
             .min(0.1).max(1).step(0.01)
             .name('rotate unlock at')
+
+        //How fast the camera eases its look target onto a hovered duck (and back)
+        this.debugFolder
+            .add(this, 'focusLerp')
+            .min(0.001).max(0.3).step(0.001)
+            .name('duck focus lerp')
 
         //Print the current camera + target values to the console
         const debugObject = {

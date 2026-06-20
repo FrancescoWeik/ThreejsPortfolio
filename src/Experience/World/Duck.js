@@ -53,19 +53,30 @@ export default class Duck{
     }
 
     applyEmissiveLook(){
-        //Respect the Blender emissive: a glTF mesh still lets its base color react to lights,
-        //so we zero the base color on emitting meshes, leaving only the emissive to glow.
         this.object.traverse((child) => {
-            if(child.isMesh && child.material && child.material.emissive){
-                if(child.material.emissive.getHex() !== 0x000000){
-                    //Clone so we never touch a material shared with the rest of the card
-                    child.material = child.material.clone();
-                    child.material.color.set(0x000000); //black base -> no light response
-                    child.material.needsUpdate = true;
+            if(!child.isMesh || !child.material) return;
+            const mat = child.material;
 
-                    child.castShadow = true;     //still casts shadows, like in Blender
-                    child.receiveShadow = false; //the emissive would mask received shadows
-                }
+            //"SVGMat" should be unlit and always black (like in Blender). glTF imports it as a
+            //PBR material that reacts to light, so swap it for a plain black MeshBasicMaterial.
+            if(mat.name && mat.name.toLowerCase().includes('svgmat')){
+                child.material = new THREE.MeshBasicMaterial({
+                    color: 0x000000,
+                    side: mat.side,
+                    transparent: mat.transparent,
+                    opacity: mat.opacity
+                });
+                child.castShadow = true;
+                child.receiveShadow = false;
+            }
+            //Respect the Blender emissive: a glTF mesh still lets its base color react to lights,
+            //so we zero the base color on emitting meshes, leaving only the emissive to glow.
+            else if(mat.emissive && mat.emissive.getHex() !== 0x000000){
+                child.material = mat.clone();
+                child.material.color.set(0x000000); //black base -> no light response
+                child.material.needsUpdate = true;
+                child.castShadow = true;
+                child.receiveShadow = false;
             }
         });
     }
@@ -122,6 +133,14 @@ export default class Duck{
             this.collider.geometry.dispose();
             this.collider = null;
         }
+    }
+
+    //World-space point the camera should look at when focusing this duck (its center)
+    getFocusPoint(target){
+        if(this.collider){
+            return this.collider.getWorldPosition(target);
+        }
+        return this.object.getWorldPosition(target);
     }
 
     setHovered(hovered){
