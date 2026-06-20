@@ -1,8 +1,7 @@
 import * as THREE from 'three'
-import DuckBubble from './DuckBubble.js'
 
 //A single clickable/hoverable duck on the card. It owns its own data and behaviour
-//(invisible collider, emissive look, hover bubble) so IronDuckCard stays a thin manager.
+//(invisible collider, emissive look, hover wobble) so IronDuckCard stays a thin manager.
 export default class Duck{
     constructor(object, options = {}){
         this.object = object;                                 //the THREE node (e.g. "Arri")
@@ -10,12 +9,10 @@ export default class Duck{
         this.member = options.member || { name: this.name }; //data shown in the bubble/popup
         this.hoverable = options.hoverable !== false;         //default true
         this.colliderPadding = options.colliderPadding !== undefined ? options.colliderPadding : 1.2;
-        this.bubbleOffset = options.bubbleOffset !== undefined ? options.bubbleOffset : 12; //px gap above the duck
 
         this.collider = null;
-        this.anchorLocal = null;   //top-center of the duck, in local space (bubble anchor)
-        this.bubble = null;        //the hover bubble (only for hoverable ducks)
         this.hovered = false;
+        this.originalScale = object.scale.clone(); //to restore the duck after it shrinks away
 
         //Hover "paper wobble": a quick damped back-and-forth rotation that settles back to the
         //duck's CURRENT rotation (captured at hover time, i.e. the pose it has once it's out of
@@ -37,19 +34,11 @@ export default class Duck{
             this.wobbleAxis === 'z' ? 1 : 0
         );
 
-        //Reused temp vectors (avoid per-frame allocations)
-        this._anchorWorld = new THREE.Vector3();
-        this._projected = new THREE.Vector3();
-
         //Tag the object and its children so a raycast hit maps back to this Duck
         this.object.traverse((child) => { child.userData.duck = this; });
 
         this.applyEmissiveLook();
         this.buildCollider();
-
-        if(this.hoverable){
-            this.bubble = new DuckBubble(this.member);
-        }
     }
 
     applyEmissiveLook(){
@@ -103,9 +92,6 @@ export default class Duck{
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
 
-        //Anchor for the bubble: top-center of the duck (local space)
-        this.anchorLocal = new THREE.Vector3(center.x, box.max.y, center.z);
-
         const geometry = new THREE.BoxGeometry(
             size.x * this.colliderPadding,
             size.y * this.colliderPadding,
@@ -146,10 +132,6 @@ export default class Duck{
     setHovered(hovered){
         if(this.hovered === hovered) return;
         this.hovered = hovered;
-        if(this.bubble){
-            if(hovered) this.bubble.show();
-            else this.bubble.hide();
-        }
         //Start the wobble on hover, but ONLY if one isn't already running. This way rapid
         //hover/unhover doesn't restart it, and the rest pose is captured while clean.
         if(hovered && this.hoverable && !this.wobbleActive){
@@ -159,7 +141,7 @@ export default class Duck{
         }
     }
 
-    update(cameraInstance, sizes, delta){
+    update(delta){
         //Paper wobble: a damped oscillation around the captured rest pose. Set absolutely each
         //frame (restQuat * wobble) so it never accumulates, and it returns exactly to restQuat.
         if(this.wobbleActive){
@@ -174,19 +156,6 @@ export default class Duck{
                 const angle = envelope * Math.sin(this.wobbleFrequency * this.wobbleTime);
                 this._wobbleQuat.setFromAxisAngle(this._wobbleAxisVec, angle);
                 this.object.quaternion.copy(this.restQuat).multiply(this._wobbleQuat);
-            }
-        }
-
-        //Keep the bubble positioned above the duck (the duck can move with the card animation)
-        if(this.bubble && this.anchorLocal){
-            this._anchorWorld.copy(this.anchorLocal).applyMatrix4(this.object.matrixWorld);
-            this._projected.copy(this._anchorWorld).project(cameraInstance);
-
-            //Behind the camera: nothing to position
-            if(this._projected.z <= 1){
-                const x = (this._projected.x * 0.5 + 0.5) * sizes.width;
-                const y = (-this._projected.y * 0.5 + 0.5) * sizes.height - this.bubbleOffset;
-                this.bubble.setScreenPosition(x, y);
             }
         }
     }

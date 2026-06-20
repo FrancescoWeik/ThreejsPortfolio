@@ -40,6 +40,12 @@ export default class Camera{
         this.focusLerp = 0.001;
         this._focusTmp = new THREE.Vector3();
 
+        //Selection focus: when a duck is clicked the camera zooms in onto the Cartello (driven by
+        //gsap). While this is active, the per-frame hover focus is suspended.
+        this.focusingSelection = false;
+        this.selectOffset = new THREE.Vector3(0, 0.5, 1.8); //camera offset from the focused point (in front, up, zoomed)
+        this.selectTargetY = 1; //the look target's Y while focused on a Cartello
+
         //Temp vectors reused each frame to avoid allocations
         this._desiredPos = new THREE.Vector3();
         this._desiredTarget = new THREE.Vector3();
@@ -127,10 +133,10 @@ export default class Camera{
                 this.targetCurve.getPoint(t, this._desiredTarget);
                 this.instance.position.lerp(this._desiredPos, 0.1);
                 this.controls.target.lerp(this._desiredTarget, 0.1);
-            } else {
-                //Card out: ease the look target onto the hovered duck, AND slide the camera's X
-                //so the duck ends up in front of it. Un-hovering eases both back to the final
-                //framing. (OrbitControls re-aims at the target each frame.)
+            } else if(!this.focusingSelection){
+                //Card out (and no duck selected): ease the look target onto the hovered duck, AND
+                //slide the camera's X so the duck ends up in front of it. Un-hovering eases both
+                //back to the final framing. (OrbitControls re-aims at the target each frame.)
                 if(card.hoveredDuck){
                     card.hoveredDuck.getFocusPoint(this._focusTmp);
                     this.controls.target.lerp(this._focusTmp, this.focusLerp);
@@ -140,6 +146,7 @@ export default class Camera{
                     this.instance.position.x = THREE.MathUtils.lerp(this.instance.position.x, this.scrollFinalPos.x, this.focusLerp);
                 }
             }
+            //When focusingSelection is true, gsap drives position + target (see focusOnPoint)
         }
 
         this.controls.update();
@@ -155,6 +162,57 @@ export default class Camera{
         //Card going back in: re-take control and resume the scroll-driven framing
         this.freeRotate = false;
         this.controls.enableRotate = false;
+        this.clearSelectionFocus();
+    }
+
+    focusOnPoint(point, duration){
+        //Zoom the camera in and look at a point (the Cartello), eased over `duration` seconds.
+        //gsap drives both position and target; OrbitControls keeps re-aiming at the target.
+        //While focused on a Cartello the user can't move the camera.
+        this.focusingSelection = true;
+        this.controls.enableRotate = false;
+        gsap.killTweensOf(this.instance.position);
+        gsap.killTweensOf(this.controls.target);
+
+        gsap.to(this.controls.target, {
+            duration, x: point.x, y: this.selectTargetY, z: point.z, ease: 'power2.inOut'
+        });
+        gsap.to(this.instance.position, {
+            duration,
+            x: point.x + this.selectOffset.x,
+            y: point.y + this.selectOffset.y,
+            z: point.z + this.selectOffset.z,
+            ease: 'power2.inOut'
+        });
+    }
+
+    returnToFraming(duration){
+        //Ease the camera back from a Cartello focus to the final scroll framing (the previous
+        //situation). Keeps the selection-focus flag on until done so the per-frame lerp waits.
+        this.focusingSelection = true;
+        this.controls.enableRotate = false;
+        gsap.killTweensOf(this.instance.position);
+        gsap.killTweensOf(this.controls.target);
+
+        gsap.to(this.controls.target, {
+            duration, x: this.scrollFinalTarget.x, y: this.scrollFinalTarget.y, z: this.scrollFinalTarget.z, ease: 'power2.inOut'
+        });
+        gsap.to(this.instance.position, {
+            duration, x: this.scrollFinalPos.x, y: this.scrollFinalPos.y, z: this.scrollFinalPos.z, ease: 'power2.inOut',
+            onComplete: () => {
+                this.focusingSelection = false;
+                this.controls.enableRotate = this.freeRotate; //rotation available again once back
+            }
+        });
+    }
+
+    clearSelectionFocus(){
+        //Immediately stop driving the camera from a selection (e.g. when scrolling back in)
+        if(!this.focusingSelection) return;
+        this.focusingSelection = false;
+        this.controls.enableRotate = this.freeRotate;
+        gsap.killTweensOf(this.instance.position);
+        gsap.killTweensOf(this.controls.target);
     }
 
     addDebugValues(){
@@ -191,6 +249,20 @@ export default class Camera{
             .add(this, 'focusLerp')
             .min(0.001).max(0.3).step(0.001)
             .name('duck focus lerp')
+
+        //Selection focus framing (offset of the camera from the Cartello it zooms onto)
+        this.debugFolder
+            .add(this.selectOffset, 'z')
+            .min(0.5).max(8).step(0.1)
+            .name('select zoom dist')
+        this.debugFolder
+            .add(this.selectOffset, 'y')
+            .min(-3).max(5).step(0.1)
+            .name('select height')
+        this.debugFolder
+            .add(this, 'selectTargetY')
+            .min(-2).max(5).step(0.1)
+            .name('select target y')
 
         //Print the current camera + target values to the console
         const debugObject = {
