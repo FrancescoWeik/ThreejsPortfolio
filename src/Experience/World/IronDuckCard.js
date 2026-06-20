@@ -50,8 +50,12 @@ export default class IronDuckCard{
         //How much bigger than the duck its (invisible) click/hover collider should be
         this.duckColliderPadding = 1.2;
 
+        //Ducks that must NOT react to hover (e.g. the giant duck). They stay full size.
+        this.hoverExcluded = ['Papera'];
+
         this.setModel();
         this.setDucks();
+        this.setDuckMaterials();
         this.setDuckColliders();
         this.setAnimation();
         this.setScrollControl();
@@ -86,6 +90,29 @@ export default class IronDuckCard{
                 duck.userData.hoverTarget = 1;       //where hoverFactor is heading
                 this.ducks.push(duck);
             }
+        }
+    }
+
+    setDuckMaterials(){
+        //Make the ducks respect the emissive coming from Blender: a glTF mesh still lets its
+        //base color (albedo) react to scene lights, so an "emission" material looks washed
+        //instead of self-lit. We zero the base color on ducks that actually have an emissive,
+        //leaving only the emissive to glow (the Blender look). Only the ducks are affected.
+        for(const duck of this.ducks){
+            duck.traverse((child) => {
+                if(child.isMesh && child.material && child.material.emissive){
+                    //Only the materials that actually emit (non-black emissive)
+                    if(child.material.emissive.getHex() !== 0x000000){
+                        //Clone so we never touch a material shared with the rest of the card
+                        child.material = child.material.clone();
+                        child.material.color.set(0x000000); //black base -> no light response
+                        child.material.needsUpdate = true;
+
+                        child.castShadow = true;     //still casts shadows, like in Blender
+                        child.receiveShadow = false; //the emissive would mask received shadows
+                    }
+                }
+            });
         }
     }
 
@@ -375,9 +402,11 @@ export default class IronDuckCard{
     }
 
     updateDuckHover(){
-        //Shrink the hovered duck to 0, let the others grow back to their original scale
+        //Shrink the hovered duck to 0, let the others grow back to their original scale.
+        //Excluded ducks (the giant one) ignore hover and always stay full size.
         for(const duck of this.ducks){
-            duck.userData.hoverTarget = (duck.userData.duckName === this.hoveredDuckName) ? 0 : 1;
+            const excluded = this.hoverExcluded.includes(duck.userData.duckName);
+            duck.userData.hoverTarget = (!excluded && duck.userData.duckName === this.hoveredDuckName) ? 0 : 1;
 
             const factor = duck.userData.hoverFactor
                 + (duck.userData.hoverTarget - duck.userData.hoverFactor) * this.hoverSmoothing;
