@@ -34,6 +34,16 @@ export default class Duck{
             this.wobbleAxis === 'z' ? 1 : 0
         );
 
+        //Fold: lay the duck back down to its start pose (others fold when one is selected).
+        //0 = standing (up), 1 = lying (rotated foldAngle on local X). Eased via foldSmoothing.
+        this.foldTarget = 0;
+        this.foldCurrent = 0;
+        this.foldAngle = -Math.PI / 2; //rotation on X back to the lying/start pose
+        this.foldSmoothing = 0.1;
+        this.upQuat = new THREE.Quaternion();        //standing pose to fold from (captured)
+        this._foldQuat = new THREE.Quaternion();
+        this._foldAxis = new THREE.Vector3(1, 0, 0);
+
         //Tag the object and its children so a raycast hit maps back to this Duck
         this.object.traverse((child) => { child.userData.duck = this; });
 
@@ -141,7 +151,27 @@ export default class Duck{
         }
     }
 
+    setFolded(folded){
+        const target = folded ? 1 : 0;
+        if(this.foldTarget === target) return;
+        //Capture the standing pose to fold from, but only while the duck is actually up (clean),
+        //so a quick re-fold mid-unfold doesn't capture a tilted pose and drift.
+        if(folded && this.foldCurrent < 0.0001) this.upQuat.copy(this.object.quaternion);
+        this.foldTarget = target;
+    }
+
     update(delta){
+        //Fold (lie down) / unfold (stand up): overrides the standing pose, on top of the mixer.
+        //Takes priority over the wobble while active.
+        if(this.foldTarget > 0 || this.foldCurrent > 0.0001){
+            this.wobbleActive = false; //no wobble while folding/folded
+            this.foldCurrent += (this.foldTarget - this.foldCurrent) * this.foldSmoothing;
+            if(this.foldTarget === 0 && this.foldCurrent < 0.0001) this.foldCurrent = 0;
+            this._foldQuat.setFromAxisAngle(this._foldAxis, this.foldAngle * this.foldCurrent);
+            this.object.quaternion.copy(this.upQuat).multiply(this._foldQuat);
+            return;
+        }
+
         //Paper wobble: a damped oscillation around the captured rest pose. Set absolutely each
         //frame (restQuat * wobble) so it never accumulates, and it returns exactly to restQuat.
         if(this.wobbleActive){

@@ -1,6 +1,5 @@
 import Experience from '../Experience.js'
 import * as THREE from 'three'
-import gsap from 'gsap'
 import Duck from './Duck.js'
 import ducksMembers from '../ducksMembers.js'
 
@@ -55,17 +54,12 @@ export default class IronDuckCard{
         //Ducks that must NOT react to hover (e.g. the giant duck).
         this.hoverExcluded = ['Papera'];
 
-        //Selection: clicking a duck shrinks it away and grows the "Cartello" sign in its place,
-        //while the camera zooms in and focuses on it. All eased over selectDuration seconds.
+        //Selection: clicking a duck folds every OTHER duck back down to its start pose;
+        //clicking away stands them all back up.
         this.selectedDuck = null;
-        this.selectDuration = 0.5;  //seconds for the whole select animation
-        this.cartelloScale = 1;     //scale the Cartello grows to
-        this._tmpVec = new THREE.Vector3();
-        this._focusVec = new THREE.Vector3();
 
         this.setModel();
         this.setDucks();
-        this.setCartello();
         this.setAnimation();
         this.setScrollControl();
         this.setDragControl();
@@ -120,127 +114,24 @@ export default class IronDuckCard{
         return null;
     }
 
-    setCartello(){
-        //The sign that replaces a duck when it's clicked. One shared instance, hidden until used.
-        this.cartello = this.resources.items.cartelloModel.scene;
-        this.cartello.scale.set(0, 0, 0);
-        this.cartello.visible = false;
-        this.scene.add(this.cartello);
-
-        this.setCartelloText();
-    }
-
-    setCartelloText(){
-        //Build a canvas-texture text plane and stick it on the sign's front face, so the clicked
-        //duck's name shows up on the Cartello.
-        this.cartelloTextColor = '#000000';
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 256;
-        this.cartelloCanvas = canvas;
-        this.cartelloCtx = canvas.getContext('2d');
-        this.cartelloTexture = new THREE.CanvasTexture(canvas);
-        this.cartelloTexture.encoding = THREE.sRGBEncoding;
-
-        //Find the board mesh and measure it to place/scale the text on its front face
-        let board = null;
-        this.cartello.traverse((child) => { if(child.isMesh && !board) board = child; });
-        if(!board) return;
-
-        board.geometry.computeBoundingBox();
-        const box = board.geometry.boundingBox;
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-
-        //Depth = thinnest axis; the text sits on the +face of that axis
-        const planeMat = new THREE.MeshBasicMaterial({ map: this.cartelloTexture, transparent: true });
-        let planeW, planeH;
-        const mesh = (w, h) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), planeMat);
-
-        if(size.z <= size.x && size.z <= size.y){
-            planeW = size.x * 0.8; planeH = size.y * 0.5;
-            this.cartelloTextMesh = mesh(planeW, planeH);
-            this.cartelloTextMesh.position.set(center.x, center.y, box.max.z + 0.01);
-        } else if(size.x <= size.y && size.x <= size.z){
-            planeW = size.z * 0.8; planeH = size.y * 0.5;
-            this.cartelloTextMesh = mesh(planeW, planeH);
-            this.cartelloTextMesh.position.set(box.max.x + 0.01, center.y, center.z);
-            this.cartelloTextMesh.rotation.y = Math.PI * 0.5;
-        } else {
-            planeW = size.x * 0.8; planeH = size.z * 0.5;
-            this.cartelloTextMesh = mesh(planeW, planeH);
-            this.cartelloTextMesh.position.set(center.x, box.max.y + 0.01, center.z);
-            this.cartelloTextMesh.rotation.x = -Math.PI * 0.5;
-        }
-
-        board.add(this.cartelloTextMesh);
-    }
-
-    drawCartelloText(name){
-        if(!this.cartelloCtx) return;
-        const ctx = this.cartelloCtx;
-        const { width, height } = this.cartelloCanvas;
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = this.cartelloTextColor;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = 'bold 120px sans-serif';
-        ctx.fillText(name || '', width / 2, height / 2);
-        this.cartelloTexture.needsUpdate = true;
-    }
-
     selectDuck(duck){
+        //The clicked duck stays up; every OTHER (small) duck folds back down to its start pose.
+        //The giant duck (not hoverable) never folds.
         if(this.selectedDuck === duck) return;
-        const dur = this.selectDuration;
-
-        //Restore a previously selected duck (if any) back to its size
-        if(this.selectedDuck){
-            const prev = this.selectedDuck;
-            gsap.to(prev.object.scale, { duration: dur, x: prev.originalScale.x, y: prev.originalScale.y, z: prev.originalScale.z });
-        }
-
         this.selectedDuck = duck;
-
-        //The duck shrinks away
-        gsap.to(duck.object.scale, { duration: dur, x: 0, y: 0, z: 0, ease: 'power2.inOut' });
-
-        //The Cartello appears in its place (at the duck's position) with zero rotation,
-        //growing from 0 to its scale, showing the duck's name
-        this.drawCartelloText((duck.member && duck.member.name) || duck.name);
-        duck.object.getWorldPosition(this._tmpVec);
-        this.cartello.position.copy(this._tmpVec);
-        this.cartello.rotation.set(0, 0, 0);
-        this.cartello.visible = true;
-        gsap.killTweensOf(this.cartello.scale);
-        this.cartello.scale.set(0, 0, 0);
-        gsap.to(this.cartello.scale, { duration: dur, x: this.cartelloScale, y: this.cartelloScale, z: this.cartelloScale, ease: 'power2.inOut' });
-
-        //The camera zooms in and focuses on the Cartello
-        duck.getFocusPoint(this._focusVec);
-        this.camera.focusOnPoint(this._focusVec, dur);
+        for(const other of this.ducks){
+            if(!other.hoverable) continue;
+            other.setFolded(other !== duck);
+        }
     }
 
-    deselectDuck(easeCamera = true){
-        //Restore the selected duck, shrink the Cartello away, and bring the camera back.
-        //easeCamera = true lerps the camera to the previous framing (click outside the Cartello);
-        //easeCamera = false releases it immediately (the card is being scrolled back in).
+    deselectDuck(){
+        //Stand every (small) duck back up
         if(!this.selectedDuck) return;
-        const dur = this.selectDuration;
-        const prev = this.selectedDuck;
         this.selectedDuck = null;
-
-        gsap.to(prev.object.scale, { duration: dur, x: prev.originalScale.x, y: prev.originalScale.y, z: prev.originalScale.z });
-        gsap.killTweensOf(this.cartello.scale);
-        gsap.to(this.cartello.scale, {
-            duration: dur, x: 0, y: 0, z: 0,
-            onComplete: () => { this.cartello.visible = false; }
-        });
-
-        if(easeCamera){
-            this.camera.returnToFraming(dur);
-        } else {
-            this.camera.clearSelectionFocus();
+        for(const other of this.ducks){
+            if(!other.hoverable) continue;
+            other.setFolded(false);
         }
     }
 
@@ -380,23 +271,13 @@ export default class IronDuckCard{
         this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
         this.raycaster.setFromCamera(this.pointer, this.camera.instance);
 
-        //If a Cartello is shown, clicking anywhere OFF it returns to the previous situation
-        if(this.selectedDuck){
-            const onCartello = this.cartello.visible &&
-                this.raycaster.intersectObject(this.cartello, true).length > 0;
-            if(!onCartello){
-                this.deselectDuck();
-            }
-            return;
-        }
-
-        //Otherwise, selecting a duck swaps it for the Cartello and focuses the camera
+        //Clicking a duck selects it (folds the others); clicking off any duck stands them all up
         const intersects = this.raycaster.intersectObjects(this.duckColliders, true);
-        if(intersects.length > 0){
-            const duck = this.getDuckFromObject(intersects[0].object);
-            if(duck){
-                this.selectDuck(duck);
-            }
+        const duck = intersects.length > 0 ? this.getDuckFromObject(intersects[0].object) : null;
+        if(duck){
+            this.selectDuck(duck);
+        } else {
+            this.deselectDuck();
         }
     }
 
@@ -477,16 +358,6 @@ export default class IronDuckCard{
             .add(this, 'parallaxEasing')
             .min(0.01).max(0.3).step(0.005)
             .name('parallax easing')
-
-        //Selection (duck -> Cartello)
-        this.debugFolder
-            .add(this, 'selectDuration')
-            .min(0.1).max(3).step(0.05)
-            .name('select duration (s)')
-        this.debugFolder
-            .add(this, 'cartelloScale')
-            .min(0.1).max(5).step(0.1)
-            .name('cartello scale')
     }
 
     rebuildDuckColliders(){
@@ -532,9 +403,9 @@ export default class IronDuckCard{
         this.animation.action.time = clipProgress * this.animation.duration;
         this.animation.mixer.update(0);
 
-        //If the card is being scrolled back in, drop any active selection (camera handled by scroll)
+        //If the card is being scrolled back in, stand any folded ducks back up
         if(this.selectedDuck && !this.camera.freeRotate){
-            this.deselectDuck(false);
+            this.deselectDuck();
         }
 
         this.updateParallax();
