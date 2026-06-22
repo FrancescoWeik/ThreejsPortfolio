@@ -1,7 +1,9 @@
 import Experience from '../Experience.js'
 import * as THREE from 'three'
+import gsap from 'gsap'
 import Duck from './Duck.js'
 import ducksMembers from '../ducksMembers.js'
+import projects from '../projects.js'
 
 export default class IronDuckCard{
     constructor(){
@@ -58,13 +60,26 @@ export default class IronDuckCard{
         //clicking away stands them all back up.
         this.selectedDuck = null;
 
+        //Projects sequence: clicking the Projects sign blocks interactions, slides the card back
+        //into its container (the intro extraction reversed) and spins the whole card 360°.
+        this.projectsSequenceActive = false;
+        this.spinAngle = 0;            //extra X rotation of the card (driven by the spin)
+        this.retractDuration = 2;      //seconds: card slides back in
+        this.spinDuration = 1.2;       //seconds: full 360° spin
+
+        //Projects sign, placed local to the card so it follows the extraction
+        this.projectsPosition = new THREE.Vector3(3, 0.1, -1.5);
+        this.projectsScale = 1;
+
         this.setModel();
         this.setDucks();
+        this.setProjects();
+        this.setProjectPanel();
         this.setAnimation();
         this.setScrollControl();
         this.setDragControl();
         this.setHoverControl();
-        this.setPopup();
+        this.setInfoPanel();
         this.setDebug();
     }
 
@@ -102,6 +117,96 @@ export default class IronDuckCard{
         this.duckColliders = this.ducks.map((duck) => duck.collider).filter(Boolean);
     }
 
+    setProjects(){
+        //The "Projects" sign sits on a corner of the card. Parent it to FullBiglietto so it moves
+        //with the card extraction (and the flip). Clicking it flips the card to show the back.
+        this.projects = this.resources.items.projectsModel.scene;
+        this.projects.position.copy(this.projectsPosition);
+        this.projects.scale.setScalar(this.projectsScale);
+
+        const parent = this.model.getObjectByName('FullBiglietto') || this.model;
+        parent.add(this.projects);
+    }
+
+    playProjectsSequence(){
+        //Clicking the Projects sign: block interactions, slide the card back into its container
+        //(reverse extraction, the camera follows the scroll spline back), then spin it 360°.
+        if(this.projectsSequenceActive) return;
+        this.projectsSequenceActive = true;
+        this.deselectDuck();
+
+        //Start the card retract from the card-out point (the clip is identical at 1 and scrollMax,
+        //so this is invisible) and drive it to 0 over retractDuration. The camera is moved by its
+        //OWN eased tween (the spline is suspended while the sequence plays), so it glides smoothly
+        //alongside the card with no snap.
+        this.scrollCurrent = Math.min(this.scrollCurrent, 1);
+        this.scrollTarget = this.scrollCurrent;
+        this.camera.controls.enableRotate = false;
+
+        const cam = this.camera.instance;
+        const tgt = this.camera.controls.target;
+        const startPos = this.camera.scrollStartPos;
+        const startTarget = this.camera.scrollStartTarget;
+        const dur = this.retractDuration;
+        const ease = 'power1.inOut';
+
+        let halfSpinDone = false;
+        const tl = gsap.timeline({
+            onComplete: () => {
+                this.spinAngle = 0;                 //360° == back to start; reset for next time
+                this.projectsSequenceActive = false; //(for now) re-enable; future changes go here
+            }
+        });
+
+        //Card slides back in (clip), camera glides to the start framing — together, same timing
+        tl.to(this, { scrollCurrent: 0, duration: dur, ease, onUpdate: () => { this.scrollTarget = this.scrollCurrent; } }, 0);
+        tl.to(cam.position, { x: startPos.x, y: startPos.y, z: startPos.z, duration: dur, ease }, 0);
+        tl.to(tgt, { x: startTarget.x, y: startTarget.y, z: startTarget.z, duration: dur, ease }, 0);
+
+        //Then a full 360° spin; fire the half-spin hook once it reaches 180°
+        tl.to(this, {
+            spinAngle: Math.PI * 2,
+            duration: this.spinDuration,
+            ease: 'power2.inOut',
+            onUpdate: () => {
+                if(!halfSpinDone && this.spinAngle >= Math.PI){
+                    halfSpinDone = true;
+                    this.onSpinHalfway();
+                }
+            }
+        }, '>');
+    }
+
+    onSpinHalfway(){
+        //Half-way through the 360° spin (card rotated 180°): show the project panel, hide Papera.
+        if(this.projectPanel) this.projectPanel.visible = true;
+        if(this.paperaObject) this.paperaObject.visible = false;
+    }
+
+    setProjectPanel(){
+        //The card has a hidden "ProjectImageContainer" panel (on its back) and a "Papera" object.
+        //The panel starts off; at the 180° point of the spin it turns on and Papera turns off.
+        //For now we just put the first project's image on the panel (unlit).
+        this.projectPanel = this.model.getObjectByName('ProjectImageContainer');
+        this.paperaObject = this.model.getObjectByName('Papera');
+
+        if(this.projectPanel){
+            this.projectPanel.visible = false; //off until the spin reaches 180°
+
+            const first = projects[0];
+            const texture = first && this.resources.items[`projectImage_${first.node}`];
+            if(texture){
+                texture.flipY = false;             //glTF UVs have their origin at the top
+                texture.encoding = THREE.sRGBEncoding;
+                texture.needsUpdate = true;
+                const material = new THREE.MeshBasicMaterial({ map: texture });
+                this.projectPanel.traverse((child) => {
+                    if(child.isMesh) child.material = material;
+                });
+            }
+        }
+    }
+
     //Walk up the hierarchy to find which Duck (if any) was hit
     getDuckFromObject(object){
         let current = object;
@@ -123,16 +228,18 @@ export default class IronDuckCard{
             if(!other.hoverable) continue;
             other.setFolded(other !== duck);
         }
+        this.showInfoPanel(duck.member);
     }
 
     deselectDuck(){
-        //Stand every (small) duck back up
+        //Stand every (small) duck back up and close the info panel
         if(!this.selectedDuck) return;
         this.selectedDuck = null;
         for(const other of this.ducks){
             if(!other.hoverable) continue;
             other.setFolded(false);
         }
+        this.hideInfoPanel();
     }
 
     setAnimation(){
@@ -158,11 +265,16 @@ export default class IronDuckCard{
         return this.camera && this.camera.followScroll;
     }
 
+    //User input is also blocked while the projects sequence is playing
+    inputAllowed(){
+        return this.canInteract() && !this.projectsSequenceActive;
+    }
+
     setScrollControl(){
         //Mouse wheel drives the whole journey both ways: scroll down advances it, scroll up
         //(even once arrived) plays it back in reverse.
         window.addEventListener('wheel', (event) => {
-            if(!this.canInteract()) return;
+            if(!this.inputAllowed()) return;
             this.scrollTarget = THREE.MathUtils.clamp(
                 this.scrollTarget + event.deltaY * this.wheelSensitivity,
                 0,
@@ -172,12 +284,12 @@ export default class IronDuckCard{
 
         //Touch: swiping the finger upwards advances the animation
         window.addEventListener('touchstart', (event) => {
-            if(!this.canInteract()) return;
+            if(!this.inputAllowed()) return;
             this.lastTouchY = event.touches[0].clientY;
         }, { passive: true });
 
         window.addEventListener('touchmove', (event) => {
-            if(!this.canInteract()) return;
+            if(!this.inputAllowed()) return;
             if(this.camera.freeRotate) return; //card out: gestures rotate/zoom the camera instead
             if(this.lastTouchY === null) return;
             const currentY = event.touches[0].clientY;
@@ -198,7 +310,7 @@ export default class IronDuckCard{
     setDragControl(){
         //Press on the card and drag left to pull it out, drag right to push it back in
         window.addEventListener('pointerdown', (event) => {
-            if(!this.canInteract()) return;
+            if(!this.inputAllowed()) return;
             this.pointerDownX = event.clientX;
             this.pointerDownY = event.clientY;
 
@@ -233,7 +345,8 @@ export default class IronDuckCard{
             //If the pointer barely moved it counts as a click: check for a duck
             const moved = Math.abs(event.clientX - this.pointerDownX) + Math.abs(event.clientY - this.pointerDownY);
             const isClick = moved < 6;
-            if(isClick && this.canInteract() && this.camera.freeRotate && !this.isPopupOpen()){
+            //Ignore clicks while the projects sequence plays, and clicks on the info panel
+            if(isClick && this.inputAllowed() && this.camera.freeRotate && !this.isPanelTarget(event.target)){
                 this.checkDuckClick(event);
             }
             this.isDragging = false;
@@ -250,7 +363,7 @@ export default class IronDuckCard{
         //Track the pointer and figure out which duck (if any) it is over
         window.addEventListener('pointermove', (event) => {
             //Hover only makes sense when the card is out and the ducks are interactive
-            if(this.isDragging || !this.canInteract() || !this.camera.freeRotate || this.isPopupOpen()){
+            if(this.isDragging || !this.inputAllowed() || !this.camera.freeRotate){
                 this.hoveredDuck = null;
                 return;
             }
@@ -271,6 +384,12 @@ export default class IronDuckCard{
         this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
         this.raycaster.setFromCamera(this.pointer, this.camera.instance);
 
+        //Clicking the Projects sign plays the projects sequence (retract + 360° spin)
+        if(this.projects && this.raycaster.intersectObject(this.projects, true).length > 0){
+            this.playProjectsSequence();
+            return;
+        }
+
         //Clicking a duck selects it (folds the others); clicking off any duck stands them all up
         const intersects = this.raycaster.intersectObjects(this.duckColliders, true);
         const duck = intersects.length > 0 ? this.getDuckFromObject(intersects[0].object) : null;
@@ -281,41 +400,57 @@ export default class IronDuckCard{
         }
     }
 
-    setPopup(){
-        this.popup = {};
-        this.popup.element = document.getElementById('duckPopup');
-        this.popup.title = document.getElementById('duckPopupTitle');
-        this.popup.text = document.getElementById('duckPopupText');
-        this.popup.close = document.getElementById('duckPopupClose');
+    setInfoPanel(){
+        this.panel = {};
+        this.panel.element = document.getElementById('duckPanel');
+        this.panel.name = document.getElementById('duckPanelName');
+        this.panel.description = document.getElementById('duckPanelDescription');
+        this.panel.link = document.getElementById('duckPanelLink');
+        this.panel.image = document.getElementById('duckPanelImage');
+        this.panel.media = document.getElementById('duckPanelMedia');
+        this.panel.close = document.getElementById('duckPanelClose');
 
-        if(this.popup.close){
-            this.popup.close.addEventListener('click', () => this.hideDuckPopup());
-        }
-        if(this.popup.element){
-            //Click on the dark backdrop (outside the card) closes the popup
-            this.popup.element.addEventListener('click', (event) => {
-                if(event.target === this.popup.element){
-                    this.hideDuckPopup();
-                }
-            });
+        if(this.panel.close){
+            //Closing the panel deselects (stands the ducks back up)
+            this.panel.close.addEventListener('click', () => this.deselectDuck());
         }
     }
 
-    isPopupOpen(){
-        return this.popup && this.popup.element && this.popup.element.classList.contains('visible');
+    isPanelTarget(target){
+        //True if a DOM event happened inside the info panel (so it shouldn't deselect)
+        return this.panel && this.panel.element && this.panel.element.contains(target);
     }
 
-    showDuckPopup(duck){
-        if(!this.popup || !this.popup.element) return;
-        const member = duck.member || {};
-        this.popup.title.textContent = member.name || duck.name;
-        this.popup.text.textContent = member.description || '';
-        this.popup.element.classList.add('visible');
+    showInfoPanel(member){
+        if(!this.panel || !this.panel.element) return;
+        const m = member || {};
+
+        this.panel.name.textContent = m.name || '';
+
+        this.panel.description.textContent = m.description || '';
+        this.panel.description.classList.toggle('is-hidden', !m.description);
+
+        if(m.link){
+            this.panel.link.href = m.link;
+            this.panel.link.classList.remove('is-hidden');
+        } else {
+            this.panel.link.classList.add('is-hidden');
+        }
+
+        if(m.imagePath){
+            this.panel.image.src = m.imagePath;
+            this.panel.media.classList.remove('is-empty');
+        } else {
+            this.panel.image.removeAttribute('src');
+            this.panel.media.classList.add('is-empty');
+        }
+
+        this.panel.element.classList.add('visible');
     }
 
-    hideDuckPopup(){
-        if(!this.popup || !this.popup.element) return;
-        this.popup.element.classList.remove('visible');
+    hideInfoPanel(){
+        if(!this.panel || !this.panel.element) return;
+        this.panel.element.classList.remove('visible');
     }
 
     setDebug(){
@@ -358,6 +493,17 @@ export default class IronDuckCard{
             .add(this, 'parallaxEasing')
             .min(0.01).max(0.3).step(0.005)
             .name('parallax easing')
+
+        //Projects sign + flip
+        const onProjectsMove = () => this.projects.position.copy(this.projectsPosition);
+        this.debugFolder.add(this.projectsPosition, 'x').min(-6).max(6).step(0.05).name('projects x').onChange(onProjectsMove)
+        this.debugFolder.add(this.projectsPosition, 'y').min(-2).max(3).step(0.05).name('projects y').onChange(onProjectsMove)
+        this.debugFolder.add(this.projectsPosition, 'z').min(-4).max(4).step(0.05).name('projects z').onChange(onProjectsMove)
+        this.debugFolder
+            .add(this, 'projectsScale').min(0.1).max(3).step(0.05).name('projects scale')
+            .onChange(() => this.projects.scale.setScalar(this.projectsScale))
+        this.debugFolder.add(this, 'retractDuration').min(0.3).max(4).step(0.1).name('retract duration')
+        this.debugFolder.add(this, 'spinDuration').min(0.3).max(4).step(0.1).name('spin duration')
     }
 
     rebuildDuckColliders(){
@@ -369,17 +515,19 @@ export default class IronDuckCard{
     }
 
     updateParallax(){
-        //Tilt the whole card a little toward the mouse position (eased), for a parallax feel
-        if(!this.parallaxEnabled || !this.model || !this.modelBaseRotation) return;
-        if(!this.canInteract()) return; //only after the intro
+        //Drives the card's root rotation: the 360° spin (driven by the projects sequence) on Y,
+        //plus a small parallax tilt toward the mouse.
+        if(!this.model || !this.modelBaseRotation || !this.canInteract()) return;
 
-        const mouse = this.sizes.mouse; //x,y in [-1, 1], y up
-        this.parallaxCurrentX += (mouse.x - this.parallaxCurrentX) * this.parallaxEasing;
-        this.parallaxCurrentY += (mouse.y - this.parallaxCurrentY) * this.parallaxEasing;
+        //Parallax tilt (eases to 0 when disabled)
+        const mouseX = this.parallaxEnabled ? this.sizes.mouse.x : 0;
+        const mouseY = this.parallaxEnabled ? this.sizes.mouse.y : 0;
+        this.parallaxCurrentX += (mouseX - this.parallaxCurrentX) * this.parallaxEasing;
+        this.parallaxCurrentY += (mouseY - this.parallaxCurrentY) * this.parallaxEasing;
 
-        //mouse x -> tilt around Y, mouse y -> tilt around X
+        //mouse x -> tilt around Y; spin + mouse y -> rotation around X
         this.model.rotation.y = this.modelBaseRotation.y + this.parallaxCurrentX * this.parallaxAmount;
-        this.model.rotation.x = this.modelBaseRotation.x - this.parallaxCurrentY * this.parallaxAmount;
+        this.model.rotation.x = this.modelBaseRotation.x + this.spinAngle - this.parallaxCurrentY * this.parallaxAmount;
     }
 
     updateDucks(){
@@ -394,8 +542,11 @@ export default class IronDuckCard{
     update(){
         if(!this.animation || !this.animation.action) return;
 
-        //Smoothly approach the scroll target for a fluid feel
-        this.scrollCurrent += (this.scrollTarget - this.scrollCurrent) * this.smoothing;
+        //Smoothly approach the scroll target for a fluid feel (the projects sequence drives
+        //scrollCurrent itself via gsap, so don't fight it then)
+        if(!this.projectsSequenceActive){
+            this.scrollCurrent += (this.scrollTarget - this.scrollCurrent) * this.smoothing;
+        }
 
         //Only the first scroll unit [0 -> 1] drives the clip; beyond that the card stays out
         //(the extra scroll range carries the camera to its final framing).
@@ -403,8 +554,8 @@ export default class IronDuckCard{
         this.animation.action.time = clipProgress * this.animation.duration;
         this.animation.mixer.update(0);
 
-        //If the card is being scrolled back in, stand any folded ducks back up
-        if(this.selectedDuck && !this.camera.freeRotate){
+        //If the card is being scrolled back in, stand ducks back up
+        if(!this.camera.freeRotate && this.selectedDuck){
             this.deselectDuck();
         }
 
