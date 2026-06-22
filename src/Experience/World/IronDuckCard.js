@@ -92,6 +92,7 @@ export default class IronDuckCard{
         this.setDucks();
         this.setProjects();
         this.setProjectPanel();
+        this.setProjectText();
         this.setAnimation();
         this.setScrollControl();
         this.setDragControl();
@@ -196,8 +197,10 @@ export default class IronDuckCard{
     }
 
     onSpinHalfway(){
-        //Half-way through the 360° spin (card rotated 180°): show the project panel, hide Papera.
+        //Half-way through the 360° spin (card rotated 180°): show the project image + text panels,
+        //hide Papera.
         if(this.projectPanel) this.projectPanel.visible = true;
+        if(this.projectTextPanel) this.projectTextPanel.visible = true;
         if(this.paperaObject) this.paperaObject.visible = false;
     }
 
@@ -260,6 +263,131 @@ export default class IronDuckCard{
         ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
     }
 
+    setProjectText(){
+        //Dedicated "ProjectTextContainer" plane shows each project's text, sliding with the same
+        //carousel offset as the image. We keep the plane's OWN material as the background and add
+        //a transparent text overlay on top (so only the text is drawn, the plane shows through).
+        this.projectTextPanel = this.model.getObjectByName('ProjectTextContainer');
+        if(!this.projectTextPanel) return;
+
+        this.projectTextPanel.visible = false; //off until the spin reaches 180°
+
+        let planeMesh = null;
+        this.projectTextPanel.traverse((child) => { if(child.isMesh && !planeMesh) planeMesh = child; });
+        if(!planeMesh) return;
+
+        //Transparent overlay sharing the plane's geometry; pulled slightly forward to sit on top
+        this.projectTextMaterial = new THREE.MeshBasicMaterial({
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            polygonOffset: true,
+            polygonOffsetFactor: -1,
+            polygonOffsetUnits: -1
+        });
+        const overlay = new THREE.Mesh(planeMesh.geometry, this.projectTextMaterial);
+        overlay.renderOrder = 1;
+        planeMesh.add(overlay);
+
+        this.buildProjectsTextAtlas();
+    }
+
+    buildProjectsTextAtlas(){
+        const count = this.projectList.length;
+        if(count === 0) return;
+
+        //Slot aspect = the panel's two largest (planar) dimensions
+        let aspect = 1.2;
+        this.projectTextPanel.traverse((child) => {
+            if(child.isMesh && child.geometry){
+                child.geometry.computeBoundingBox();
+                const s = child.geometry.boundingBox.getSize(new THREE.Vector3());
+                const dims = [s.x, s.y, s.z].sort((a, b) => b - a);
+                if(dims[1] > 0) aspect = dims[0] / dims[1];
+            }
+        });
+        const slotH = 1024;
+        const slotW = Math.round(slotH * aspect);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = slotW * count;
+        canvas.height = slotH;
+        const ctx = canvas.getContext('2d');
+
+        this.projectList.forEach((project, i) => {
+            this.drawProjectTextSlot(ctx, project, i * slotW, slotW, slotH);
+        });
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.flipY = false;
+        texture.encoding = THREE.sRGBEncoding;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.repeat.set(1 / count, 1);
+        texture.needsUpdate = true;
+
+        this.projectTextMaterial.map = texture;
+        this.projectTextMaterial.needsUpdate = true;
+        this.updateCarouselOffset();
+    }
+
+    drawProjectTextSlot(ctx, project, x, w, h){
+        //Transparent background (the plane's own material shows through) — only text is drawn.
+        const pad = w * 0.09;
+        const maxWidth = w - pad * 2;
+        const accent = project.titleColor || '#4a76f9';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+
+        //Title (bold, project's color, wrapped to at most 2 lines so long titles don't overflow)
+        ctx.fillStyle = accent;
+        const titleSize = Math.round(h * 0.10);
+        ctx.font = `bold ${titleSize}px sans-serif`;
+        const titleLines = this.wrapText(ctx, project.title || '', maxWidth).slice(0, 2);
+        const titleLineH = titleSize * 1.18;
+        let y = h * 0.08;
+        for(const line of titleLines){
+            ctx.fillText(line, x + pad, y);
+            y += titleLineH;
+        }
+
+        //Description (white, wrapped), placed just below the title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.round(h * 0.055)}px sans-serif`;
+        const descLineH = h * 0.075;
+        y += h * 0.05; //gap after the title
+        const descLines = this.wrapText(ctx, project.description || '', maxWidth);
+        for(const line of descLines){
+            ctx.fillText(line, x + pad, y);
+            y += descLineH;
+        }
+
+        //Link prompt (bottom, project's color)
+        if(project.link){
+            ctx.fillStyle = accent;
+            ctx.font = `italic ${Math.round(h * 0.05)}px sans-serif`;
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('Apri il progetto  →', x + pad, h - pad * 0.6);
+        }
+    }
+
+    wrapText(ctx, text, maxWidth){
+        if(!text) return [];
+        const words = text.split(' ');
+        const lines = [];
+        let current = '';
+        for(const word of words){
+            const test = current ? current + ' ' + word : word;
+            if(ctx.measureText(test).width > maxWidth && current){
+                lines.push(current);
+                current = word;
+            } else {
+                current = test;
+            }
+        }
+        if(current) lines.push(current);
+        return lines;
+    }
+
     updateCarousel(){
         //Ease the slide toward its target and apply the texture offset
         if(!this.inProjectsSection) return;
@@ -269,8 +397,14 @@ export default class IronDuckCard{
 
     updateCarouselOffset(){
         const count = this.projectList.length;
-        if(count === 0 || !this.projectPanelMaterial || !this.projectPanelMaterial.map) return;
-        this.projectPanelMaterial.map.offset.x = this.carouselCurrent / count;
+        if(count === 0) return;
+        const offset = this.carouselCurrent / count;
+        if(this.projectPanelMaterial && this.projectPanelMaterial.map){
+            this.projectPanelMaterial.map.offset.x = offset;
+        }
+        if(this.projectTextMaterial && this.projectTextMaterial.map){
+            this.projectTextMaterial.map.offset.x = offset; //text slides in sync with the image
+        }
         this.currentProjectIndex = ((Math.round(this.carouselCurrent) % count) + count) % count;
     }
 
@@ -298,6 +432,18 @@ export default class IronDuckCard{
         if(!this.carouselDragging) return;
         this.carouselDragging = false;
         this.carouselTarget = Math.round(this.carouselTarget); //snap to the nearest image
+    }
+
+    checkProjectLinkClick(event){
+        //A tap on the text panel opens the current project's link
+        if(!this.projectTextPanel) return;
+        this.pointer.x = (event.clientX / this.sizes.width) * 2 - 1;
+        this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.pointer, this.camera.instance);
+        if(this.raycaster.intersectObject(this.projectTextPanel, true).length > 0){
+            const project = this.projectList[this.currentProjectIndex];
+            if(project && project.link) window.open(project.link, '_blank', 'noopener');
+        }
     }
 
     //Walk up the hierarchy to find which Duck (if any) was hit
@@ -460,7 +606,9 @@ export default class IronDuckCard{
 
         const onPointerUp = (event) => {
             if(this.inProjectsSection){
+                const moved = Math.abs(event.clientX - this.carouselDragStartX);
                 this.carouselDragEnd();
+                if(moved < 6) this.checkProjectLinkClick(event); //a tap on the text opens the link
                 return;
             }
             //If the pointer barely moved it counts as a click: check for a duck

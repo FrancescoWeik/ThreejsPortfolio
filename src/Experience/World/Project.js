@@ -9,6 +9,7 @@ export default class Project{
         this.description = data.description;
         this.link = data.link;
         this.imagePath = data.imagePath;
+        this.titleColor = data.titleColor;
 
         //The image is preloaded in the Resources (sources.js), named `projectImage_<node>`
         this.texture = resources.items[`projectImage_${this.node}`] || null;
