@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import Duck from './Duck.js'
 import ducksMembers from '../ducksMembers.js'
 import projects from '../projects.js'
+import Project from './Project.js'
 
 export default class IronDuckCard{
     constructor(){
@@ -59,6 +60,22 @@ export default class IronDuckCard{
         //Selection: clicking a duck folds every OTHER duck back down to its start pose;
         //clicking away stands them all back up.
         this.selectedDuck = null;
+
+        //Projects data (one Project per entry in projects.js) + which one is shown on the panel.
+        //Once in the projects section the card scroll is locked; scrolling cycles the project image.
+        this.projectList = projects.map((data) => new Project(data, this.resources));
+        this.currentProjectIndex = 0;
+        this.inProjectsSection = false;
+
+        //Carousel: the panel shows one slice of a wide atlas texture; sliding the texture offset
+        //(carouselCurrent eased toward carouselTarget) scrolls the images, with wrap + snap.
+        this.carouselCurrent = 0;
+        this.carouselTarget = 0;
+        this.carouselEase = 0.12;             //how fast the slide follows the target
+        this.carouselDragSensitivity = 0.004; //image units per dragged pixel
+        this.carouselDragging = false;
+        this.carouselDragStartX = 0;
+        this.carouselDragStartTarget = 0;
 
         //Projects sequence: clicking the Projects sign blocks interactions, slides the card back
         //into its container (the intro extraction reversed) and spins the whole card 360°.
@@ -153,8 +170,9 @@ export default class IronDuckCard{
         let halfSpinDone = false;
         const tl = gsap.timeline({
             onComplete: () => {
-                this.spinAngle = 0;                 //360° == back to start; reset for next time
-                this.projectsSequenceActive = false; //(for now) re-enable; future changes go here
+                this.spinAngle = 0;                  //360° == back to start; reset for next time
+                this.projectsSequenceActive = false;
+                this.inProjectsSection = true;       //locked in the projects section now
             }
         });
 
@@ -186,25 +204,100 @@ export default class IronDuckCard{
     setProjectPanel(){
         //The card has a hidden "ProjectImageContainer" panel (on its back) and a "Papera" object.
         //The panel starts off; at the 180° point of the spin it turns on and Papera turns off.
-        //For now we just put the first project's image on the panel (unlit).
         this.projectPanel = this.model.getObjectByName('ProjectImageContainer');
         this.paperaObject = this.model.getObjectByName('Papera');
 
         if(this.projectPanel){
             this.projectPanel.visible = false; //off until the spin reaches 180°
 
-            const first = projects[0];
-            const texture = first && this.resources.items[`projectImage_${first.node}`];
-            if(texture){
-                texture.flipY = false;             //glTF UVs have their origin at the top
-                texture.encoding = THREE.sRGBEncoding;
-                texture.needsUpdate = true;
-                const material = new THREE.MeshBasicMaterial({ map: texture });
-                this.projectPanel.traverse((child) => {
-                    if(child.isMesh) child.material = material;
-                });
-            }
+            //One shared unlit material; its map is a wide atlas slid via the texture offset
+            this.projectPanelMaterial = new THREE.MeshBasicMaterial();
+            this.projectPanel.traverse((child) => {
+                if(child.isMesh) child.material = this.projectPanelMaterial;
+            });
+            this.buildProjectsAtlas();
         }
+    }
+
+    buildProjectsAtlas(){
+        //One wide canvas with every project image side by side; we show one slice and slide it.
+        const count = this.projectList.length;
+        if(count === 0) return;
+
+        const sample = this.projectList[0].texture && this.projectList[0].texture.image;
+        const slotW = (sample && sample.naturalWidth) || 1024;
+        const slotH = (sample && sample.naturalHeight) || 1024;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = slotW * count;
+        canvas.height = slotH;
+        const ctx = canvas.getContext('2d');
+
+        this.projectList.forEach((project, i) => {
+            const img = project.texture && project.texture.image;
+            if(img) this.drawImageCover(ctx, img, i * slotW, 0, slotW, slotH);
+        });
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.flipY = false;
+        texture.encoding = THREE.sRGBEncoding;
+        texture.wrapS = THREE.RepeatWrapping;     //seamless wrap from last image to first
+        texture.repeat.set(1 / count, 1);         //show one image at a time
+        texture.needsUpdate = true;
+
+        this.projectPanelMaterial.map = texture;
+        this.projectPanelMaterial.needsUpdate = true;
+        this.updateCarouselOffset();
+    }
+
+    drawImageCover(ctx, img, x, y, w, h){
+        //Draw img into the (x,y,w,h) slot scaled to cover (center-crop), preserving aspect
+        const iw = img.naturalWidth || img.width;
+        const ih = img.naturalHeight || img.height;
+        const scale = Math.max(w / iw, h / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    }
+
+    updateCarousel(){
+        //Ease the slide toward its target and apply the texture offset
+        if(!this.inProjectsSection) return;
+        this.carouselCurrent += (this.carouselTarget - this.carouselCurrent) * this.carouselEase;
+        this.updateCarouselOffset();
+    }
+
+    updateCarouselOffset(){
+        const count = this.projectList.length;
+        if(count === 0 || !this.projectPanelMaterial || !this.projectPanelMaterial.map) return;
+        this.projectPanelMaterial.map.offset.x = this.carouselCurrent / count;
+        this.currentProjectIndex = ((Math.round(this.carouselCurrent) % count) + count) % count;
+    }
+
+    carouselStepByScroll(deltaY){
+        //One image per wheel notch (the slide itself is smoothed in updateCarousel)
+        if(this.projectList.length <= 1) return;
+        this.carouselTarget = Math.round(this.carouselTarget) + Math.sign(deltaY);
+    }
+
+    carouselDragStart(clientX){
+        this.carouselDragging = true;
+        this.carouselDragStartX = clientX;
+        this.carouselDragStartTarget = this.carouselTarget;
+    }
+
+    carouselDragMove(clientX){
+        if(!this.carouselDragging) return;
+        //Drag left -> advance to the next image. Follow the finger 1:1 (no lag) while dragging.
+        this.carouselTarget = this.carouselDragStartTarget + (this.carouselDragStartX - clientX) * this.carouselDragSensitivity;
+        this.carouselCurrent = this.carouselTarget;
+        this.updateCarouselOffset();
+    }
+
+    carouselDragEnd(){
+        if(!this.carouselDragging) return;
+        this.carouselDragging = false;
+        this.carouselTarget = Math.round(this.carouselTarget); //snap to the nearest image
     }
 
     //Walk up the hierarchy to find which Duck (if any) was hit
@@ -265,15 +358,20 @@ export default class IronDuckCard{
         return this.camera && this.camera.followScroll;
     }
 
-    //User input is also blocked while the projects sequence is playing
+    //Card scroll is blocked while the sequence plays AND once we're locked in the projects section
     inputAllowed(){
-        return this.canInteract() && !this.projectsSequenceActive;
+        return this.canInteract() && !this.projectsSequenceActive && !this.inProjectsSection;
     }
 
     setScrollControl(){
         //Mouse wheel drives the whole journey both ways: scroll down advances it, scroll up
         //(even once arrived) plays it back in reverse.
         window.addEventListener('wheel', (event) => {
+            //In the projects section, the wheel slides the carousel (the card is locked)
+            if(this.inProjectsSection){
+                this.carouselStepByScroll(event.deltaY);
+                return;
+            }
             if(!this.inputAllowed()) return;
             this.scrollTarget = THREE.MathUtils.clamp(
                 this.scrollTarget + event.deltaY * this.wheelSensitivity,
@@ -282,19 +380,28 @@ export default class IronDuckCard{
             );
         }, { passive: true });
 
-        //Touch: swiping the finger upwards advances the animation
+        //Touch: swiping advances the animation, or drags the carousel in the projects section
         window.addEventListener('touchstart', (event) => {
-            if(!this.inputAllowed()) return;
+            if(this.inProjectsSection){
+                this.carouselDragStart(event.touches[0].clientX); //horizontal drag of the carousel
+                return;
+            }
+            if(!this.canInteract()) return;
             this.lastTouchY = event.touches[0].clientY;
         }, { passive: true });
 
         window.addEventListener('touchmove', (event) => {
-            if(!this.inputAllowed()) return;
-            if(this.camera.freeRotate) return; //card out: gestures rotate/zoom the camera instead
+            if(this.inProjectsSection){
+                this.carouselDragMove(event.touches[0].clientX);
+                return;
+            }
             if(this.lastTouchY === null) return;
             const currentY = event.touches[0].clientY;
-            const deltaY = this.lastTouchY - currentY; //swipe up -> positive -> advances
+            const deltaY = this.lastTouchY - currentY; //swipe up -> positive
             this.lastTouchY = currentY;
+
+            if(!this.inputAllowed()) return;
+            if(this.camera.freeRotate) return; //card out: gestures rotate/zoom the camera instead
             this.scrollTarget = THREE.MathUtils.clamp(
                 this.scrollTarget + deltaY * this.touchSensitivity,
                 0,
@@ -303,6 +410,7 @@ export default class IronDuckCard{
         }, { passive: true });
 
         window.addEventListener('touchend', () => {
+            if(this.inProjectsSection) this.carouselDragEnd();
             this.lastTouchY = null;
         }, { passive: true });
     }
@@ -310,6 +418,11 @@ export default class IronDuckCard{
     setDragControl(){
         //Press on the card and drag left to pull it out, drag right to push it back in
         window.addEventListener('pointerdown', (event) => {
+            //In the projects section, dragging slides the carousel
+            if(this.inProjectsSection){
+                this.carouselDragStart(event.clientX);
+                return;
+            }
             if(!this.inputAllowed()) return;
             this.pointerDownX = event.clientX;
             this.pointerDownY = event.clientY;
@@ -331,6 +444,10 @@ export default class IronDuckCard{
         });
 
         window.addEventListener('pointermove', (event) => {
+            if(this.inProjectsSection){
+                this.carouselDragMove(event.clientX);
+                return;
+            }
             if(!this.isDragging) return;
             const deltaX = this.lastDragX - event.clientX; //drag left -> positive -> pulls the card out
             this.lastDragX = event.clientX;
@@ -342,6 +459,10 @@ export default class IronDuckCard{
         });
 
         const onPointerUp = (event) => {
+            if(this.inProjectsSection){
+                this.carouselDragEnd();
+                return;
+            }
             //If the pointer barely moved it counts as a click: check for a duck
             const moved = Math.abs(event.clientX - this.pointerDownX) + Math.abs(event.clientY - this.pointerDownY);
             const isClick = moved < 6;
@@ -354,6 +475,7 @@ export default class IronDuckCard{
         }
         window.addEventListener('pointerup', onPointerUp);
         window.addEventListener('pointercancel', () => {
+            this.carouselDragEnd();
             this.isDragging = false;
             this.lastDragX = null;
         });
@@ -504,6 +626,8 @@ export default class IronDuckCard{
             .onChange(() => this.projects.scale.setScalar(this.projectsScale))
         this.debugFolder.add(this, 'retractDuration').min(0.3).max(4).step(0.1).name('retract duration')
         this.debugFolder.add(this, 'spinDuration').min(0.3).max(4).step(0.1).name('spin duration')
+        this.debugFolder.add(this, 'carouselEase').min(0.02).max(0.5).step(0.01).name('carousel ease')
+        this.debugFolder.add(this, 'carouselDragSensitivity').min(0.001).max(0.02).step(0.001).name('carousel drag')
     }
 
     rebuildDuckColliders(){
@@ -515,7 +639,7 @@ export default class IronDuckCard{
     }
 
     updateParallax(){
-        //Drives the card's root rotation: the 360° spin (driven by the projects sequence) on Y,
+        //Drives the card's root rotation: the 360° spin (driven by the projects sequence) on X,
         //plus a small parallax tilt toward the mouse.
         if(!this.model || !this.modelBaseRotation || !this.canInteract()) return;
 
@@ -561,5 +685,6 @@ export default class IronDuckCard{
 
         this.updateParallax();
         this.updateDucks();
+        this.updateCarousel();
     }
 }
