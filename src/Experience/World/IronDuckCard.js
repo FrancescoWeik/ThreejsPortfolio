@@ -5,6 +5,7 @@ import Duck from './Duck.js'
 import ducksMembers from '../ducksMembers.js'
 import projects from '../projects.js'
 import Project from './Project.js'
+import info from '../info..js'
 
 export default class IronDuckCard{
     constructor(){
@@ -103,6 +104,7 @@ export default class IronDuckCard{
         this.setDucks();
         this.setNavPanels();
         this.setGeneralFall();
+        this.setInfoPlane();
         this.setProjectPanel();
         this.setProjectText();
         this.setBackArrow();
@@ -198,11 +200,120 @@ export default class IronDuckCard{
         this.bigliettoPivot = this.model.getObjectByName('BigliettoPivot');
     }
 
+    setInfoPlane(){
+        //"InformationPlane" sits on the card; it's lit up (with the info.js content) when the card
+        //flips into the general section, and switched off again on the way back.
+        this.informationPlane = this.model.getObjectByName('InformationPlane');
+        if(!this.informationPlane) return;
+        this.informationPlane.visible = false;
+
+        //Unlit material showing the info canvas (visible from both faces)
+        this.infoPlaneMaterial = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
+        this.informationPlane.traverse((child) => { if(child.isMesh) child.material = this.infoPlaneMaterial; });
+        this.buildInfoPlaneTexture();
+    }
+
+    buildInfoPlaneTexture(){
+        const data = (info && info[0]) || {};
+
+        //Match the plane's aspect so the text isn't stretched
+        let aspect = 2;
+        this.informationPlane.traverse((child) => {
+            if(child.isMesh && child.geometry){
+                child.geometry.computeBoundingBox();
+                const s = child.geometry.boundingBox.getSize(new THREE.Vector3());
+                const dims = [s.x, s.y, s.z].sort((a, b) => b - a);
+                if(dims[1] > 0) aspect = dims[0] / dims[1];
+            }
+        });
+
+        const h = 1024;
+        const w = Math.round(h * aspect);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        //No background: the canvas stays transparent so the white card shows through.
+        //Only two ink colors are used: black for the body, blue as the accent.
+        const black = '#141414';
+        const blue = '#2348d8';
+        const cx = w / 2;
+
+        //Decorative blue corner brackets — framing the card without filling a background
+        const inset = Math.round(h * 0.08);
+        const armX = Math.round(w * 0.045);
+        const armY = Math.round(h * 0.085);
+        ctx.strokeStyle = blue;
+        ctx.lineWidth = Math.max(3, Math.round(h * 0.009));
+        ctx.lineCap = 'round';
+        const corner = (x, y, dx, dy) => {
+            ctx.beginPath();
+            ctx.moveTo(x + dx * armX, y);
+            ctx.lineTo(x, y);
+            ctx.lineTo(x, y + dy * armY);
+            ctx.stroke();
+        };
+        corner(inset, inset, 1, 1);
+        corner(w - inset, inset, -1, 1);
+        corner(inset, h - inset, 1, -1);
+        corner(w - inset, h - inset, -1, -1);
+
+        ctx.textBaseline = 'top';
+
+        //Title "IronDuck": "Iron" black + "Duck" blue, centered
+        const titleSize = Math.round(h * 0.15);
+        ctx.font = `bold ${titleSize}px sans-serif`;
+        const w1 = ctx.measureText('Iron').width;
+        const w2 = ctx.measureText('Duck').width;
+        const titleStart = cx - (w1 + w2) / 2;
+        let y = Math.round(h * 0.17);
+        ctx.textAlign = 'left';
+        ctx.fillStyle = black;
+        ctx.fillText('Iron', titleStart, y);
+        ctx.fillStyle = blue;
+        ctx.fillText('Duck', titleStart + w1, y);
+        y += Math.round(titleSize * 1.05);
+
+        //Blue underline centered under the title
+        const lineW = Math.round((w1 + w2) * 0.55);
+        ctx.fillStyle = blue;
+        ctx.fillRect(Math.round(cx - lineW / 2), y, lineW, Math.max(4, Math.round(h * 0.012)));
+        y += Math.round(h * 0.09);
+
+        //Description (black, centered, each '\n' paragraph wrapped)
+        ctx.textAlign = 'center';
+        ctx.fillStyle = black;
+        const descSize = Math.round(h * 0.06);
+        ctx.font = `${descSize}px sans-serif`;
+        const lineH = Math.round(descSize * 1.5);
+        const maxWidth = Math.round(w * 0.78);
+        const paragraphs = (data.description || '').split('\n');
+        for(const para of paragraphs){
+            const trimmed = para.trim();
+            if(!trimmed){ y += Math.round(lineH * 0.4); continue; }
+            for(const line of this.wrapText(ctx, trimmed, maxWidth)){
+                ctx.fillText(line, cx, y);
+                y += lineH;
+            }
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        //The card flips 180° and we see the plane's back face, so the texture reads upside down and
+        //mirrored: flip it vertically (flipY) and horizontally (negative repeat.x) to read correctly.
+        texture.flipY = true;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.repeat.x = -1;
+        texture.offset.x = 1;
+        texture.encoding = THREE.sRGBEncoding;
+        texture.needsUpdate = true;
+        this.infoPlaneMaterial.map = texture;
+        this.infoPlaneMaterial.needsUpdate = true;
+    }
+
     foldAllDucks(folded){
-        //Fold every (small) duck down to its lying pose (or stand them back up). The giant duck
-        //(not hoverable) never folds.
+        //Fold every duck down to its lying pose (or stand them back up). In the general section the
+        //giant Papera folds too (unlike normal selection, where it stays put), so don't skip it.
         for(const duck of this.ducks){
-            if(!duck.hoverable) continue;
             duck.setFolded(folded);
         }
     }
@@ -220,6 +331,9 @@ export default class IronDuckCard{
         this.projectsSequenceActive = true;
         this.suspendSpline = true;       //gsap drives the camera (no spline fight)
         this.camera.controls.enableRotate = false;
+
+        //Light up the info plane right away (it stays on for the whole general section)
+        if(this.informationPlane) this.informationPlane.visible = true;
 
         //Pre-roll: first the ducks fold down and the cartelli scale to 0 (like the projects retract)
         this.selectedDuck = null;
@@ -277,7 +391,8 @@ export default class IronDuckCard{
                 this.projectsSequenceActive = false;
                 this.suspendSpline = false;               //camera spline resumes (no snap: already at final)
                 this.camera.controls.enableRotate = true; //card out again: free orbit
-                this.foldAllDucks(false);                 //ducks stand back up
+                this.foldAllDucks(false);                 //ducks (and giant Papera) stand back up
+                if(this.informationPlane) this.informationPlane.visible = false; //info plane off on arrival
                 this.navPanelsShown = true;
                 this.animateNavPanelsIn();                //the cartelli pop back in
             }
