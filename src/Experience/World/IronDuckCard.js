@@ -90,9 +90,19 @@ export default class IronDuckCard{
         //when it goes back in. Clicking ProjectsInfoPanel opens the projects section.
         this.navPanelsShown = false;
 
+        //General section: clicking GeneralInfoPanel folds the ducks, hides the nav panels and
+        //rotates the card's hinge ("BigliettoPivot", authored on the edge nearest the container)
+        //180° so the card falls flat onto the container. A back arrow returns.
+        this.inGeneralSection = false;
+        this.fallDuration = 1.4;     //seconds: the fall (and its reverse)
+        this.fallTarget = -Math.PI;  //hinge angle once fallen onto the container (180°, clockwise)
+        this.fallAxis = 'z';         //BigliettoPivot local axis to rotate around
+        this.generalPreRoll = 0.5;   //seconds: ducks fold + cartelli scale to 0 before the card turns
+
         this.setModel();
         this.setDucks();
         this.setNavPanels();
+        this.setGeneralFall();
         this.setProjectPanel();
         this.setProjectText();
         this.setBackArrow();
@@ -181,8 +191,106 @@ export default class IronDuckCard{
         });
     }
 
+    setGeneralFall(){
+        //"BigliettoPivot" wraps the whole card and is hinged on the edge nearest the container.
+        //It isn't touched by the extraction clip (which only moves FullBiglietto inside it), so we
+        //can just tween its rotation to flip the card 180° flat onto the container (and back).
+        this.bigliettoPivot = this.model.getObjectByName('BigliettoPivot');
+    }
+
+    foldAllDucks(folded){
+        //Fold every (small) duck down to its lying pose (or stand them back up). The giant duck
+        //(not hoverable) never folds.
+        for(const duck of this.ducks){
+            if(!duck.hoverable) continue;
+            duck.setFolded(folded);
+        }
+    }
+
     onGeneralClick(){
-        //Placeholder: General info navigation (to be defined)
+        this.playGeneralSequence();
+    }
+
+    playGeneralSequence(){
+        //Clicking GeneralInfoPanel: block input, stand the ducks down, hide the nav panels and
+        //rotate the hinge so the card falls onto the container. While it rotates, the camera glides
+        //(eased) to the same framing the projects sequence uses. Then pop in the back arrow.
+        if(this.projectsSequenceActive || this.inProjectsSection || this.inGeneralSection) return;
+        if(!this.bigliettoPivot) return;
+        this.projectsSequenceActive = true;
+        this.suspendSpline = true;       //gsap drives the camera (no spline fight)
+        this.camera.controls.enableRotate = false;
+
+        //Pre-roll: first the ducks fold down and the cartelli scale to 0 (like the projects retract)
+        this.selectedDuck = null;
+        this.hideInfoPanel();
+        this.foldAllDucks(true);
+        this.navPanelsShown = false;
+        this.animateNavPanelsOut();
+
+        const cam = this.camera.instance;
+        const tgt = this.camera.controls.target;
+        const startPos = this.camera.scrollStartPos;       //same destination as the projects sequence
+        const startTarget = this.camera.scrollStartTarget;
+        const dur = this.fallDuration;
+        const lead = this.generalPreRoll;                  //let the ducks/cartelli animate first
+        const ease = 'power2.inOut';
+
+        gsap.killTweensOf(this.bigliettoPivot.rotation);
+        gsap.killTweensOf(cam.position);
+        gsap.killTweensOf(tgt);
+
+        const tl = gsap.timeline({
+            onComplete: () => {
+                this.projectsSequenceActive = false;
+                this.inGeneralSection = true; //locked in the general section now
+                this.animateBackArrowIn();    //pop in the back arrow
+            }
+        });
+        //After the pre-roll: card falls onto the container; camera glides to the projects framing
+        tl.to(this.bigliettoPivot.rotation, { [this.fallAxis]: this.fallTarget, duration: dur, ease }, lead);
+        tl.to(cam.position, { x: startPos.x, y: startPos.y, z: startPos.z, duration: dur, ease }, lead);
+        tl.to(tgt, { x: startTarget.x, y: startTarget.y, z: startTarget.z, duration: dur, ease }, lead);
+    }
+
+    exitGeneralSequence(){
+        //Back from the general section: shrink the arrow, lift the card back off the container and
+        //glide the camera back to the card-out framing, then restore the normal state.
+        if(this.projectsSequenceActive || !this.inGeneralSection) return;
+        if(!this.bigliettoPivot) return;
+        this.projectsSequenceActive = true;
+        this.inGeneralSection = false;
+
+        const cam = this.camera.instance;
+        const tgt = this.camera.controls.target;
+        const finalPos = this.camera.scrollFinalPos;       //the card-out (open card) framing
+        const finalTarget = this.camera.scrollFinalTarget;
+        const dur = this.fallDuration;
+        const ease = 'power2.inOut';
+
+        gsap.killTweensOf(this.bigliettoPivot.rotation);
+        gsap.killTweensOf(cam.position);
+        gsap.killTweensOf(tgt);
+
+        const tl = gsap.timeline({
+            onComplete: () => {
+                this.projectsSequenceActive = false;
+                this.suspendSpline = false;               //camera spline resumes (no snap: already at final)
+                this.camera.controls.enableRotate = true; //card out again: free orbit
+                this.foldAllDucks(false);                 //ducks stand back up
+                this.navPanelsShown = true;
+                this.animateNavPanelsIn();                //the cartelli pop back in
+            }
+        });
+
+        //Back arrow shrinks away while the card lifts and the camera glides back
+        if(this.backArrow){
+            gsap.killTweensOf(this._backArrowProxy);
+            tl.to(this._backArrowProxy, { s: 0, duration: 0.3, ease: 'power2.in', onUpdate: () => this.applyBackArrowScale() }, 0);
+        }
+        tl.to(this.bigliettoPivot.rotation, { [this.fallAxis]: 0, duration: dur, ease }, 0);
+        tl.to(cam.position, { x: finalPos.x, y: finalPos.y, z: finalPos.z, duration: dur, ease }, 0);
+        tl.to(tgt, { x: finalTarget.x, y: finalTarget.y, z: finalTarget.z, duration: dur, ease }, 0);
     }
 
     onMailClick(){
@@ -196,6 +304,8 @@ export default class IronDuckCard{
         this.projectsSequenceActive = true;
         this.suspendSpline = true; //gsap drives the camera straight back (avoids a spline snap)
         this.deselectDuck();
+        this.navPanelsShown = false;
+        this.animateNavPanelsOut(); //the cartelli switch off as the card retracts
 
         //Start the card retract from the card-out point (the clip is identical at 1 and scrollMax,
         //so this is invisible) and drive it to 0 over retractDuration. The camera is moved by its
@@ -643,7 +753,7 @@ export default class IronDuckCard{
 
     //Card scroll is blocked while the sequence plays AND once we're locked in the projects section
     inputAllowed(){
-        return this.canInteract() && !this.projectsSequenceActive && !this.inProjectsSection;
+        return this.canInteract() && !this.projectsSequenceActive && !this.inProjectsSection && !this.inGeneralSection;
     }
 
     setScrollControl(){
@@ -742,6 +852,11 @@ export default class IronDuckCard{
         });
 
         const onPointerUp = (event) => {
+            //In the general section, only the back arrow is interactive (it lifts the card back up)
+            if(this.inGeneralSection){
+                if(this.clickedBackArrow(event)) this.exitGeneralSequence();
+                return;
+            }
             if(this.inProjectsSection){
                 const moved = Math.abs(event.clientX - this.carouselDragStartX);
                 this.carouselDragEnd();
@@ -918,6 +1033,16 @@ export default class IronDuckCard{
         this.debugFolder.add(this, 'spinDuration').min(0.3).max(4).step(0.1).name('spin duration')
         this.debugFolder.add(this, 'carouselEase').min(0.02).max(0.5).step(0.01).name('carousel ease')
         this.debugFolder.add(this, 'carouselDragSensitivity').min(0.001).max(0.02).step(0.001).name('carousel drag')
+
+        //General fall: flip the card onto its container via the BigliettoPivot hinge
+        this.debugFolder.add(this, 'fallAxis', ['x', 'y', 'z']).name('fall axis')
+        this.debugFolder.add(this, 'fallTarget').min(-Math.PI).max(Math.PI).step(0.01).name('fall angle')
+        this.debugFolder.add(this, 'fallDuration').min(0.3).max(4).step(0.1).name('fall duration')
+        this.debugFolder.add(this, 'generalPreRoll').min(0).max(2).step(0.05).name('fall pre-roll')
+        const fallActions = {
+            play: () => this.inGeneralSection ? this.exitGeneralSequence() : this.playGeneralSequence()
+        }
+        this.debugFolder.add(fallActions, 'play').name('play / reverse general')
     }
 
     rebuildDuckColliders(){
@@ -973,13 +1098,18 @@ export default class IronDuckCard{
             this.deselectDuck();
         }
 
-        //Nav panels pop in once the card is fully out, pop out when it goes back in (hysteresis)
-        if(!this.navPanelsShown && this.scrollCurrent >= 0.99){
-            this.navPanelsShown = true;
-            this.animateNavPanelsIn();
-        } else if(this.navPanelsShown && this.scrollCurrent < 0.9){
-            this.navPanelsShown = false;
-            this.animateNavPanelsOut();
+        //Nav panels pop in once the card is fully out, pop out when it goes back in (hysteresis).
+        //Only auto-manage them in the normal browsing state; the section sequences drive them
+        //explicitly (so they stay hidden in projects/general even though the card is still "out").
+        const sectionActive = this.inProjectsSection || this.inGeneralSection || this.projectsSequenceActive;
+        if(!sectionActive){
+            if(!this.navPanelsShown && this.scrollCurrent >= 0.99){
+                this.navPanelsShown = true;
+                this.animateNavPanelsIn();
+            } else if(this.navPanelsShown && this.scrollCurrent < 0.9){
+                this.navPanelsShown = false;
+                this.animateNavPanelsOut();
+            }
         }
 
         this.updateParallax();
