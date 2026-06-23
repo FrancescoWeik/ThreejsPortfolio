@@ -15,10 +15,5 @@ export default [
         type: "gltfModel",
         path: 'models/IronDuckCard/IronDuckCard.glb'
     },
-    {
-        name: "projectsModel",
-        type: "gltfModel",
-        path: 'models/Projects.glb'
-    },
     ...projectImageSources
 ]

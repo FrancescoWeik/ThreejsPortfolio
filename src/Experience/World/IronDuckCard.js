@@ -83,17 +83,19 @@ export default class IronDuckCard{
         this.suspendSpline = false;          //suspends the camera scroll-spline (so gsap can drive it)
         this.spinAngle = 0;            //extra X rotation of the card (driven by the spin)
         this.retractDuration = 2;      //seconds: card slides back in
+        this.automaticExtractDuration = 3;
         this.spinDuration = 1.2;       //seconds: full 360° spin
 
-        //Projects sign, placed local to the card so it follows the extraction
-        this.projectsPosition = new THREE.Vector3(3, 0.1, -1.5);
-        this.projectsScale = 1;
+        //Navigation panels (General/Projects/Mail): pop in when the card is fully out, pop out
+        //when it goes back in. Clicking ProjectsInfoPanel opens the projects section.
+        this.navPanelsShown = false;
 
         this.setModel();
         this.setDucks();
-        this.setProjects();
+        this.setNavPanels();
         this.setProjectPanel();
         this.setProjectText();
+        this.setBackArrow();
         this.setAnimation();
         this.setScrollControl();
         this.setDragControl();
@@ -136,15 +138,55 @@ export default class IronDuckCard{
         this.duckColliders = this.ducks.map((duck) => duck.collider).filter(Boolean);
     }
 
-    setProjects(){
-        //The "Projects" sign sits on a corner of the card. Parent it to FullBiglietto so it moves
-        //with the card extraction (and the flip). Clicking it flips the card to show the back.
-        this.projects = this.resources.items.projectsModel.scene;
-        this.projects.position.copy(this.projectsPosition);
-        this.projects.scale.setScalar(this.projectsScale);
+    setNavPanels(){
+        //The "NavigateInfoPanel" group (child of FullBiglietto) holds 3 panels authored at scale 0.
+        //They pop in once the card is fully out and pop out when it goes back in. ProjectsInfoPanel
+        //opens the projects section; General/Mail have placeholder click hooks for now.
+        this.generalInfoPanel = this.model.getObjectByName('GeneralInfoPanel');
+        this.projectsInfoPanel = this.model.getObjectByName('ProjectsInfoPanel');
+        this.mailInfoPanel = this.model.getObjectByName('MailInfoPanel');
 
-        const parent = this.model.getObjectByName('FullBiglietto') || this.model;
-        parent.add(this.projects);
+        //Pop order (staggered): General -> Projects -> Mail. Each is hidden (scale 0) until shown.
+        this.navPanels = [this.generalInfoPanel, this.projectsInfoPanel, this.mailInfoPanel].filter(Boolean);
+        this._navPanelProxies = this.navPanels.map(() => ({ s: 0 }));
+        this.navPanels.forEach((panel) => panel.scale.setScalar(0));
+    }
+
+    applyNavPanelScale(index){
+        this.navPanels[index].scale.setScalar(this._navPanelProxies[index].s);
+    }
+
+    animateNavPanelsIn(){
+        //Each panel bounces 0 -> 1.2 -> 0.9 -> 1, started staggered (overlapping, not waiting)
+        this.navPanels.forEach((panel, i) => {
+            const proxy = this._navPanelProxies[i];
+            gsap.killTweensOf(proxy);
+            proxy.s = 0;
+            gsap.timeline({ delay: i * 0.12, onUpdate: () => this.applyNavPanelScale(i) })
+                .to(proxy, { s: 1.2, duration: 0.3, ease: 'power2.out' })
+                .to(proxy, { s: 0.9, duration: 0.12, ease: 'power1.inOut' })
+                .to(proxy, { s: 1, duration: 0.12, ease: 'power1.inOut' });
+        });
+    }
+
+    animateNavPanelsOut(){
+        //Each panel scales back to 0 (slightly staggered)
+        this.navPanels.forEach((panel, i) => {
+            const proxy = this._navPanelProxies[i];
+            gsap.killTweensOf(proxy);
+            gsap.to(proxy, {
+                s: 0, duration: 0.25, delay: i * 0.05, ease: 'power2.in',
+                onUpdate: () => this.applyNavPanelScale(i)
+            });
+        });
+    }
+
+    onGeneralClick(){
+        //Placeholder: General info navigation (to be defined)
+    }
+
+    onMailClick(){
+        //Placeholder: Mail/contact navigation (to be defined)
     }
 
     playProjectsSequence(){
@@ -198,7 +240,6 @@ export default class IronDuckCard{
                 }
             }
         }, '>');
-        this.setBackArrow();
     }
 
     onSpinHalfway(){
@@ -265,7 +306,7 @@ export default class IronDuckCard{
         if(this.projectsSequenceActive || !this.inProjectsSection) return;
         this.projectsSequenceActive = true; //blocks input, but the spline stays active so the
         this.inProjectsSection = false;     //camera re-opens exactly like the initial scroll
-        const dur = this.retractDuration;
+        const dur = this.automaticExtractDuration;
         const ease = 'power1.inOut';
 
         let halfSpinDone = false;
@@ -754,9 +795,17 @@ export default class IronDuckCard{
         this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
         this.raycaster.setFromCamera(this.pointer, this.camera.instance);
 
-        //Clicking the Projects sign plays the projects sequence (retract + 360° spin)
-        if(this.projects && this.raycaster.intersectObject(this.projects, true).length > 0){
+        //Clicking a navigation panel: Projects opens the projects section; General/Mail are hooks
+        if(this.projectsInfoPanel && this.raycaster.intersectObject(this.projectsInfoPanel, true).length > 0){
             this.playProjectsSequence();
+            return;
+        }
+        if(this.generalInfoPanel && this.raycaster.intersectObject(this.generalInfoPanel, true).length > 0){
+            this.onGeneralClick();
+            return;
+        }
+        if(this.mailInfoPanel && this.raycaster.intersectObject(this.mailInfoPanel, true).length > 0){
+            this.onMailClick();
             return;
         }
 
@@ -864,14 +913,7 @@ export default class IronDuckCard{
             .min(0.01).max(0.3).step(0.005)
             .name('parallax easing')
 
-        //Projects sign + flip
-        const onProjectsMove = () => this.projects.position.copy(this.projectsPosition);
-        this.debugFolder.add(this.projectsPosition, 'x').min(-6).max(6).step(0.05).name('projects x').onChange(onProjectsMove)
-        this.debugFolder.add(this.projectsPosition, 'y').min(-2).max(3).step(0.05).name('projects y').onChange(onProjectsMove)
-        this.debugFolder.add(this.projectsPosition, 'z').min(-4).max(4).step(0.05).name('projects z').onChange(onProjectsMove)
-        this.debugFolder
-            .add(this, 'projectsScale').min(0.1).max(3).step(0.05).name('projects scale')
-            .onChange(() => this.projects.scale.setScalar(this.projectsScale))
+        //Projects sequence
         this.debugFolder.add(this, 'retractDuration').min(0.3).max(4).step(0.1).name('retract duration')
         this.debugFolder.add(this, 'spinDuration').min(0.3).max(4).step(0.1).name('spin duration')
         this.debugFolder.add(this, 'carouselEase').min(0.02).max(0.5).step(0.01).name('carousel ease')
@@ -929,6 +971,15 @@ export default class IronDuckCard{
         //If the card is being scrolled back in, stand ducks back up
         if(!this.camera.freeRotate && this.selectedDuck){
             this.deselectDuck();
+        }
+
+        //Nav panels pop in once the card is fully out, pop out when it goes back in (hysteresis)
+        if(!this.navPanelsShown && this.scrollCurrent >= 0.99){
+            this.navPanelsShown = true;
+            this.animateNavPanelsIn();
+        } else if(this.navPanelsShown && this.scrollCurrent < 0.9){
+            this.navPanelsShown = false;
+            this.animateNavPanelsOut();
         }
 
         this.updateParallax();
