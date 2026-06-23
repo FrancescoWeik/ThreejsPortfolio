@@ -107,7 +107,7 @@ export default class Camera{
                 this.disableFreeRotate();
             }
 
-            if(!this.freeRotate && !card.projectsSequenceActive){
+            if(!this.freeRotate && !card.suspendSpline){
                 //Map scroll to the curve param: [0,1] -> [0,0.5] (start->overview),
                 //[1,scrollMax] -> [0.5,1] (overview->final)
                 let t;

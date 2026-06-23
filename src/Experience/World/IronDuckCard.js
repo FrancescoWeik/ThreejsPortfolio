@@ -79,7 +79,8 @@ export default class IronDuckCard{
 
         //Projects sequence: clicking the Projects sign blocks interactions, slides the card back
         //into its container (the intro extraction reversed) and spins the whole card 360°.
-        this.projectsSequenceActive = false;
+        this.projectsSequenceActive = false; //blocks user input during a sequence
+        this.suspendSpline = false;          //suspends the camera scroll-spline (so gsap can drive it)
         this.spinAngle = 0;            //extra X rotation of the card (driven by the spin)
         this.retractDuration = 2;      //seconds: card slides back in
         this.spinDuration = 1.2;       //seconds: full 360° spin
@@ -151,6 +152,7 @@ export default class IronDuckCard{
         //(reverse extraction, the camera follows the scroll spline back), then spin it 360°.
         if(this.projectsSequenceActive) return;
         this.projectsSequenceActive = true;
+        this.suspendSpline = true; //gsap drives the camera straight back (avoids a spline snap)
         this.deselectDuck();
 
         //Start the card retract from the card-out point (the clip is identical at 1 and scrollMax,
@@ -173,6 +175,7 @@ export default class IronDuckCard{
             onComplete: () => {
                 this.spinAngle = 0;                  //360° == back to start; reset for next time
                 this.projectsSequenceActive = false;
+                this.suspendSpline = false;
                 this.inProjectsSection = true;       //locked in the projects section now
                 this.animateBackArrowIn();           //pop in the back arrow
             }
@@ -260,13 +263,8 @@ export default class IronDuckCard{
         //Back from the projects page: shrink the arrow, spin 360° swapping back to the original
         //card (at 180°), then auto re-open the card to the open-card framing.
         if(this.projectsSequenceActive || !this.inProjectsSection) return;
-        this.projectsSequenceActive = true;
-        this.inProjectsSection = false;
-
-        const cam = this.camera.instance;
-        const tgt = this.camera.controls.target;
-        const finalPos = this.camera.scrollFinalPos;
-        const finalTarget = this.camera.scrollFinalTarget;
+        this.projectsSequenceActive = true; //blocks input, but the spline stays active so the
+        this.inProjectsSection = false;     //camera re-opens exactly like the initial scroll
         const dur = this.retractDuration;
         const ease = 'power1.inOut';
 
@@ -296,10 +294,10 @@ export default class IronDuckCard{
             }
         }, 0);
 
-        //Then the card re-extracts on its own + camera glides back to the open framing
+        //Then the card re-extracts on its own. The camera is NOT tweened directly: the scroll
+        //spline drives it (start -> overview -> final) exactly like the initial extraction, just
+        //automatic. The spline stays active (suspendSpline is false) and follows scrollCurrent.
         tl.to(this, { scrollCurrent: this.scrollMax, duration: dur, ease, onUpdate: () => { this.scrollTarget = this.scrollCurrent; } }, '>');
-        tl.to(cam.position, { x: finalPos.x, y: finalPos.y, z: finalPos.z, duration: dur, ease }, '<');
-        tl.to(tgt, { x: finalTarget.x, y: finalTarget.y, z: finalTarget.z, duration: dur, ease }, '<');
     }
 
     setProjectPanel(){
