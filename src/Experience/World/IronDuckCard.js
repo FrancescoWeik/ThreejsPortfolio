@@ -174,6 +174,7 @@ export default class IronDuckCard{
                 this.spinAngle = 0;                  //360° == back to start; reset for next time
                 this.projectsSequenceActive = false;
                 this.inProjectsSection = true;       //locked in the projects section now
+                this.animateBackArrowIn();           //pop in the back arrow
             }
         });
 
@@ -194,6 +195,7 @@ export default class IronDuckCard{
                 }
             }
         }, '>');
+        this.setBackArrow();
     }
 
     onSpinHalfway(){
@@ -202,6 +204,102 @@ export default class IronDuckCard{
         if(this.projectPanel) this.projectPanel.visible = true;
         if(this.projectTextPanel) this.projectTextPanel.visible = true;
         if(this.paperaObject) this.paperaObject.visible = false;
+    }
+
+    showCardContent(){
+        //Reverse of onSpinHalfway: back to the original card (Papera on, project panels off)
+        if(this.projectPanel) this.projectPanel.visible = false;
+        if(this.projectTextPanel) this.projectTextPanel.visible = false;
+        if(this.paperaObject) this.paperaObject.visible = true;
+    }
+
+    setBackArrow(){
+        //"Back" arrow shown in the projects page; clicking it returns to the open card.
+        //The group "BackArrow_Project" is the one we animate, but BOTH it and its inner mesh
+        //"Project_BackArrow" were authored at scale 0 — so give the inner mesh its real scale (1)
+        //and animate only the group, otherwise the group's 0 keeps everything invisible.
+        this.backArrow = this.model.getObjectByName('BackArrow_Project');
+        if(!this.backArrow) return;
+        //The inner mesh was authored at scale 0 AND with a leftover translation (x ≈ -32) that
+        //scale-0 was hiding. Reset its local transform so it sits at the group's origin.
+        this.backArrow.traverse((child) => {
+            if(child !== this.backArrow){
+                child.position.set(0, 0, 0);
+                child.scale.setScalar(1);
+            }
+        });
+        this.backArrowBaseScale = 1;
+        this.backArrow.scale.setScalar(0); //group hidden until the projects page opens
+        this._backArrowProxy = { s: 0 };
+    }
+
+    applyBackArrowScale(){
+        if(this.backArrow) this.backArrow.scale.setScalar(this.backArrowBaseScale * this._backArrowProxy.s);
+    }
+
+    animateBackArrowIn(){
+        //Pop in: 0 -> 1.2 -> 0.9 -> 1 (relative to its authored scale)
+        if(!this.backArrow) return;
+        gsap.killTweensOf(this._backArrowProxy);
+        this._backArrowProxy.s = 0;
+        gsap.timeline({ onUpdate: () => this.applyBackArrowScale() })
+            .to(this._backArrowProxy, { s: 1.2, duration: 0.3, ease: 'power2.out' })
+            .to(this._backArrowProxy, { s: 0.9, duration: 0.12, ease: 'power1.inOut' })
+            .to(this._backArrowProxy, { s: 1, duration: 0.12, ease: 'power1.inOut' });
+    }
+
+    clickedBackArrow(event){
+        if(!this.backArrow) return false;
+        this.pointer.x = (event.clientX / this.sizes.width) * 2 - 1;
+        this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.pointer, this.camera.instance);
+        return this.raycaster.intersectObject(this.backArrow, true).length > 0;
+    }
+
+    exitProjectsSequence(){
+        //Back from the projects page: shrink the arrow, spin 360° swapping back to the original
+        //card (at 180°), then auto re-open the card to the open-card framing.
+        if(this.projectsSequenceActive || !this.inProjectsSection) return;
+        this.projectsSequenceActive = true;
+        this.inProjectsSection = false;
+
+        const cam = this.camera.instance;
+        const tgt = this.camera.controls.target;
+        const finalPos = this.camera.scrollFinalPos;
+        const finalTarget = this.camera.scrollFinalTarget;
+        const dur = this.retractDuration;
+        const ease = 'power1.inOut';
+
+        let halfSpinDone = false;
+        const tl = gsap.timeline({
+            onComplete: () => {
+                this.spinAngle = 0;
+                this.projectsSequenceActive = false;
+                this.scrollTarget = this.scrollCurrent; //stays open (= scrollMax)
+            }
+        });
+
+        //Back arrow shrinks away (together with the spin start)
+        if(this.backArrow){
+            gsap.killTweensOf(this._backArrowProxy);
+            tl.to(this._backArrowProxy, {
+                s: 0, duration: 0.3, ease: 'power2.in',
+                onUpdate: () => this.applyBackArrowScale()
+            }, 0);
+        }
+
+        //360° spin; at 180° swap back to the original card content
+        tl.to(this, {
+            spinAngle: Math.PI * 2, duration: this.spinDuration, ease: 'power2.inOut',
+            onUpdate: () => {
+                if(!halfSpinDone && this.spinAngle >= Math.PI){ halfSpinDone = true; this.showCardContent(); }
+            }
+        }, 0);
+
+        //Then the card re-extracts on its own + camera glides back to the open framing
+        tl.to(this, { scrollCurrent: this.scrollMax, duration: dur, ease, onUpdate: () => { this.scrollTarget = this.scrollCurrent; } }, '>');
+        tl.to(cam.position, { x: finalPos.x, y: finalPos.y, z: finalPos.z, duration: dur, ease }, '<');
+        tl.to(tgt, { x: finalTarget.x, y: finalTarget.y, z: finalTarget.z, duration: dur, ease }, '<');
     }
 
     setProjectPanel(){
@@ -608,7 +706,11 @@ export default class IronDuckCard{
             if(this.inProjectsSection){
                 const moved = Math.abs(event.clientX - this.carouselDragStartX);
                 this.carouselDragEnd();
-                if(moved < 6) this.checkProjectLinkClick(event); //a tap on the text opens the link
+                if(moved < 6){
+                    //A tap on the back arrow returns to the card; otherwise on the text opens the link
+                    if(this.clickedBackArrow(event)) this.exitProjectsSequence();
+                    else this.checkProjectLinkClick(event);
+                }
                 return;
             }
             //If the pointer barely moved it counts as a click: check for a duck
