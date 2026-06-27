@@ -5,7 +5,6 @@ import Duck from './Duck.js'
 import ducksMembers from '../ducksMembers.js'
 import projects from '../projects.js'
 import Project from './Project.js'
-import info from '../info..js'
 
 export default class IronDuckCard{
     constructor(){
@@ -207,200 +206,18 @@ export default class IronDuckCard{
         if(!this.informationPlane) return;
         this.informationPlane.visible = false;
 
-        //Unlit material showing the info canvas (visible from both faces)
-        this.infoPlaneMaterial = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
-        this.informationPlane.traverse((child) => { if(child.isMesh) child.material = this.infoPlaneMaterial; });
-        this.buildInfoPlaneTexture();
-    }
-
-    buildInfoPlaneTexture(){
-        const data = (info && info[0]) || {};
-
-        //Match the plane's aspect so the text isn't stretched
-        let aspect = 2;
-        this.informationPlane.traverse((child) => {
-            if(child.isMesh && child.geometry){
-                child.geometry.computeBoundingBox();
-                const s = child.geometry.boundingBox.getSize(new THREE.Vector3());
-                const dims = [s.x, s.y, s.z].sort((a, b) => b - a);
-                if(dims[1] > 0) aspect = dims[0] / dims[1];
-            }
-        });
-
-        const h = 1024;
-        const w = Math.round(h * aspect);
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, w, h);
-        //No background fill: the canvas stays transparent so the white card shows through.
-        //Two inks only — black + blue — plus a friendly rounded font and a little duck mascot.
-        const black = '#141414';
-        const blue = '#2756e6';
-        const blueDark = '#1736a8';
-        const blueSoft = '#9fb6f7';
-        const titleFont = (px) => `700 ${px}px "Fredoka", "Trebuchet MS", sans-serif`;
-        const bodyFont = (px) => `500 ${px}px "Fredoka", "Trebuchet MS", sans-serif`;
-
-        //--- tiny vector helpers ---------------------------------------------------------------
-        const roundRectPath = (x, y, rw, rh, r) => {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + rw, y, x + rw, y + rh, r);
-            ctx.arcTo(x + rw, y + rh, x, y + rh, r);
-            ctx.arcTo(x, y + rh, x, y, r);
-            ctx.arcTo(x, y, x + rw, y, r);
-            ctx.closePath();
-        };
-        const sparkle = (x, y, r, color) => {
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            for(let i = 0; i < 4; i++){
-                const a = i * Math.PI / 2;
-                ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
-                const a2 = a + Math.PI / 4;
-                ctx.lineTo(x + Math.cos(a2) * r * 0.36, y + Math.sin(a2) * r * 0.36);
-            }
-            ctx.closePath();
-            ctx.fill();
-        };
-        const dot = (x, y, r, color) => { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); };
-        const wavy = (x, y, width, amp, color) => {
-            ctx.strokeStyle = color;
-            ctx.lineWidth = Math.max(5, Math.round(h * 0.014));
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            const seg = 28;
-            for(let i = 0; i <= seg; i++){
-                const px = x + width * i / seg;
-                const py = y + Math.sin(i / seg * Math.PI * 4) * amp;
-                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-            }
-            ctx.stroke();
-        };
-        const drawDuck = (dx, dy, S) => {
-            //body
-            dot(dx, dy, 0, blue);
-            ctx.fillStyle = blue;
-            ctx.beginPath(); ctx.ellipse(dx, dy, S * 1.0, S * 0.82, 0, 0, Math.PI * 2); ctx.fill();
-            //tail
-            ctx.beginPath();
-            ctx.moveTo(dx - S * 0.8, dy - S * 0.05);
-            ctx.lineTo(dx - S * 1.25, dy - S * 0.4);
-            ctx.lineTo(dx - S * 0.65, dy - S * 0.45);
-            ctx.closePath(); ctx.fill();
-            //head
-            const hx = dx + S * 0.62, hy = dy - S * 0.78;
-            ctx.fillStyle = blue;
-            ctx.beginPath(); ctx.arc(hx, hy, S * 0.58, 0, Math.PI * 2); ctx.fill();
-            //hair tuft
-            ctx.strokeStyle = blue; ctx.lineWidth = S * 0.09; ctx.lineCap = 'round';
-            [-0.22, 0.04, 0.3].forEach((a) => {
-                ctx.beginPath();
-                ctx.moveTo(hx + a * S, hy - S * 0.5);
-                ctx.lineTo(hx + a * S * 1.4, hy - S * 0.95);
-                ctx.stroke();
-            });
-            //wing
-            ctx.fillStyle = blueDark;
-            ctx.beginPath(); ctx.ellipse(dx + S * 0.08, dy + S * 0.02, S * 0.46, S * 0.3, -0.35, 0, Math.PI * 2); ctx.fill();
-            //beak
-            ctx.fillStyle = blueDark;
-            ctx.beginPath();
-            ctx.moveTo(hx + S * 0.5, hy - S * 0.06);
-            ctx.lineTo(hx + S * 1.02, hy + S * 0.06);
-            ctx.lineTo(hx + S * 0.5, hy + S * 0.24);
-            ctx.closePath(); ctx.fill();
-            //eye + cheek
-            dot(hx + S * 0.46, hy + S * 0.04, S * 0.075, blueSoft); //cheek blush
-            dot(hx + S * 0.2, hy - S * 0.04, S * 0.1, black);
-            //feet
-            ctx.strokeStyle = blueDark; ctx.lineWidth = S * 0.13; ctx.lineCap = 'round';
-            [-0.22, 0.28].forEach((o) => {
-                ctx.beginPath();
-                ctx.moveTo(dx + o * S, dy + S * 0.78);
-                ctx.lineTo(dx + o * S, dy + S * 1.02);
-                ctx.stroke();
-            });
-        };
-
-        //--- playful dashed frame --------------------------------------------------------------
-        const m = Math.round(h * 0.055);
-        ctx.save();
-        ctx.setLineDash([Math.round(h * 0.03), Math.round(h * 0.022)]);
-        ctx.lineWidth = Math.max(4, Math.round(h * 0.011));
-        ctx.strokeStyle = blue;
-        ctx.lineCap = 'round';
-        roundRectPath(m, m, w - m * 2, h - m * 2, Math.round(h * 0.08));
-        ctx.stroke();
-        ctx.restore();
-
-        //--- mascot + scattered sparkles -------------------------------------------------------
-        const duckX = Math.round(w * 0.2), duckY = Math.round(h * 0.55), S = Math.round(h * 0.22);
-        drawDuck(duckX, duckY, S);
-        sparkle(Math.round(w * 0.12), Math.round(h * 0.22), Math.round(h * 0.045), blue);
-        sparkle(Math.round(w * 0.31), Math.round(h * 0.2), Math.round(h * 0.03), blueSoft);
-        sparkle(Math.round(w * 0.92), Math.round(h * 0.82), Math.round(h * 0.04), blue);
-        dot(Math.round(w * 0.06), Math.round(h * 0.72), Math.round(h * 0.014), blue);
-        dot(Math.round(w * 0.34), Math.round(h * 0.82), Math.round(h * 0.016), blueSoft);
-
-        //--- title + copy (right column) -------------------------------------------------------
-        const colX = Math.round(w * 0.42);
-        ctx.textBaseline = 'alphabetic';
-        ctx.textAlign = 'left';
-
-        //Title "IronDuck": "Iron" black + "Duck" blue
-        const titleSize = Math.round(h * 0.155);
-        ctx.font = titleFont(titleSize);
-        let ty = Math.round(h * 0.32);
-        ctx.fillStyle = black;
-        ctx.fillText('Iron', colX, ty);
-        const ironW = ctx.measureText('Iron').width;
-        ctx.fillStyle = blue;
-        ctx.fillText('Duck', colX + ironW, ty);
-        const titleW = ironW + ctx.measureText('Duck').width;
-
-        //Wavy blue underline under the title
-        wavy(colX + Math.round(h * 0.01), ty + Math.round(h * 0.05), Math.round(titleW * 0.92), Math.round(h * 0.012), blue);
-
-        //Description (black, left-aligned, each '\n' paragraph wrapped)
-        ctx.fillStyle = black;
-        const descSize = Math.round(h * 0.058);
-        ctx.font = bodyFont(descSize);
-        ctx.textBaseline = 'top';
-        const lineH = Math.round(descSize * 1.5);
-        const maxWidth = w - colX - Math.round(w * 0.08);
-        let y = Math.round(h * 0.46);
-        const paragraphs = (data.description || '').split('\n');
-        for(const para of paragraphs){
-            const trimmed = para.trim();
-            if(!trimmed){ y += Math.round(lineH * 0.4); continue; }
-            for(const line of this.wrapText(ctx, trimmed, maxWidth)){
-                ctx.fillText(line, colX, y);
-                y += lineH;
-            }
-        }
-
-        //Redraw once the rounded web font has actually loaded (the first pass uses a fallback)
-        if(!this._infoFontRequested && typeof document !== 'undefined' && document.fonts && document.fonts.load){
-            this._infoFontRequested = true;
-            Promise.all([document.fonts.load('700 100px "Fredoka"'), document.fonts.load('500 100px "Fredoka"')])
-                .then(() => this.buildInfoPlaneTexture())
-                .catch(() => {});
-        }
-
-        const texture = new THREE.CanvasTexture(canvas);
-        //The card flips 180° and we see the plane's back face, so the texture reads upside down and
-        //mirrored: flip it vertically (flipY) and horizontally (negative repeat.x) to read correctly.
+        //Pre-made info screen (textures/PanelInfo.png). The card flips 180° and we see the plane's
+        //back face, so the texture is flipped vertically (flipY) + horizontally (negative repeat.x).
+        const texture = new THREE.TextureLoader().load('textures/PanelInfo.png');
         texture.flipY = true;
         texture.wrapS = THREE.RepeatWrapping;
         texture.repeat.x = -1;
         texture.offset.x = 1;
         texture.encoding = THREE.sRGBEncoding;
-        texture.needsUpdate = true;
-        this.infoPlaneMaterial.map = texture;
-        this.infoPlaneMaterial.needsUpdate = true;
+
+        //Unlit material showing the image (visible from both faces; transparent if the PNG has alpha)
+        this.infoPlaneMaterial = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+        this.informationPlane.traverse((child) => { if(child.isMesh) child.material = this.infoPlaneMaterial; });
     }
 
     foldAllDucks(folded){
