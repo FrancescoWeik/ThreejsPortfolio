@@ -161,6 +161,17 @@ export default class IronDuckCard{
         this.navPanels = [this.generalInfoPanel, this.projectsInfoPanel, this.mailInfoPanel].filter(Boolean);
         this._navPanelProxies = this.navPanels.map(() => ({ s: 0 }));
         this.navPanels.forEach((panel) => panel.scale.setScalar(0));
+
+        //Hover "paper wobble" (same as the ducks): a damped tilt that settles back to the rest pose.
+        this.navWobbleAmplitude = 0.35; //radians of the first swing
+        this.navWobbleFrequency = 35;   //rad/s — how fast it flaps
+        this.navWobbleDecay = 8;        //how quickly it settles back
+        this._navWobbleAxis = new THREE.Vector3(1, 0, 0);
+        this._navWobbleQuat = new THREE.Quaternion();
+        this._navPanelRest = this.navPanels.map((p) => p.quaternion.clone());
+        this._navPanelWobble = this.navPanels.map(() => ({ active: false, time: 0 }));
+        this.hoveredNavPanel = null;       //index of the panel under the pointer (or null)
+        this._prevHoveredNavPanel = null;  //to fire the wobble only on hover-enter
     }
 
     applyNavPanelScale(index){
@@ -916,6 +927,7 @@ export default class IronDuckCard{
             //Hover only makes sense when the card is out and the ducks are interactive
             if(this.isDragging || !this.inputAllowed() || !this.camera.freeRotate){
                 this.hoveredDuck = null;
+                this.hoveredNavPanel = null;
                 return;
             }
 
@@ -927,6 +939,17 @@ export default class IronDuckCard{
             const duck = intersects.length > 0 ? this.getDuckFromObject(intersects[0].object) : null;
             //Only hoverable ducks trigger the bubble (the giant duck does nothing)
             this.hoveredDuck = (duck && duck.hoverable) ? duck : null;
+
+            //Nav panels wobble on hover too (only while they're visible)
+            this.hoveredNavPanel = null;
+            if(this.navPanelsShown){
+                for(let i = 0; i < this.navPanels.length; i++){
+                    if(this.raycaster.intersectObject(this.navPanels[i], true).length > 0){
+                        this.hoveredNavPanel = i;
+                        break;
+                    }
+                }
+            }
         });
     }
 
@@ -1103,6 +1126,42 @@ export default class IronDuckCard{
         }
     }
 
+    updateNavPanels(){
+        //Same paper wobble as the ducks: fire it on hover-enter, then let it decay back to rest.
+        if(!this.navPanels || this.navPanels.length === 0) return;
+        const delta = this.time.delta * 0.001; //ms -> seconds
+
+        //Start a fresh wobble only when the pointer newly enters a panel
+        if(this.hoveredNavPanel !== this._prevHoveredNavPanel){
+            const i = this.hoveredNavPanel;
+            if(i !== null){
+                const w = this._navPanelWobble[i];
+                if(!w.active){
+                    this._navPanelRest[i].copy(this.navPanels[i].quaternion); //rest pose to return to
+                    w.active = true;
+                    w.time = 0;
+                }
+            }
+            this._prevHoveredNavPanel = this.hoveredNavPanel;
+        }
+
+        //Advance every active wobble (damped oscillation around the captured rest pose)
+        for(let i = 0; i < this.navPanels.length; i++){
+            const w = this._navPanelWobble[i];
+            if(!w.active) continue;
+            w.time += delta;
+            const envelope = this.navWobbleAmplitude * Math.exp(-this.navWobbleDecay * w.time);
+            if(envelope < 0.005){
+                this.navPanels[i].quaternion.copy(this._navPanelRest[i]); //snap back, stop
+                w.active = false;
+            } else {
+                const angle = envelope * Math.sin(this.navWobbleFrequency * w.time);
+                this._navWobbleQuat.setFromAxisAngle(this._navWobbleAxis, angle);
+                this.navPanels[i].quaternion.copy(this._navPanelRest[i]).multiply(this._navWobbleQuat);
+            }
+        }
+    }
+
     update(){
         if(!this.animation || !this.animation.action) return;
 
@@ -1139,6 +1198,7 @@ export default class IronDuckCard{
 
         this.updateParallax();
         this.updateDucks();
+        this.updateNavPanels();
         this.updateCarousel();
     }
 }
