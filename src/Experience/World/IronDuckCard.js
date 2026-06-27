@@ -5,6 +5,7 @@ import Duck from './Duck.js'
 import ducksMembers from '../ducksMembers.js'
 import projects from '../projects.js'
 import Project from './Project.js'
+import ContactMail from './ContactMail.js'
 
 export default class IronDuckCard{
     constructor(){
@@ -99,11 +100,17 @@ export default class IronDuckCard{
         this.fallAxis = 'z';         //BigliettoPivot local axis to rotate around
         this.generalPreRoll = 0.5;   //seconds: ducks fold + cartelli scale to 0 before the card turns
 
+        //Mail section: clicking MailInfoPanel retracts the card into the container and spins it 180°
+        //(half of the projects spin), stopping on the ContactPlane / contact form. The back arrow
+        //reverses it (spin back, card re-extracts) like the other sections.
+        this.inMailSection = false;
+
         this.setModel();
         this.setDucks();
         this.setNavPanels();
         this.setGeneralFall();
         this.setInfoPlane();
+        this.setContactMail();
         this.setProjectPanel();
         this.setProjectText();
         this.setBackArrow();
@@ -329,8 +336,108 @@ export default class IronDuckCard{
         tl.to(tgt, { x: finalTarget.x, y: finalTarget.y, z: finalTarget.z, duration: dur, ease }, 0);
     }
 
+    setContactMail(){
+        //The contact screen (ContactPlane backdrop + DOM mail form) lives in its own class.
+        this.contactPlane = this.model.getObjectByName('ContactPlane');
+        this.contactMail = new ContactMail({
+            plane: this.contactPlane,
+            onBack: () => this.exitMailSequence()
+        });
+    }
+
     onMailClick(){
-        //Placeholder: Mail/contact navigation (to be defined)
+        this.playMailSequence();
+    }
+
+    playMailSequence(){
+        //Clicking MailInfoPanel: like the projects sequence, but the spin stops at 180° on the
+        //contact screen. Retract the card into the container, glide the camera to the start framing,
+        //then spin 180° (revealing the ContactPlane/form halfway through) and stay there.
+        if(this.projectsSequenceActive || this.inProjectsSection || this.inGeneralSection || this.inMailSection) return;
+        this.projectsSequenceActive = true;
+        this.suspendSpline = true;
+        this.deselectDuck();
+        this.navPanelsShown = false;
+        this.animateNavPanelsOut();
+
+        this.scrollCurrent = Math.min(this.scrollCurrent, 1);
+        this.scrollTarget = this.scrollCurrent;
+        this.camera.controls.enableRotate = false;
+
+        const cam = this.camera.instance;
+        const tgt = this.camera.controls.target;
+        const startPos = this.camera.scrollStartPos;
+        const startTarget = this.camera.scrollStartTarget;
+        const dur = this.retractDuration;
+        const ease = 'power1.inOut';
+
+        let revealed = false;
+        const tl = gsap.timeline({
+            onComplete: () => {
+                this.projectsSequenceActive = false;
+                this.suspendSpline = false;    //spline holds the camera at the start framing
+                this.inMailSection = true;     //locked in the mail section (spin stays at 180°)
+                this.animateBackArrowIn();
+            }
+        });
+
+        //Card retracts; camera glides to the start framing — together, same timing
+        tl.to(this, { scrollCurrent: 0, duration: dur, ease, onUpdate: () => { this.scrollTarget = this.scrollCurrent; } }, 0);
+        tl.to(cam.position, { x: startPos.x, y: startPos.y, z: startPos.z, duration: dur, ease }, 0);
+        tl.to(tgt, { x: startTarget.x, y: startTarget.y, z: startTarget.z, duration: dur, ease }, 0);
+
+        //Then a HALF spin (180°), revealing the contact screen as the back comes into view
+        tl.to(this, {
+            spinAngle: Math.PI,
+            duration: this.spinDuration,
+            ease: 'power2.inOut',
+            onUpdate: () => { if(!revealed && this.spinAngle >= Math.PI / 2){ revealed = true; this.onMailReveal(); } }
+        }, '>');
+    }
+
+    onMailReveal(){
+        //Half-way through the 180° turn: show the contact screen, hide Papera
+        if(this.paperaObject) this.paperaObject.visible = false;
+        if(this.contactMail) this.contactMail.show();
+    }
+
+    onMailHide(){
+        //Reverse of onMailReveal: back to the original card
+        if(this.contactMail) this.contactMail.hide();
+        if(this.paperaObject) this.paperaObject.visible = true;
+    }
+
+    exitMailSequence(){
+        //Back from the mail section: shrink the arrow, spin the 180° back (hiding the contact screen
+        //halfway), then re-extract the card via the spline — exactly like the projects exit.
+        if(this.projectsSequenceActive || !this.inMailSection) return;
+        this.projectsSequenceActive = true;
+        this.inMailSection = false;
+        const dur = this.automaticExtractDuration;
+        const ease = 'power1.inOut';
+
+        if(this.backArrow){
+            gsap.killTweensOf(this._backArrowProxy);
+            gsap.to(this._backArrowProxy, { s: 0, duration: 0.3, ease: 'power2.in', onUpdate: () => this.applyBackArrowScale() });
+        }
+
+        let hidden = false;
+        const tl = gsap.timeline({
+            onComplete: () => {
+                this.spinAngle = 0;
+                this.projectsSequenceActive = false;
+                this.scrollTarget = this.scrollCurrent; //stays open (= scrollMax)
+            }
+        });
+
+        //Spin the 180° back; hide the contact screen as the front comes back into view
+        tl.to(this, {
+            spinAngle: 0, duration: this.spinDuration, ease: 'power2.inOut',
+            onUpdate: () => { if(!hidden && this.spinAngle <= Math.PI / 2){ hidden = true; this.onMailHide(); } }
+        }, 0);
+
+        //Then the card re-extracts on its own, the spline driving the camera (like the projects exit)
+        tl.to(this, { scrollCurrent: this.scrollMax, duration: dur, ease, onUpdate: () => { this.scrollTarget = this.scrollCurrent; } }, '>');
     }
 
     playProjectsSequence(){
@@ -789,7 +896,7 @@ export default class IronDuckCard{
 
     //Card scroll is blocked while the sequence plays AND once we're locked in the projects section
     inputAllowed(){
-        return this.canInteract() && !this.projectsSequenceActive && !this.inProjectsSection && !this.inGeneralSection;
+        return this.canInteract() && !this.projectsSequenceActive && !this.inProjectsSection && !this.inGeneralSection && !this.inMailSection;
     }
 
     setScrollControl(){
@@ -891,6 +998,17 @@ export default class IronDuckCard{
             //In the general section, only the back arrow is interactive (it lifts the card back up)
             if(this.inGeneralSection){
                 if(this.clickedBackArrow(event)) this.exitGeneralSequence();
+                return;
+            }
+            //In the mail section: the 3D back arrow returns; otherwise forward the click onto the
+            //ContactPlane so the in-plane form can focus a field / press its buttons.
+            if(this.inMailSection){
+                if(this.clickedBackArrow(event)){ this.exitMailSequence(); return; }
+                this.pointer.x = (event.clientX / this.sizes.width) * 2 - 1;
+                this.pointer.y = -(event.clientY / this.sizes.height) * 2 + 1;
+                this.raycaster.setFromCamera(this.pointer, this.camera.instance);
+                const hit = this.contactPlane ? this.raycaster.intersectObject(this.contactPlane, true)[0] : null;
+                if(this.contactMail) this.contactMail.handleHit(hit ? hit.uv : null);
                 return;
             }
             if(this.inProjectsSection){
@@ -1185,7 +1303,7 @@ export default class IronDuckCard{
         //Nav panels pop in once the card is fully out, pop out when it goes back in (hysteresis).
         //Only auto-manage them in the normal browsing state; the section sequences drive them
         //explicitly (so they stay hidden in projects/general even though the card is still "out").
-        const sectionActive = this.inProjectsSection || this.inGeneralSection || this.projectsSequenceActive;
+        const sectionActive = this.inProjectsSection || this.inGeneralSection || this.inMailSection || this.projectsSequenceActive;
         if(!sectionActive){
             if(!this.navPanelsShown && this.scrollCurrent >= 0.99){
                 this.navPanelsShown = true;
