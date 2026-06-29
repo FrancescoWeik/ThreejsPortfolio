@@ -2,8 +2,9 @@ import * as dat from 'lil-gui'
 
 export default class Debug{
     constructor(){
-        //Always show the GUI for now (set to window.location.hash === "#debug" to hide it later)
-        this.active = true
+        //The debug GUI is hidden by default; it only shows when the URL asks for it, e.g.
+        //  http://localhost:.../#debug   (or any path containing "/debug").
+        this.active = window.location.hash === '#debug' || window.location.pathname.includes('/debug')
 
         if(this.active){
             this.ui = new dat.GUI()

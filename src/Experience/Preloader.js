@@ -47,7 +47,7 @@ export default class PreLoader extends EventEmitter
     readyScreen()
     {
         this.loading.remove()
-        this.startButton.style.display = "inline"
+        this.startButton.style.display = "inline-block"
         this.startButton.classList.add('fadeIn')
         this.startButton.addEventListener("click", async () => {
             // Remove overlay and button

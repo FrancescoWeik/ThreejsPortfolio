@@ -9,13 +9,10 @@
 <body>
     <!--<iframe src="about.html" class="picture"></iframe>-->
     <canvas class="webgl"></canvas>
-    <div class = "overlay">
-        <img class ="imageLoading" src="./Gif/SpiderMoving.gif">
-    </div>
+    <div class="overlay"></div>
     <div id="loading">
-        <h1>
-            <span id="progressPercentage">Loading...</span> 
-        </h1>
+        <div class="loader__spinner"></div>
+        <span id="progressPercentage" class="loader__text">Loading… 0%</span>
     </div>
     <button class="start">START</button>
 

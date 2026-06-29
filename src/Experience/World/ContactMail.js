@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import contactConfig from '../contactConfig.js'
 
 //The "contact" screen, drawn ENTIRELY onto the ContactPlane texture so it feels part of the model
 //(no DOM popup). The form is interactive: the card raycasts a click onto the plane and forwards the
@@ -9,12 +10,13 @@ export default class ContactMail{
     constructor(options = {}){
         this.plane = options.plane || null;          //ContactPlane (THREE node) — the form surface
         this.onBack = options.onBack || (() => {});  //called by the on-plane "back" button
-        this.toAddress = options.to || 'info@ironduck.games';
+        this.toAddress = contactConfig.email;        //mail destination (from the shared config)
+        this.instagram = contactConfig.instagram;    //Instagram profile URL
 
-        //Form model (the inputs hold the real text; these mirror it for drawing)
-        this.fieldOrder = ['from', 'subject', 'body'];
+        //Form model (the inputs hold the real text; these mirror it for drawing). No "From" field:
+        //Send opens the visitor's own mail app via mailto, so the sender is already their account.
+        this.fieldOrder = ['subject', 'body'];
         this.fields = {
-            from:    { label: 'From',    placeholder: 'your@email.com',          value: '', multiline: false },
             subject: { label: 'Subject', placeholder: "What's it about?",         value: '', multiline: false },
             body:    { label: 'Message', placeholder: 'Write your message here...', value: '', multiline: true }
         };
@@ -55,7 +57,7 @@ export default class ContactMail{
         this.inputs = {};
         for(const key of this.fieldOrder){
             const el = document.createElement(this.fields[key].multiline ? 'textarea' : 'input');
-            if(!this.fields[key].multiline) el.type = (key === 'from') ? 'email' : 'text';
+            if(!this.fields[key].multiline) el.type = 'text';
             el.setAttribute('autocomplete', 'off');
             el.setAttribute('autocapitalize', 'off');
             el.setAttribute('spellcheck', 'false');
@@ -93,12 +95,11 @@ export default class ContactMail{
         ctx.font = '400 34px sans-serif';
         ctx.fillText('An idea, a collaboration or just a hello ✉', 142, 200);
 
-        //Fields
+        //Fields (Subject + Message)
         const fx = 140, fw = W - 280;
         const boxes = {
-            from:    { x: fx, y: 295, w: fw, h: 95 },
-            subject: { x: fx, y: 460, w: fw, h: 95 },
-            body:    { x: fx, y: 625, w: fw, h: 180 }
+            subject: { x: fx, y: 285, w: fw, h: 90 },
+            body:    { x: fx, y: 455, w: fw, h: 205 }
         };
         for(const key of this.fieldOrder){
             this._rects[key] = boxes[key];
@@ -106,17 +107,26 @@ export default class ContactMail{
         }
 
         //Send button (centered, blue pill)
-        const send = { x: W / 2 - 280, y: 838, w: 560, h: 120 };
+        const send = { x: W / 2 - 280, y: 695, w: 560, h: 110 };
         this._rects.send = send;
         const g2 = ctx.createLinearGradient(send.x, 0, send.x + send.w, 0);
         g2.addColorStop(0, '#4a76f9'); g2.addColorStop(1, '#2756e6');
         this.roundRect(send.x, send.y, send.w, send.h, send.h / 2);
         ctx.fillStyle = g2; ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.font = '700 46px sans-serif';
+        ctx.font = '700 44px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('Send ✦', send.x + send.w / 2, send.y + send.h / 2 + 2);
+
+        //Contacts strip (clickable): email + Instagram
+        const gap = 40;
+        const chipW = (fw - gap) / 2;
+        const chipY = 850, chipH = 95;
+        this._rects.email = { x: fx, y: chipY, w: chipW, h: chipH };
+        this._rects.instagram = { x: fx + chipW + gap, y: chipY, w: chipW, h: chipH };
+        this.drawChip(this._rects.email, 'email', this.toAddress, blue);
+        this.drawChip(this._rects.instagram, 'instagram', 'Instagram', blue);
 
         this.texture.needsUpdate = true;
     }
@@ -179,6 +189,49 @@ export default class ContactMail{
         ctx.fillRect(x + 2, y - 2, 3, size + 4);
     }
 
+    drawChip(rect, type, text, blue){
+        const ctx = this.ctx;
+        this.roundRect(rect.x, rect.y, rect.w, rect.h, rect.h / 2);
+        ctx.fillStyle = 'rgba(107, 142, 251, 0.12)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(107, 142, 251, 0.5)';
+        ctx.stroke();
+
+        const cy = rect.y + rect.h / 2;
+        this.drawChipIcon(type, rect.x + 44, cy, 42, blue);
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '500 38px sans-serif';
+        ctx.fillText(text, rect.x + 108, cy + 2);
+    }
+
+    drawChipIcon(type, cx, cy, s, color){
+        const ctx = this.ctx;
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = Math.max(3, s * 0.09);
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        if(type === 'email'){
+            const w = s * 1.2, h = s * 0.82;
+            const x = cx - w / 2, y = cy - h / 2;
+            ctx.strokeRect(x, y, w, h);
+            ctx.beginPath();
+            ctx.moveTo(x, y + h * 0.18);
+            ctx.lineTo(cx, y + h * 0.62);
+            ctx.lineTo(x + w, y + h * 0.18);
+            ctx.stroke();
+        } else {
+            const a = s, x = cx - a / 2, y = cy - a / 2;
+            this.roundRect(x, y, a, a, a * 0.28); ctx.stroke();          //body
+            ctx.beginPath(); ctx.arc(cx, cy, a * 0.26, 0, Math.PI * 2); ctx.stroke(); //lens
+            ctx.beginPath(); ctx.arc(x + a * 0.78, y + a * 0.22, a * 0.06, 0, Math.PI * 2); ctx.fill(); //dot
+        }
+    }
+
     wrapText(text, maxWidth){
         const ctx = this.ctx;
         const out = [];
@@ -218,10 +271,20 @@ export default class ContactMail{
         const cy = (t.flipY ? (1 - sy) : sy) * this.H;
 
         if(this.inside(cx, cy, this._rects.send)){ this.send(); return; }
+        if(this.inside(cx, cy, this._rects.email)){ this.openEmail(); return; }
+        if(this.inside(cx, cy, this._rects.instagram)){ this.openInstagram(); return; }
         for(const key of this.fieldOrder){
             if(this.inside(cx, cy, this._rects[key])){ this.focusField(key); return; }
         }
         this.blur();
+    }
+
+    openEmail(){
+        window.location.href = `mailto:${this.toAddress}`;
+    }
+
+    openInstagram(){
+        if(this.instagram) window.open(this.instagram, '_blank', 'noopener');
     }
 
     inside(x, y, r){
@@ -258,18 +321,18 @@ export default class ContactMail{
     }
 
     send(){
-        const from = this.fields.from.value.trim();
         const subject = this.fields.subject.value.trim();
         const body = this.fields.body.value.trim();
-        if(!from || !subject || !body){
+        if(!subject || !body){
             //Flag the first empty field
             const missing = this.fieldOrder.find((k) => !this.fields[k].value.trim());
             if(missing) this.focusField(missing);
             return;
         }
+        //Opens the visitor's own mail app with everything pre-filled (no backend, no keys)
         const mail = `mailto:${this.toAddress}`
             + `?subject=${encodeURIComponent(subject)}`
-            + `&body=${encodeURIComponent('Da: ' + from + '\n\n' + body)}`;
+            + `&body=${encodeURIComponent(body)}`;
         window.location.href = mail;
     }
 

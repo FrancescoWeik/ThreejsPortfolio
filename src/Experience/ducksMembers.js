@@ -5,57 +5,57 @@ export default [
         node: 'Arri',
         name: 'Arri',
         description: 'Designer',
-        link: 'Arri Link . com',
-        imagePath: 'textures/DuckImages/Arri.png'
+        link: 'https://www.linkedin.com/in/arrigo-berton/',
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Davide',
         name: 'Davide',
         description: 'Artist',
-        link: 'Davide Link . com',
-        imagePath: 'textures/DuckImages/Davide.png'
+        link: 'https://www.artstation.com/davide_ferro',
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Fede',
         name: 'Fede',
         description: 'Composer',
-        link: 'Fede Link . com',
-        imagePath: 'textures/DuckImages/Fede.png'
+        link: 'https://www.linkedin.com/in/federico-mannino/.com',
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Fra',
         name: 'Fra',
         description: 'Developer',
         link: 'https://francesco-portfolio.vercel.app/',
-        imagePath: 'textures/DuckImages/Fra.png'
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Henry',
         name: 'Henry',
         description: 'Artist',
-        link: 'Henry Link .com',
-        imagePath: 'textures/DuckImages/Henry.png'
+        link: 'https://www.artstation.com/henrycanes',
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Lore',
         name: 'Lore',
         description: 'Artist',
         link: 'Lore Link .com',
-        imagePath: 'textures/DuckImages/Lore.png'
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Lucas',
         name: 'Lucas',
         description: 'Developer',
-        link: 'Lucas Link .com',
-        imagePath: 'textures/DuckImages/Lucas.png'
+        link: 'https://www.linkedin.com/in/lucas-calz%C3%A0/',
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Teo',
         name: 'Teo',
         description: 'Developer',
-        link: 'Teo Link .com',
-        imagePath: 'textures/DuckImages/Teo.png'
+        link: 'https://www.linkedin.com/in/matteo-pisani-a41555157/.com',
+        imagePath: 'textures/DuckImages/Placeholder.png'
     },
     {
         node: 'Papera',
