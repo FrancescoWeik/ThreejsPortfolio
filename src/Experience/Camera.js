@@ -14,6 +14,14 @@ export default class Camera{
 
         this.introDuration = 1.9; //seconds of the entry camera movement
 
+        //Responsive framing: the perspective FOV is vertical, so on a narrow (portrait/mobile)
+        //screen the horizontal field shrinks and the model looks "zoomed in". We keep a constant
+        //horizontal framing by widening the vertical FOV once the aspect drops below baseAspect.
+        //On landscape/desktop (aspect >= baseAspect) nothing changes.
+        this.baseFov = 35;      //design FOV (used at baseAspect and wider)
+        this.baseAspect = 1.5;  //at/above this aspect the desktop framing is kept untouched
+        this.maxFov = 80;       //cap, to avoid extreme fish-eye on very tall phones
+
         //Scroll-driven camera move: while the card animation plays (0 -> 1) the camera
         //lerps from its resting pose to this final framing. Enabled after the intro.
         //While followScroll is false, the card scroll/drag input is also blocked.
@@ -51,10 +59,24 @@ export default class Camera{
     }
 
     setInstance(){
-        this.instance = new THREE.PerspectiveCamera(35, this.sizes.width / this.sizes.height, 0.1, 100)
+        this.instance = new THREE.PerspectiveCamera(this.baseFov, this.sizes.width / this.sizes.height, 0.1, 100)
         //Initial position: high up and far back
         this.instance.position.set(0, 15, 20)
         this.scene.add(this.instance)
+        this.updateFov(); //apply the responsive framing right away
+    }
+
+    updateFov(){
+        //Keep the horizontal field constant on narrow screens by widening the vertical FOV.
+        const aspect = this.sizes.width / this.sizes.height;
+        let fov = this.baseFov;
+        if(aspect < this.baseAspect){
+            const half = THREE.MathUtils.degToRad(this.baseFov) * 0.5;
+            fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(half) * (this.baseAspect / aspect)));
+            fov = Math.min(fov, this.maxFov);
+        }
+        this.instance.fov = fov;
+        this.instance.updateProjectionMatrix();
     }
 
     setIntro(){
@@ -87,7 +109,7 @@ export default class Camera{
 
     resize(){
         this.instance.aspect = this.sizes.width/this.sizes.height;
-        this.instance.updateProjectionMatrix()
+        this.updateFov(); //re-fit the framing for the new aspect (also updates the projection)
     }
 
     update(){
@@ -152,11 +174,10 @@ export default class Camera{
         this.debugFolder.add(this.controls.target, 'y').min(-20).max(20).step(0.01).name('target y').listen().onChange(() => this.controls.update())
         this.debugFolder.add(this.controls.target, 'z').min(-20).max(20).step(0.01).name('target z').listen().onChange(() => this.controls.update())
 
-        //Field of view
-        this.debugFolder
-            .add(this.instance, 'fov')
-            .min(10).max(90).step(1)
-            .onChange(() => this.instance.updateProjectionMatrix())
+        //Field of view (responsive): base FOV, the aspect below which it widens, and the cap
+        this.debugFolder.add(this, 'baseFov').min(10).max(90).step(1).name('base fov').onChange(() => this.updateFov())
+        this.debugFolder.add(this, 'baseAspect').min(0.5).max(2.5).step(0.05).name('fov base aspect').onChange(() => this.updateFov())
+        this.debugFolder.add(this, 'maxFov').min(40).max(120).step(1).name('fov cap (mobile)').onChange(() => this.updateFov())
 
         //Duration of the intro camera movement (seconds)
         this.debugFolder
