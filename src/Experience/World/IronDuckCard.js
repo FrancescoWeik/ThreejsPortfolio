@@ -119,6 +119,7 @@ export default class IronDuckCard{
         this.setDragControl();
         this.setHoverControl();
         this.setInfoPanel();
+        this.setScrollHint();
         this.setDebug();
     }
 
@@ -1116,6 +1117,27 @@ export default class IronDuckCard{
         }
     }
 
+    setScrollHint(){
+        //The "Scroll" hint under the card: shown after the intro, hidden once the user starts scrolling.
+        this.scrollHint = document.getElementById('scrollHint');
+        this.scrollHintShown = false;
+        this.scrollHintDismissed = false;
+    }
+
+    updateScrollHint(){
+        if(!this.scrollHint || this.scrollHintDismissed) return;
+        //Appear once the intro is over (scroll is interactive)
+        if(!this.scrollHintShown && this.canInteract()){
+            this.scrollHintShown = true;
+            this.scrollHint.classList.add('visible');
+        }
+        //Fade out as soon as any scrolling begins
+        if(this.scrollHintShown && (this.scrollTarget > 0.03 || this.scrollCurrent > 0.03)){
+            this.scrollHintDismissed = true;
+            this.scrollHint.classList.remove('visible');
+        }
+    }
+
     isPanelTarget(target){
         //True if a DOM event happened inside the info panel (so it shouldn't deselect)
         return this.panel && this.panel.element && this.panel.element.contains(target);
@@ -1314,6 +1336,7 @@ export default class IronDuckCard{
             }
         }
 
+        this.updateScrollHint();
         this.updateParallax();
         this.updateDucks();
         this.updateNavPanels();

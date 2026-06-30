@@ -47,6 +47,18 @@ export default class Camera{
         this._desiredPos = new THREE.Vector3();
         this._desiredTarget = new THREE.Vector3();
 
+        //Free-orbit clamp (only while the user can actually orbit, card fully out): allow a small
+        //look-around centered on the final framing — ±azimuth horizontally, ±polar vertically.
+        this.azimuthLimitDeg = 30; //left/right
+        this.polarLimitDeg = 15;   //up/down
+        this.limitEase = 0.12;     //how softly the camera springs back inside the band (0 = no pull)
+        const finalOffset = this.scrollFinalPos.clone().sub(this.scrollFinalTarget);
+        const finalSph = new THREE.Spherical().setFromVector3(finalOffset);
+        this.centerTheta = finalSph.theta; //azimuth of the resting (final) framing
+        this.centerPhi = finalSph.phi;     //polar of the resting (final) framing
+        this._softOffset = new THREE.Vector3();
+        this._softSph = new THREE.Spherical();
+
         this.setInstance()
         this.setOrbitControls();
         this.setIntro();
@@ -149,6 +161,35 @@ export default class Camera{
         }
 
         this.controls.update();
+        this.softClampRotation();
+    }
+
+    softClampRotation(){
+        //Soft (rubber-band) limit instead of OrbitControls' hard min/max clamp: the user can push a
+        //little past the band, and each frame the camera eases back toward it — a smooth wall.
+        //Only while actually orbiting (card out); the scripted phases drive the camera themselves.
+        if(!this.controls.enableRotate) return;
+
+        const target = this.controls.target;
+        this._softOffset.copy(this.instance.position).sub(target);
+        this._softSph.setFromVector3(this._softOffset);
+
+        const az = THREE.MathUtils.degToRad(this.azimuthLimitDeg);
+        const po = THREE.MathUtils.degToRad(this.polarLimitDeg);
+        const azMin = this.centerTheta - az, azMax = this.centerTheta + az;
+        const poMin = Math.max(0.001, this.centerPhi - po), poMax = Math.min(Math.PI - 0.001, this.centerPhi + po);
+        const t = this.limitEase;
+
+        let changed = false;
+        if(this._softSph.theta > azMax){ this._softSph.theta += (azMax - this._softSph.theta) * t; changed = true; }
+        else if(this._softSph.theta < azMin){ this._softSph.theta += (azMin - this._softSph.theta) * t; changed = true; }
+        if(this._softSph.phi > poMax){ this._softSph.phi += (poMax - this._softSph.phi) * t; changed = true; }
+        else if(this._softSph.phi < poMin){ this._softSph.phi += (poMin - this._softSph.phi) * t; changed = true; }
+
+        if(changed){
+            this._softOffset.setFromSpherical(this._softSph);
+            this.instance.position.copy(target).add(this._softOffset);
+        }
     }
 
     enableFreeRotate(){
@@ -178,6 +219,11 @@ export default class Camera{
         this.debugFolder.add(this, 'baseFov').min(10).max(90).step(1).name('base fov').onChange(() => this.updateFov())
         this.debugFolder.add(this, 'baseAspect').min(0.5).max(2.5).step(0.05).name('fov base aspect').onChange(() => this.updateFov())
         this.debugFolder.add(this, 'maxFov').min(40).max(120).step(1).name('fov cap (mobile)').onChange(() => this.updateFov())
+
+        //Free-orbit clamp (card out): how far left/right and up/down the user can look
+        this.debugFolder.add(this, 'azimuthLimitDeg').min(0).max(90).step(1).name('look ±° L/R')
+        this.debugFolder.add(this, 'polarLimitDeg').min(0).max(60).step(1).name('look ±° up/down')
+        this.debugFolder.add(this, 'limitEase').min(0.02).max(0.5).step(0.01).name('limit softness')
 
         //Duration of the intro camera movement (seconds)
         this.debugFolder

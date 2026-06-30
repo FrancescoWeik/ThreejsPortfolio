@@ -14,7 +14,11 @@
         <div class="loader__spinner"></div>
         <span id="progressPercentage" class="loader__text">Loading… 0%</span>
     </div>
-    <button class="start">START</button>
+    <!-- Hint shown under the card after the intro; fades out once the user starts scrolling -->
+    <div class="scroll-hint" id="scrollHint">
+        <span>Scroll</span>
+        <span class="scroll-hint__arrow">&#8595;</span>
+    </div>
 
     <!-- Side info panel shown when a duck on the card is clicked -->
     <aside class="duck-panel" id="duckPanel">

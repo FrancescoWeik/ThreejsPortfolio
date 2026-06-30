@@ -74,42 +74,42 @@ body
     color: rgba(255, 255, 255, 0.7);
 }
 
-/* START button */
-.start{
+/* Scroll hint (under the card; fades out once the user scrolls) */
+.scroll-hint{
     position: fixed;
-    top: 50%;
+    bottom: 40px;
     left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 16px 56px;
-    border: 2px solid rgba(255, 255, 255, 0.85);
-    border-radius: 999px;
-    color: #ffffff;
-    background-color: transparent;
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: 5px;
-    text-transform: uppercase;
-    font-family: sans-serif;
-    cursor: pointer;
+    transform: translateX(-50%) translateY(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     opacity: 0;
-    transition: opacity 0.5s ease, color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-    display: none;
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    color: rgba(255, 255, 255, 0.82);
+    font-family: sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    z-index: 6;
 }
 
-.start:hover{
-    color: #ffffff;
-    border-color: #4a76f9;
-    background-color: #4a76f9;
-    box-shadow: 0 12px 34px rgba(74, 118, 249, 0.45);
-    transform: translate(-50%, -50%) scale(1.04);
+.scroll-hint.visible{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
-.start.fadeIn{
-    opacity:1;
+.scroll-hint__arrow{
+    font-size: 1.3rem;
+    line-height: 1;
+    animation: scroll-bob 1.4s ease-in-out infinite;
 }
 
-.start.fadeOut{
-    opacity:0;
+@keyframes scroll-bob{
+    0%, 100%{ transform: translateY(0); opacity: 0.6; }
+    50%{ transform: translateY(6px); opacity: 1; }
 }
 
 /* Duck info side panel */
@@ -247,7 +247,6 @@ body
 }
 
 
-/* START hover styling is handled by .start:hover above (turns blue) */
 
 /* Duck hover bubble (speech-bubble tooltip above a duck) */
 .duck-bubble {
