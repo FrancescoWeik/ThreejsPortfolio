@@ -25,10 +25,10 @@ export default class IronDuckCard{
         this.scrollTarget = 0;    //where the scroll wants to be
         this.scrollCurrent = 0;   //smoothed value actually applied
         this.scrollMax = 1.5;     //total scroll range (1 = card out, the rest = camera approach)
-        this.wheelSensitivity = 0.0006;  //how much one wheel notch advances the scroll
+        this.wheelSensitivity = 0.001;  //how much one wheel notch advances the scroll
         this.touchSensitivity = 0.003;   //how much a finger swipe advances the scroll
         this.dragSensitivity = 0.004;    //how much dragging the card advances the scroll
-        this.smoothing = 0.01;    //how fast it follows the scroll (0 = slow, 1 = instant)
+        this.smoothing = 0.02;    //how fast it follows the scroll (0 = slow, 1 = instant)
         this.lastTouchY = null;
 
         //Parallax: the card eases a little toward the mouse (top-right, bottom-left, ...)
@@ -473,6 +473,8 @@ export default class IronDuckCard{
                 this.projectsSequenceActive = false;
                 this.suspendSpline = false;
                 this.inProjectsSection = true;       //locked in the projects section now
+                this.projectsHintShown = false;      //let the "scroll" hint show again on each entry
+                this.projectsHintDismissed = false;
                 this.animateBackArrowIn();           //pop in the back arrow
             }
         });
@@ -560,6 +562,7 @@ export default class IronDuckCard{
         if(this.projectsSequenceActive || !this.inProjectsSection) return;
         this.projectsSequenceActive = true; //blocks input, but the spline stays active so the
         this.inProjectsSection = false;     //camera re-opens exactly like the initial scroll
+        this.dismissProjectsHint();         //hide the carousel hint if it was still showing
         const dur = this.automaticExtractDuration;
         const ease = 'power1.inOut';
 
@@ -801,11 +804,13 @@ export default class IronDuckCard{
 
     carouselStepByScroll(deltaY){
         //One image per wheel notch (the slide itself is smoothed in updateCarousel)
+        this.dismissProjectsHint();
         if(this.projectList.length <= 1) return;
         this.carouselTarget = Math.round(this.carouselTarget) + Math.sign(deltaY);
     }
 
     carouselDragStart(clientX){
+        this.dismissProjectsHint();
         this.carouselDragging = true;
         this.carouselDragStartX = clientX;
         this.carouselDragStartTarget = this.carouselTarget;
@@ -900,6 +905,17 @@ export default class IronDuckCard{
         return this.canInteract() && !this.projectsSequenceActive && !this.inProjectsSection && !this.inGeneralSection && !this.inMailSection;
     }
 
+    normalizeWheelDelta(event){
+        //Wheel deltas come in different units depending on the browser/OS: pixels (deltaMode 0,
+        //Chrome/trackpad), lines (deltaMode 1, often Firefox) or pages (deltaMode 2). A wheel notch
+        //is ~100 in pixels but ~3 in lines, so a fixed sensitivity makes line-mode scroll ~30x slower.
+        //Convert everything to a pixel-ish scale (and cap it) so the speed is the same everywhere.
+        let d = event.deltaY;
+        if(event.deltaMode === 1) d *= 40;        //lines  -> px
+        else if(event.deltaMode === 2) d *= 800;  //pages  -> px
+        return THREE.MathUtils.clamp(d, -120, 120);
+    }
+
     setScrollControl(){
         //Mouse wheel drives the whole journey both ways: scroll down advances it, scroll up
         //(even once arrived) plays it back in reverse.
@@ -911,7 +927,7 @@ export default class IronDuckCard{
             }
             if(!this.inputAllowed()) return;
             this.scrollTarget = THREE.MathUtils.clamp(
-                this.scrollTarget + event.deltaY * this.wheelSensitivity,
+                this.scrollTarget + this.normalizeWheelDelta(event) * this.wheelSensitivity,
                 0,
                 this.scrollMax
             );
@@ -1118,22 +1134,42 @@ export default class IronDuckCard{
     }
 
     setScrollHint(){
-        //The "Scroll" hint under the card: shown after the intro, hidden once the user starts scrolling.
+        //The "Scroll" hint under the card. Reused for two moments (never visible at once): the intro
+        //extraction, and the projects carousel. Each has its own shown/dismissed state.
         this.scrollHint = document.getElementById('scrollHint');
         this.scrollHintShown = false;
         this.scrollHintDismissed = false;
+        this.projectsHintShown = false;
+        this.projectsHintDismissed = false;
     }
 
     updateScrollHint(){
-        if(!this.scrollHint || this.scrollHintDismissed) return;
-        //Appear once the intro is over (scroll is interactive)
+        if(!this.scrollHint) return;
+
+        //In the projects section: prompt to scroll the carousel, until the first carousel move
+        if(this.inProjectsSection){
+            if(!this.projectsHintDismissed && !this.projectsHintShown){
+                this.projectsHintShown = true;
+                this.scrollHint.classList.add('visible');
+            }
+            return;
+        }
+
+        //Initial extraction hint: appear once the intro is over, fade out as soon as scrolling begins
+        if(this.scrollHintDismissed) return;
         if(!this.scrollHintShown && this.canInteract()){
             this.scrollHintShown = true;
             this.scrollHint.classList.add('visible');
         }
-        //Fade out as soon as any scrolling begins
         if(this.scrollHintShown && (this.scrollTarget > 0.03 || this.scrollCurrent > 0.03)){
             this.scrollHintDismissed = true;
+            this.scrollHint.classList.remove('visible');
+        }
+    }
+
+    dismissProjectsHint(){
+        if(this.scrollHint && !this.projectsHintDismissed){
+            this.projectsHintDismissed = true;
             this.scrollHint.classList.remove('visible');
         }
     }
@@ -1181,7 +1217,7 @@ export default class IronDuckCard{
         this.debugFolder = this.debug.ui.addFolder('IronDuckCard - scroll');
         this.debugFolder
             .add(this, 'wheelSensitivity')
-            .min(0).max(0.01).step(0.0001)
+            .min(0).max(100).step(0.0001)
             .name('wheel speed')
         this.debugFolder
             .add(this, 'touchSensitivity')
@@ -1306,9 +1342,13 @@ export default class IronDuckCard{
         if(!this.animation || !this.animation.action) return;
 
         //Smoothly approach the scroll target for a fluid feel (the projects sequence drives
-        //scrollCurrent itself via gsap, so don't fight it then)
+        //scrollCurrent itself via gsap, so don't fight it then). Frame-rate independent: the
+        //smoothing is converted to a deltaTime-based exponential (referenced at 60fps), so the speed
+        //is identical on 60Hz, 144Hz, etc. instead of depending on the frame rate.
         if(!this.projectsSequenceActive){
-            this.scrollCurrent += (this.scrollTarget - this.scrollCurrent) * this.smoothing;
+            const dt = Math.min(this.time.delta, 50); //ms, clamped to avoid spikes after a tab switch
+            const f = 1 - Math.pow(1 - this.smoothing, dt / 16.667);
+            this.scrollCurrent += (this.scrollTarget - this.scrollCurrent) * f;
         }
 
         //Only the first scroll unit [0 -> 1] drives the clip; beyond that the card stays out
